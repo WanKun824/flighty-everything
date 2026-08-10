@@ -2,18 +2,10 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "漫游 — 旅行故事地图",
-  description: "以地图为中心，规划、播放与分享你的旅程。",
+  title: "漫游 — 旅行、地图与朋友",
+  description: "发现真实旅程，规划路线，与朋友一起出发。",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="zh-Hans">
-      <body>{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="zh-Hans"><body>{children}</body></html>;
 }

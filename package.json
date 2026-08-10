@@ -18,7 +18,8 @@
     "lucide-react": "^0.468.0",
     "mapbox-gl": "^3.28.1",
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "sf-symbols-lib": "^2.0.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
