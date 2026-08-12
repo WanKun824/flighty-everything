@@ -1,100 +1,49 @@
-# vinext-starter
+# 漫游 · Travel Globe
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+一套 Apple 风格的旅行社群与地球仪行程 Demo。地图使用 Mapbox GL JS，交通工具预览使用 Three.js，地点搜索使用 Mapbox Search Box API。
 
-## Prerequisites
+## 已完成
 
-- Node.js `>=22.13.0`
+- Mapbox 真实地球仪、卫星/地图切换、星空与大气效果
+- 香港—东京—京都—直岛多段示例行程
+- 机场、车站、港口和景点的真实坐标与站点卡片
+- 飞机、汽车、新干线、轮船四套轻量 Three.js 3D 模型
+- 交通工具沿路线播放、暂停和拖动进度
+- Mapbox 真实地点搜索，添加出发时间和交通方式
+- 行程照片、天气、打卡信息和旅行社群界面
+- 桌面、平板和手机响应式布局
 
-## Quick Start
+## 本地运行
+
+需要 Node.js 22 或以上版本。
 
 ```bash
 npm install
 npm run dev
+```
+
+打开终端显示的本地地址。生产构建：
+
+```bash
+npm run lint
 npm run build
 ```
 
-This starter does not use `wrangler.jsonc`.
+可在 `.env.local` 中设置 Mapbox 公共 Token：
 
-## Included Shape
-
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
-
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```env
+NEXT_PUBLIC_MAPBOX_TOKEN=你的_Mapbox_公共_Token
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+## 主要文件
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+- `app/page.tsx`：行程、地图、地点搜索及主要 UI
+- `app/Vehicle3D.tsx`：四套程序化 Three.js 交通工具模型
+- `app/globals.css`：Apple 风格视觉与响应式布局
+- `app/layout.tsx`：页面与社交分享元数据
+- `.github/workflows/ci.yml`：GitHub Actions 自动检查
+- `HANDOFF.md`：完整交接、GitHub 与 Codemagic 操作文档
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+## 当前边界
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+Mapbox Search Box 返回真实地点；跨国飞机、铁路和轮渡轨迹目前是演示路线，并非实时航班、列车或船班数据。正式版本需要接入航班、铁路/公交和轮渡时刻服务。3D 载具为项目内程序化模型，不依赖外部模型文件与额外授权。

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ElementType } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ElementType } from "react";
 import SFHouse from "sf-symbols-lib/monochrome/SFHouse";
 import SFHouseFill from "sf-symbols-lib/monochrome/SFHouseFill";
 import SFMap from "sf-symbols-lib/monochrome/SFMap";
@@ -35,26 +35,28 @@ import SFPauseFill from "sf-symbols-lib/monochrome/SFPauseFill";
 import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
 import SFClock from "sf-symbols-lib/monochrome/SFClock";
 import SFGlobeAsiaAustraliaFill from "sf-symbols-lib/monochrome/SFGlobeAsiaAustraliaFill";
-import SFCompassDrawing from "sf-symbols-lib/monochrome/SFCompassDrawing";
 import SFRectangleGrid2x2Fill from "sf-symbols-lib/monochrome/SFRectangleGrid2x2Fill";
-import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
-import SFAt from "sf-symbols-lib/monochrome/SFAt";
-import SFLink from "sf-symbols-lib/monochrome/SFLink";
 import SFEnvelopeFill from "sf-symbols-lib/monochrome/SFEnvelopeFill";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import SFLockFill from "sf-symbols-lib/monochrome/SFLockFill";
 import SFHandRaisedFill from "sf-symbols-lib/monochrome/SFHandRaisedFill";
 import SFInfoCircleFill from "sf-symbols-lib/monochrome/SFInfoCircleFill";
 import SFChartBarFill from "sf-symbols-lib/monochrome/SFChartBarFill";
-import SFCalendar from "sf-symbols-lib/monochrome/SFCalendar";
-import SFLocationNorthFill from "sf-symbols-lib/monochrome/SFLocationNorthFill";
 import SFCloudSunFill from "sf-symbols-lib/monochrome/SFCloudSunFill";
+import SFCarFill from "sf-symbols-lib/monochrome/SFCarFill";
+import type { VehicleKind } from "./Vehicle3D";
 
-const MAPBOX_TOKEN =
+const LazyVehicle3D = lazy(() => import("./Vehicle3D"));
+
+function VehiclePreview(props: { kind: VehicleKind; progress?: number; className?: string }) {
+  return <Suspense fallback={<div className={`${props.className ?? ""} vehicle-loading`} aria-hidden="true" />}><LazyVehicle3D {...props} /></Suspense>;
+}
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN ??
   "pk.eyJ1IjoidmluY2VudGxlZTg3NiIsImEiOiJjbXAyZHB5OHowZjh3MndzZHY0ZWs3Z3FsIn0.DC32avSkIOG7VpPwMgetjw";
 
 type AppTab = "community" | "explore" | "messages" | "profile";
-type Transport = "flight" | "train" | "ferry";
+type Transport = VehicleKind;
 
 type Post = {
   id: number;
@@ -161,13 +163,34 @@ const stories = [
   ["Yuki", "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=90"],
 ] as const;
 
-const tripStops = [
-  { city: "香港", detail: "赤鱲角国际机场", time: "9月18日 · 08:45", type: "flight" as Transport, color: "#0a84ff", coordinate: [114.1694, 22.3193] as [number, number] },
-  { city: "东京", detail: "涩谷 · 代官山", time: "9月19日 · 10:30", type: "train" as Transport, color: "#bf5af2", coordinate: [139.7006, 35.6595] as [number, number] },
-  { city: "京都", detail: "祇园 · 东山", time: "9月20日 · 09:10", type: "train" as Transport, color: "#ff9f0a", coordinate: [135.7785, 35.0037] as [number, number] },
-  { city: "直岛", detail: "宫浦港 · 本村", time: "9月21日 · 11:20", type: "ferry" as Transport, color: "#32ade6", coordinate: [133.9958, 34.4598] as [number, number] },
+type TripStop = {
+  id: string;
+  city: string;
+  detail: string;
+  time: string;
+  type: Transport;
+  color: string;
+  coordinate: [number, number];
+  code?: string;
+  kind: "airport" | "station" | "port" | "place";
+  photo: string;
+};
+
+const initialTripStops: TripStop[] = [
+  { id: "hkg", city: "香港", detail: "香港国际机场 · T1", code: "HKG", time: "9月18日 · 08:45", type: "flight", color: "#0a84ff", coordinate: [113.9185, 22.3080], kind: "airport", photo: "https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=500&q=84" },
+  { id: "hnd", city: "东京", detail: "羽田机场 · T3", code: "HND", time: "9月18日 · 14:00", type: "car", color: "#ff375f", coordinate: [139.7798, 35.5494], kind: "airport", photo: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=500&q=84" },
+  { id: "tokyo", city: "东京", detail: "东京站 · 丸之内口", code: "TYO", time: "9月20日 · 09:10", type: "train", color: "#bf5af2", coordinate: [139.7671, 35.6812], kind: "station", photo: "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=500&q=84" },
+  { id: "kyoto", city: "京都", detail: "京都站 · 八条口", code: "KYO", time: "9月20日 · 11:22", type: "train", color: "#ff9f0a", coordinate: [135.7588, 34.9858], kind: "station", photo: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=500&q=84" },
+  { id: "uno", city: "宇野", detail: "宇野港 · 1号码头", code: "UNO", time: "9月23日 · 10:40", type: "ferry", color: "#32ade6", coordinate: [133.9538, 34.4910], kind: "port", photo: "https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=500&q=84" },
+  { id: "naoshima", city: "直岛", detail: "宫浦港 · 艺术岛入口", code: "NAO", time: "9月23日 · 11:00", type: "ferry", color: "#30d158", coordinate: [133.9720, 34.4563], kind: "port", photo: "https://images.unsplash.com/photo-1524413840807-0c3cb6fa808d?auto=format&fit=crop&w=500&q=84" },
 ];
 
+const transportMeta: Record<Transport, { label: string; color: string }> = {
+  flight: { label: "飞机", color: "#0a84ff" },
+  car: { label: "汽车", color: "#ff375f" },
+  train: { label: "火车", color: "#bf5af2" },
+  ferry: { label: "轮船", color: "#32ade6" },
+};
 const conversations = [
   { id: 1, name: "Mika Chen", avatar: posts[0].avatar, preview: "京都那家旅馆我已经收藏了", time: "2分钟", unread: 2, online: true },
   { id: 2, name: "关西秋日小组", avatar: posts[2].image, preview: "Noah 分享了一条新路线", time: "18分钟", unread: 5, online: false },
@@ -295,25 +318,32 @@ function CommunityScreen({ onCreate }: { onCreate: () => void }) {
   );
 }
 
-function MapCanvas({ progress, selected, mapStyle, onSelect }: { progress: number; selected: number; mapStyle: "standard" | "satellite"; onSelect: (index: number) => void }) {
+function MapCanvas({ progress, selected, mapStyle, globe, stops, onSelect }: { progress: number; selected: number; mapStyle: "standard" | "satellite"; globe: boolean; stops: TripStop[]; onSelect: (index: number) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
-  const planeRef = useRef<import("mapbox-gl").Marker | null>(null);
-  const ferryRef = useRef<import("mapbox-gl").Marker | null>(null);
+  const vehicleRef = useRef<import("mapbox-gl").Marker | null>(null);
   const [ready, setReady] = useState(0);
 
-  const flightPath = useMemo(() => Array.from({ length: 101 }, (_, index) => {
-    const t = index / 100;
-    const from = tripStops[0].coordinate;
-    const to = tripStops[1].coordinate;
-    return [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t + Math.sin(Math.PI * t) * 3.7] as [number, number];
-  }), []);
-  const ferryPath = useMemo(() => Array.from({ length: 51 }, (_, index) => {
-    const t = index / 50;
-    const from: [number, number] = [134.15, 34.5];
-    const to = tripStops[3].coordinate;
-    return [from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * t] as [number, number];
-  }), []);
+  const segmentPaths = useMemo(() => stops.slice(0, -1).map((stop, segmentIndex) => {
+    const destination = stops[segmentIndex + 1];
+    const steps = 48;
+    const coordinates = Array.from({ length: steps + 1 }, (_, index) => {
+      const t = index / steps;
+      const lift = stop.type === "flight" ? Math.sin(Math.PI * t) * 4.7 : Math.sin(Math.PI * t) * .08;
+      return [stop.coordinate[0] + (destination.coordinate[0] - stop.coordinate[0]) * t, stop.coordinate[1] + (destination.coordinate[1] - stop.coordinate[1]) * t + lift] as [number, number];
+    });
+    return { mode: stop.type, coordinates };
+  }), [stops]);
+
+  const activeVehicle = useMemo(() => {
+    const max = Math.max(1, segmentPaths.length);
+    const absolute = Math.min(99.999, Math.max(0, progress)) / 100 * max;
+    const segmentIndex = Math.min(max - 1, Math.floor(absolute));
+    const segmentProgress = absolute - segmentIndex;
+    const segment = segmentPaths[segmentIndex] ?? segmentPaths[0];
+    const coordinateIndex = Math.min((segment?.coordinates.length ?? 1) - 1, Math.round(segmentProgress * ((segment?.coordinates.length ?? 1) - 1)));
+    return { kind: segment?.mode ?? "flight", coordinate: segment?.coordinates[coordinateIndex] ?? stops[0]?.coordinate ?? [0, 0] };
+  }, [progress, segmentPaths, stops]);
 
   useEffect(() => {
     let disposed = false;
@@ -324,32 +354,31 @@ function MapCanvas({ progress, selected, mapStyle, onSelect }: { progress: numbe
       const map = new mapboxgl.Map({
         container: containerRef.current,
         style: mapStyle === "standard" ? "mapbox://styles/mapbox/standard" : "mapbox://styles/mapbox/standard-satellite",
-        center: [131.8, 30.6], zoom: 4.5, pitch: 48, bearing: -10, antialias: true, attributionControl: true,
+        projection: globe ? "globe" : "mercator",
+        center: globe ? [132, 29] : [136, 33], zoom: globe ? 2.15 : 4.7, pitch: globe ? 14 : 48, bearing: -10, antialias: true, attributionControl: true,
       });
       mapRef.current = map;
       instance = map;
       map.on("style.load", () => {
         try {
           map.setConfigProperty("basemap", "lightPreset", mapStyle === "standard" ? "day" : "dusk");
-          map.setConfigProperty("basemap", "show3dBuildings", true);
-          map.setConfigProperty("basemap", "show3dLandmarks", true);
+          map.setConfigProperty("basemap", "show3dBuildings", !globe);
+          map.setConfigProperty("basemap", "show3dLandmarks", !globe);
         } catch { /* Standard style defaults remain active. */ }
+        map.setFog(globe ? { color: "rgb(228, 238, 250)", "high-color": "rgb(119, 171, 229)", "space-color": "rgb(4, 11, 26)", "horizon-blend": .14, "star-intensity": .45 } : {});
 
         const routeData = {
           type: "FeatureCollection" as const,
-          features: [
-            { type: "Feature" as const, properties: { mode: "flight" }, geometry: { type: "LineString" as const, coordinates: flightPath } },
-            { type: "Feature" as const, properties: { mode: "rail" }, geometry: { type: "LineString" as const, coordinates: [tripStops[1].coordinate, [138.4, 35.15], [137.1, 35.0], tripStops[2].coordinate, [134.15, 34.5]] } },
-            { type: "Feature" as const, properties: { mode: "ferry" }, geometry: { type: "LineString" as const, coordinates: ferryPath } },
-          ],
+          features: segmentPaths.map((segment) => ({ type: "Feature" as const, properties: { mode: segment.mode }, geometry: { type: "LineString" as const, coordinates: segment.coordinates } })),
         };
         map.addSource("journey", { type: "geojson", data: routeData });
-        map.addLayer({ id: "route-halo", type: "line", source: "journey", paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": .78, "line-blur": 1.5 } });
+        map.addLayer({ id: "route-halo", type: "line", source: "journey", paint: { "line-color": "#ffffff", "line-width": 7, "line-opacity": .72, "line-blur": 1.5 } });
         map.addLayer({ id: "route-flight", type: "line", source: "journey", filter: ["==", ["get", "mode"], "flight"], paint: { "line-color": "#0a84ff", "line-width": 3.2, "line-dasharray": [1, 1.4] } });
-        map.addLayer({ id: "route-rail", type: "line", source: "journey", filter: ["==", ["get", "mode"], "rail"], paint: { "line-color": "#bf5af2", "line-width": 3.2 } });
+        map.addLayer({ id: "route-car", type: "line", source: "journey", filter: ["==", ["get", "mode"], "car"], paint: { "line-color": "#ff375f", "line-width": 3.2 } });
+        map.addLayer({ id: "route-rail", type: "line", source: "journey", filter: ["==", ["get", "mode"], "train"], paint: { "line-color": "#bf5af2", "line-width": 3.2 } });
         map.addLayer({ id: "route-ferry", type: "line", source: "journey", filter: ["==", ["get", "mode"], "ferry"], paint: { "line-color": "#32ade6", "line-width": 3.2, "line-dasharray": [.6, 1.2] } });
 
-        tripStops.forEach((stop, index) => {
+        stops.forEach((stop, index) => {
           const el = document.createElement("button");
           el.className = "route-pin";
           el.dataset.index = String(index);
@@ -359,37 +388,40 @@ function MapCanvas({ progress, selected, mapStyle, onSelect }: { progress: numbe
           el.addEventListener("click", () => onSelect(index));
           new mapboxgl.Marker({ element: el, anchor: "bottom" }).setLngLat(stop.coordinate).addTo(map);
         });
-        const plane = document.createElement("div");
-        plane.className = "moving-vehicle plane";
-        plane.textContent = "✈︎";
-        planeRef.current = new mapboxgl.Marker({ element: plane }).setLngLat(flightPath[Math.round(progress)]).addTo(map);
-        const ferry = document.createElement("div");
-        ferry.className = "moving-vehicle ferry";
-        ferry.textContent = "⛴︎";
-        ferryRef.current = new mapboxgl.Marker({ element: ferry }).setLngLat(ferryPath[Math.round(progress / 2)]).addTo(map);
+        const vehicle = document.createElement("div");
+        const firstMode = stops[0]?.type ?? "flight";
+        vehicle.className = `map-vehicle map-vehicle-${firstMode}`;
+        vehicle.textContent = firstMode === "flight" ? "✈︎" : firstMode === "car" ? "◆" : firstMode === "train" ? "▰" : "▲";
+        vehicleRef.current = new mapboxgl.Marker({ element: vehicle }).setLngLat(stops[0]?.coordinate ?? [0, 0]).addTo(map);
         setReady((value) => value + 1);
       });
     });
-    return () => { disposed = true; planeRef.current = null; ferryRef.current = null; mapRef.current = null; instance?.remove(); };
-  }, [mapStyle, flightPath, ferryPath, onSelect]);
+    return () => { disposed = true; vehicleRef.current = null; mapRef.current = null; instance?.remove(); };
+  }, [mapStyle, globe, stops, segmentPaths, onSelect]);
 
   useEffect(() => {
-    planeRef.current?.setLngLat(flightPath[Math.min(100, Math.round(progress))]);
-    ferryRef.current?.setLngLat(ferryPath[Math.min(50, Math.round(progress / 2))]);
-  }, [progress, ready, flightPath, ferryPath]);
+    vehicleRef.current?.setLngLat(activeVehicle.coordinate);
+    const element = vehicleRef.current?.getElement();
+    if (element) {
+      element.className = `map-vehicle map-vehicle-${activeVehicle.kind}`;
+      element.textContent = activeVehicle.kind === "flight" ? "✈︎" : activeVehicle.kind === "car" ? "◆" : activeVehicle.kind === "train" ? "▰" : "▲";
+    }
+  }, [activeVehicle.coordinate, activeVehicle.kind, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) return;
-    const stop = tripStops[selected];
-    map.flyTo({ center: stop.coordinate, zoom: selected === 0 ? 10.6 : 12.2, pitch: 58, bearing: -16, duration: 1200, essential: true, padding: { left: window.innerWidth > 900 ? 390 : 0, bottom: window.innerWidth <= 900 ? 280 : 0 } });
+    const stop = stops[selected];
+    if (!stop) return;
+    map.flyTo({ center: stop.coordinate, zoom: globe ? 4.6 : stop.kind === "airport" ? 10.6 : 12.2, pitch: globe ? 24 : 58, bearing: -16, duration: 1200, essential: true, padding: { left: window.innerWidth > 900 ? 390 : 0, bottom: window.innerWidth <= 900 ? 280 : 0 } });
     containerRef.current?.querySelectorAll<HTMLElement>(".route-pin").forEach((pin) => pin.classList.toggle("active", pin.dataset.index === String(selected)));
-  }, [selected, ready]);
+  }, [selected, ready, globe, stops]);
 
   return <div className="map-canvas" ref={containerRef} />;
 }
 
-function ExploreScreen() {
+/*
+function LegacyExploreScreen() {
   const [selectedStop, setSelectedStop] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(38);
@@ -406,7 +438,7 @@ function ExploreScreen() {
   const selected = tripStops[selectedStop];
   return (
     <section className="screen explore-screen">
-      <MapCanvas progress={progress} selected={selectedStop} mapStyle={mapStyle} onSelect={selectStop} />
+      <MapCanvas progress={progress} selected={selectedStop} mapStyle={mapStyle} globe={false} stops={tripStops} onSelect={selectStop} />
       <header className="map-topbar frosted-panel">
         <div className="map-search"><SFMagnifyingglass size="sm" /><input placeholder="搜索地点或添加目的地" aria-label="搜索地图" /></div>
         <div className="map-mode"><button className={mapStyle === "standard" ? "active" : ""} onClick={() => setMapStyle("standard")}>地图</button><button className={mapStyle === "satellite" ? "active" : ""} onClick={() => setMapStyle("satellite")}>卫星</button></div>
@@ -452,9 +484,171 @@ function ExploreScreen() {
     </section>
   );
 }
+*/
 
-function SFCloudSunFillIcon() {
-  return <span className="weather-glyph">☀︎</span>;
+function ExploreScreen() {
+  const [stops, setStops] = useState<TripStop[]>(initialTripStops);
+  const [selectedStop, setSelectedStop] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [progress, setProgress] = useState(12);
+  const [mapStyle, setMapStyle] = useState<"standard" | "satellite">("satellite");
+  const [globe, setGlobe] = useState(true);
+  const [editing, setEditing] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [transport, setTransport] = useState<Transport>("flight");
+  const [query, setQuery] = useState("");
+  const [departureTime, setDepartureTime] = useState("2026-09-24T09:30");
+  const [suggestions, setSuggestions] = useState<Array<{ mapbox_id: string; name: string; full_address?: string; feature_type?: string }>>([]);
+  const [searching, setSearching] = useState(false);
+  const sessionToken = useRef("");
+  const selectStop = useCallback((index: number) => setSelectedStop(index), []);
+
+  useEffect(() => {
+    sessionToken.current = globalThis.crypto?.randomUUID?.() ?? "manyou-search-session";
+  }, []);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timer = window.setInterval(() => setProgress((value) => value >= 100 ? 0 : value + .11), 34);
+    return () => window.clearInterval(timer);
+  }, [isPlaying]);
+
+  useEffect(() => {
+    const value = query.trim();
+    if (!adding || value.length < 2) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      try {
+        const url = new URL("https://api.mapbox.com/search/searchbox/v1/suggest");
+        url.searchParams.set("q", value);
+        url.searchParams.set("language", "zh-Hans");
+        url.searchParams.set("limit", "6");
+        url.searchParams.set("proximity", "139.7671,35.6812");
+        url.searchParams.set("session_token", sessionToken.current || "manyou-search-session");
+        url.searchParams.set("access_token", MAPBOX_TOKEN);
+        const response = await fetch(url, { signal: controller.signal });
+        const data = await response.json() as { suggestions?: Array<{ mapbox_id: string; name: string; full_address?: string; feature_type?: string }> };
+        setSuggestions(data.suggestions ?? []);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) setSuggestions([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 280);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [adding, query]);
+
+  const addSuggestion = async (suggestion: { mapbox_id: string; name: string; full_address?: string; feature_type?: string }) => {
+    setSearching(true);
+    try {
+      const url = new URL(`https://api.mapbox.com/search/searchbox/v1/retrieve/${encodeURIComponent(suggestion.mapbox_id)}`);
+      url.searchParams.set("session_token", sessionToken.current || "manyou-search-session");
+      url.searchParams.set("language", "zh-Hans");
+      url.searchParams.set("access_token", MAPBOX_TOKEN);
+      const response = await fetch(url);
+      const data = await response.json() as { features?: Array<{ geometry?: { coordinates?: [number, number] }; properties?: { name?: string; full_address?: string; feature_type?: string; poi_category?: string[] } }> };
+      const feature = data.features?.[0];
+      const coordinate = feature?.geometry?.coordinates;
+      if (!coordinate) return;
+      const featureType = `${feature?.properties?.feature_type ?? suggestion.feature_type ?? ""} ${(feature?.properties?.poi_category ?? []).join(" ")}`.toLowerCase();
+      const kind: TripStop["kind"] = featureType.includes("airport") ? "airport" : featureType.includes("station") || featureType.includes("rail") ? "station" : featureType.includes("port") || featureType.includes("ferry") ? "port" : "place";
+      const date = new Date(departureTime);
+      const timeLabel = Number.isNaN(date.getTime()) ? "待定" : `${date.getMonth() + 1}月${date.getDate()}日 · ${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+      const nextStop: TripStop = {
+        id: `place-${Date.now()}`,
+        city: feature?.properties?.name ?? suggestion.name,
+        detail: feature?.properties?.full_address ?? suggestion.full_address ?? "真实地点",
+        time: timeLabel,
+        type: transport,
+        color: transportMeta[transport].color,
+        coordinate,
+        kind,
+        photo: "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=500&q=84",
+      };
+      setStops((current) => [...current, nextStop]);
+      setSelectedStop(stops.length);
+      setAdding(false);
+      setQuery("");
+      setSuggestions([]);
+      sessionToken.current = globalThis.crypto?.randomUUID?.() ?? "manyou-search-session";
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const selected = stops[selectedStop] ?? stops[0];
+  const segmentCount = Math.max(1, stops.length - 1);
+  const activeSegmentIndex = Math.min(segmentCount - 1, Math.floor(Math.min(99.99, progress) / 100 * segmentCount));
+  const activeTransport = stops[activeSegmentIndex]?.type ?? "flight";
+  const activeFrom = stops[activeSegmentIndex] ?? stops[0];
+  const activeTo = stops[activeSegmentIndex + 1] ?? stops[1] ?? stops[0];
+  const transportIcon = (type: Transport, size: "xs" | "sm" = "sm") => type === "flight" ? <SFAirplane size={size} /> : type === "car" ? <SFCarFill size={size} /> : type === "ferry" ? <SFFerryFill size={size} /> : <SFTrainSideFrontCar size={size} />;
+
+  return (
+    <section className="screen explore-screen journey-globe-screen">
+      <MapCanvas progress={progress} selected={selectedStop} mapStyle={mapStyle} globe={globe} stops={stops} onSelect={selectStop} />
+      <header className="map-topbar frosted-panel">
+        <button className={`globe-switch ${globe ? "active" : ""}`} onClick={() => setGlobe(!globe)}><SFGlobeAsiaAustraliaFill size="sm" /><span>{globe ? "地球仪" : "城市地图"}</span></button>
+        <div className="map-search"><SFMagnifyingglass size="sm" /><input placeholder="搜索机场、车站、港口或景点" aria-label="搜索地图" onFocus={() => setAdding(true)} /></div>
+        <div className="map-mode"><button className={mapStyle === "standard" ? "active" : ""} onClick={() => setMapStyle("standard")}>地图</button><button className={mapStyle === "satellite" ? "active" : ""} onClick={() => setMapStyle("satellite")}>卫星</button></div>
+        <button className="icon-button" aria-label="分享"><SFSquareAndArrowUp size="sm" /></button>
+      </header>
+
+      <aside className="route-builder frosted-panel">
+        <span className="mobile-grabber" />
+        <div className="builder-heading">
+          <div><span className="eyebrow">LIVE JOURNEY</span><h1>日本，秋天</h1><p>9月18日 – 9月25日 · {stops.length}站 · 4种交通</p></div>
+          <button onClick={() => setEditing(!editing)}>{editing ? "完成" : "编辑"}</button>
+        </div>
+        <div className="trip-summary-line"><span><strong>2,912</strong><small>公里</small></span><span><strong>8天</strong><small>行程</small></span><span><strong>38</strong><small>照片</small></span></div>
+        <div className="transport-palette">
+          {(Object.keys(transportMeta) as Transport[]).map((type) => <button key={type} className={activeTransport === type ? "active" : ""} onClick={() => setTransport(type)}>{transportIcon(type)}<span>{transportMeta[type].label}</span></button>)}
+        </div>
+        <div className="route-list">
+          {stops.map((stop, index) => <button key={stop.id} className={selectedStop === index ? "selected" : ""} onClick={() => setSelectedStop(index)}>
+            <span className="route-node" style={{ background: stop.color }}>{transportIcon(stop.type, "xs")}</span>
+            <span className="route-copy"><small>{stop.time}</small><strong>{stop.city}</strong><em>{stop.detail}</em></span>
+            <span className="route-hub-code">{stop.code ?? (stop.kind === "airport" ? "AIR" : stop.kind === "station" ? "JR" : stop.kind === "port" ? "PORT" : "POI")}</span>
+            {editing && <span className="drag-handle">⋮⋮</span>}
+          </button>)}
+          <button className="add-stop" onClick={() => setAdding(true)}><span><SFPlus size="xs" /></span><strong>添加真实地点</strong><small>机场、车站、港口、景点</small></button>
+        </div>
+      </aside>
+
+      <aside className="place-inspector frosted-panel">
+        <div className="place-photo" style={{ backgroundImage: `url(${selected.photo})` }}><span>{selected.kind === "airport" ? "AIRPORT" : selected.kind === "station" ? "STATION" : selected.kind === "port" ? "PORT" : "PLACE"}</span><strong>{selected.code}</strong></div>
+        <div className="place-inspector-copy"><small>{selected.time}</small><h2>{selected.city}</h2><p>{selected.detail}</p></div>
+        <div className="checkin-row"><span><SFCheckmarkCircleFill size="sm" /><b>3</b><small>打卡景点</small></span><span><SFPhotoFill size="sm" /><b>12</b><small>旅途照片</small></span><span><SFCloudSunFill size="sm" /><b>23°</b><small>局部多云</small></span></div>
+        <div className="photo-strip"><img src={selected.photo} alt="行程照片"/><img src={posts[(selectedStop + 1) % posts.length].image} alt="行程照片"/><button><SFCameraFill size="sm" /><small>添加</small></button></div>
+      </aside>
+
+      <div className="route-player frosted-panel">
+        <button className="player-button" onClick={() => setIsPlaying(!isPlaying)}>{isPlaying ? <SFPauseFill size="sm" /> : <SFPlayFill size="sm" />}</button>
+        <VehiclePreview kind={activeTransport} progress={progress} className="player-vehicle" />
+        <div className="player-route-copy"><span><strong>{activeFrom.city}</strong>{transportIcon(activeTransport, "xs")}<strong>{activeTo.city}</strong><small>{transportMeta[activeTransport].label}行程</small></span><button type="button" className="route-progress" aria-label="调整行程动画进度" onClick={(event) => { const rect = event.currentTarget.getBoundingClientRect(); setProgress(Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100))); }}><i style={{ width: `${progress}%` }} /><b style={{ left: `${progress}%` }} /></button></div>
+        <span className="player-percent">{Math.round(progress)}%</span>
+      </div>
+
+      <div className="vehicle-dock frosted-panel" aria-label="3D 交通工具模型">
+        {(Object.keys(transportMeta) as Transport[]).map((type) => <button key={type} className={activeTransport === type ? "active" : ""} onClick={() => { const index = stops.findIndex((stop) => stop.type === type); if (index >= 0) { setSelectedStop(index); setProgress(index / Math.max(1, stops.length - 1) * 100); } }}><VehiclePreview kind={type} /><span>{transportMeta[type].label}</span></button>)}
+      </div>
+
+      {adding && <div className="journey-modal-backdrop" role="button" tabIndex={0} aria-label="关闭添加地点" onClick={(event) => { if (event.target === event.currentTarget) setAdding(false); }} onKeyDown={(event) => { if (event.key === "Escape") setAdding(false); }}>
+        <section className="add-place-sheet frosted-panel" role="dialog" aria-modal="true" aria-label="添加行程地点">
+          <header><div><span className="eyebrow">ADD A STOP</span><h2>添加行程地点</h2><p>搜索真实机场、车站、港口与打卡景点</p></div><button className="icon-button" onClick={() => setAdding(false)}><SFXmark size="sm" /></button></header>
+          <label className="add-search"><SFMagnifyingglass size="sm" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="例如：成田国际机场、京都站、宫浦港" />{searching && <i />}</label>
+          <div className="add-form-row"><label><span>出发时间</span><input type="datetime-local" value={departureTime} onChange={(event) => setDepartureTime(event.target.value)} /></label><label><span>交通工具</span><select value={transport} onChange={(event) => setTransport(event.target.value as Transport)}>{(Object.keys(transportMeta) as Transport[]).map((type) => <option key={type} value={type}>{transportMeta[type].label}</option>)}</select></label></div>
+          <div className="vehicle-picker">{(Object.keys(transportMeta) as Transport[]).map((type) => <button key={type} className={transport === type ? "active" : ""} onClick={() => setTransport(type)}><VehiclePreview kind={type} /><span>{transportMeta[type].label}</span></button>)}</div>
+          <div className="suggestion-list">
+            {suggestions.map((suggestion) => <button key={suggestion.mapbox_id} onClick={() => void addSuggestion(suggestion)}><span><SFLocationFill size="sm" /></span><div><strong>{suggestion.name}</strong><small>{suggestion.full_address ?? suggestion.feature_type ?? "Mapbox 真实地点"}</small></div><SFChevronRight size="xs" /></button>)}
+            {!searching && query.length >= 2 && suggestions.length === 0 && <p>没有找到结果，请尝试机场代码、车站全名或城市名。</p>}
+            {query.length < 2 && <div className="search-hints"><span>HKG 香港国际机场</span><span>Tokyo Station</span><span>Naoshima Ferry Terminal</span></div>}
+          </div>
+        </section>
+      </div>}
+    </section>
+  );
 }
 
 function MessagesScreen() {
@@ -604,7 +798,7 @@ export default function Home() {
         {navItems.map((item) => { const Icon = activeTab === item.id ? item.fill : item.outline; return <button key={item.id} className={activeTab === item.id ? "active" : ""} onClick={() => setActiveTab(item.id)}><span><Icon size="md" />{item.id === "messages" && <i>7</i>}</span><small>{item.label}</small></button>; })}
       </nav>
 
-      {createOpen && <div className="modal-backdrop" onMouseDown={() => setCreateOpen(false)}><section className="create-modal frosted-panel" role="dialog" aria-modal="true" aria-label="发布新内容" onMouseDown={(event) => event.stopPropagation()}><button className="modal-close" onClick={() => setCreateOpen(false)}><SFXmark size="sm" /></button><span className="create-icon"><SFCameraFill size="xl" /></span><h2>分享一段旅程</h2><p>发布照片、路线或正在发生的旅行故事。</p><div className="create-options"><button><span><SFPhotoFill size="md" /></span><div><strong>照片与故事</strong><small>分享旅行中的一个瞬间</small></div><SFChevronRight size="xs" /></button><button><span><SFMapFill size="md" /></span><div><strong>路线与行程</strong><small>把地图变成可复制的故事</small></div><SFChevronRight size="xs" /></button><button><span><SFClock size="md" /></span><div><strong>此刻动态</strong><small>24 小时后自动消失</small></div><SFChevronRight size="xs" /></button></div></section></div>}
+      {createOpen && <div className="modal-backdrop" role="button" tabIndex={0} aria-label="关闭创建窗口" onClick={(event) => { if (event.target === event.currentTarget) setCreateOpen(false); }} onKeyDown={(event) => { if (event.key === "Escape") setCreateOpen(false); }}><section className="create-modal frosted-panel" role="dialog" aria-modal="true" aria-label="发布新内容"><button className="modal-close" onClick={() => setCreateOpen(false)}><SFXmark size="sm" /></button><span className="create-icon"><SFCameraFill size="xl" /></span><h2>分享一段旅程</h2><p>发布照片、路线或正在发生的旅行故事。</p><div className="create-options"><button><span><SFPhotoFill size="md" /></span><div><strong>照片与故事</strong><small>分享旅行中的一个瞬间</small></div><SFChevronRight size="xs" /></button><button><span><SFMapFill size="md" /></span><div><strong>路线与行程</strong><small>把地图变成可复制的故事</small></div><SFChevronRight size="xs" /></button><button><span><SFClock size="md" /></span><div><strong>此刻动态</strong><small>24 小时后自动消失</small></div><SFChevronRight size="xs" /></button></div></section></div>}
     </main>
   );
 }
