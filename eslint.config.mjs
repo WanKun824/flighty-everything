@@ -13,6 +13,11 @@ const eslintConfig = defineConfig([
     "dist/**",
     "out/**",
     "build/**",
+    "public/draco/**",
+    "model-previews/**",
+    "scripts/**",
+    "android/**",
+    "ios/**",
     "next-env.d.ts",
   ]),
   eslint.configs.recommended,
@@ -34,6 +39,12 @@ const eslintConfig = defineConfig([
       react: {
         version: "detect",
       },
+    },
+    rules: {
+      // 可聚焦的 separator 就是 ARIA 的 window-splitter 模式（面板的缩放把手）：
+      // 规则默认不把 separator 算作可交互角色，但按规范它一旦可聚焦就是可交互的，
+      // 而且必须能用方向键调值。这条规则本来就留了 roles 白名单给这种情况。
+      "jsx-a11y/no-noninteractive-tabindex": ["error", { tags: [], roles: ["tabpanel", "separator"], allowExpressionValues: true }],
     },
   },
 ]);

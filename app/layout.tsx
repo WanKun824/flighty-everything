@@ -10,13 +10,13 @@ export const metadata: Metadata = {
     description: "真实地点、行程动画、3D 交通工具与旅行分享。",
     type: "website",
     locale: "zh_CN",
-    images: [{ url: "/social-globe.png", width: 1731, height: 909, alt: "漫游地球仪行程与交通工具" }],
+    images: [{ url: "/og.png", width: 1672, height: 941, alt: "漫游地球仪行程与四种交通工具" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "漫游｜把行程放到地球仪上",
     description: "真实地点、行程动画、3D 交通工具与旅行分享。",
-    images: ["/social-globe.png"],
+    images: ["/og.png"],
   },
 };
 
