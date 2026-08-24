@@ -1,16 +1,14 @@
 # flighty Everything
 
-A video-calibrated, mobile-first flight companion with a live globe, practical trip tools, airport operations, weather radar, friends, and a derived travel passport.
+一套以 Flighty 视觉语言重新设计的多交通旅行产品：保留 iOS 移动端，同时提供完整的中文网页工作台，并把飞机、火车、汽车与轮船连接成同一条可操作旅程。
 
 ## Product features
 
-- Interactive Mapbox globe with airport markers and camera controls
-- Flight search by flight number or route, calendar import, and random-flight demo
-- Persistent saved flights with detail and removal flows
-- Flighty Friends onboarding, profile avatar, invite codes, and live friend cards
-- Passport totals plus flight, delay, and aircraft statistics
-- Airport issue lists, favorites, detail reports, and map focus
-- Global and US RainViewer weather-radar layers
+- Three-column desktop journey workbench with live routes, date/mode filters, companions and travel statistics
+- Unified airplane, train, car and ferry data model with persistent add, complete and delete flows
+- iOS-style mobile journey timeline, multi-transport passport and interactive 3D vehicle details
+- Flight number/route search, calendar import, airports, favorites and Flighty-style friend invites
+- Interactive Mapbox globe with multi-color journey lines and RainViewer weather radar
 - Apple SF Symbols throughout the interface
 - Responsive web UI plus Capacitor iOS and Android shells
 
@@ -46,14 +44,19 @@ The Capacitor display name is `flighty Everything` on both platforms.
 
 ## Main files
 
-| File | Responsibility |
-| --- | --- |
-| `app/page.tsx` | Product screens and interaction flows |
-| `app/FlightGlobe.tsx` | Mapbox globe, airport markers, and radar layers |
-| `app/flightyData.ts` | Airport, airline, flight, and statistics models |
-| `app/flightyStorage.ts` | Versioned local persistence and mutations |
-| `app/globals.css` | Video-calibrated mobile visual system |
-| `tests/` | Data, geometry, rendering, and behavior coverage |
+| File                      | Responsibility                                                  |
+| ------------------------- | --------------------------------------------------------------- |
+| `app/page.tsx`            | Responsive web/iOS routing and mobile interaction flows         |
+| `app/DesktopJourney.tsx`  | Desktop journey workbench, companions and statistics            |
+| `app/MobileJourney.tsx`   | iOS journey timeline, passport and detail screens               |
+| `app/JourneyComposer.tsx` | Shared four-mode journey creation flow                          |
+| `app/FlightGlobe.tsx`     | Mapbox globe, journey routes, airport markers, and radar layers |
+| `app/flightyData.ts`      | Airport, airline, flight, and statistics models                 |
+| `app/flightyStorage.ts`   | Versioned local persistence and mutations                       |
+| `app/journeyData.ts`      | Unified multi-transport journey model                           |
+| `app/journeyStorage.ts`   | Versioned journey persistence and mutations                     |
+| `app/globals.css`         | Calibrated desktop and iOS visual system                        |
+| `tests/`                  | Data, geometry, rendering, and behavior coverage                |
 
 ## External data
 

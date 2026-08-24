@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type ChangeEvent,
   type ElementType,
 } from "react";
@@ -36,6 +37,13 @@ import SFStarFill from "sf-symbols-lib/monochrome/SFStarFill";
 import SFTrash from "sf-symbols-lib/monochrome/SFTrash";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import FlightGlobe from "./FlightGlobe";
+import DesktopJourney from "./DesktopJourney";
+import JourneyComposer from "./JourneyComposer";
+import {
+  MobileJourneyDetail,
+  MobileJourneyPassport,
+  MobileJourneysPanel,
+} from "./MobileJourney";
 import {
   AIRLINES,
   AIRPORTS,
@@ -52,6 +60,8 @@ import {
   type Flight,
   type Region,
 } from "./flightyData";
+import { segmentFromFlight } from "./journeyData";
+import { useJourneyStore } from "./journeyStorage";
 import {
   useFlightyStore,
   type Profile,
@@ -62,10 +72,12 @@ type Tab = "flights" | "friends" | "passport";
 type Overlay =
   | null
   | "add-flight"
+  | "add-journey"
   | "airports"
   | "airport-detail"
   | "weather"
   | "flight-detail"
+  | "journey-detail"
   | "friends-intro"
   | "profile-name"
   | "profile-avatar"
@@ -78,18 +90,46 @@ type Overlay =
 type AddMode = "suggested" | "route" | "number";
 
 const tabs: Array<{ id: Tab; label: string; icon: ElementType }> = [
-  { id: "flights", label: "My Flights", icon: SFAirplaneCircleFill },
-  { id: "friends", label: "Friends", icon: SFPerson2Fill },
-  { id: "passport", label: "Passport", icon: SFBookClosedFill },
+  { id: "flights", label: "行程", icon: SFAirplaneCircleFill },
+  { id: "friends", label: "同行", icon: SFPerson2Fill },
+  { id: "passport", label: "旅迹", icon: SFBookClosedFill },
 ];
 
+const desktopMedia = "(min-width: 900px)";
+
+function subscribeDesktop(onChange: () => void) {
+  const query = window.matchMedia(desktopMedia);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+function desktopSnapshot() {
+  const forced = new URLSearchParams(window.location.search).get("platform");
+  if (forced === "ios" || forced === "android") return false;
+  if (forced === "web") return true;
+  return window.matchMedia(desktopMedia).matches;
+}
+
 export default function Home() {
+  const desktop = useSyncExternalStore(
+    subscribeDesktop,
+    desktopSnapshot,
+    () => false,
+  );
+  return desktop ? <DesktopJourney /> : <MobileFlighty />;
+}
+
+function MobileFlighty() {
   const store = useFlightyStore();
+  const journeyStore = useJourneyStore();
   const { state } = store;
   const [activeTab, setActiveTab] = useState<Tab>("flights");
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [selectedAirport, setSelectedAirport] = useState<string | null>(null);
-  const [selectedFlight, setSelectedFlight] = useState<Flight | null>(null);
+  const [selectedFlight] = useState<Flight | null>(null);
+  const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(
+    null,
+  );
   const [resetToken, setResetToken] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -107,6 +147,10 @@ export default function Home() {
   const [randomIndex, setRandomIndex] = useState(0);
   const calendarRef = useRef<HTMLInputElement>(null);
   const stats = useMemo(() => statsForFlights(state.flights), [state.flights]);
+  const selectedJourney =
+    journeyStore.state.segments.find(
+      (segment) => segment.id === selectedJourneyId,
+    ) ?? null;
 
   const notify = (message: string) => {
     setToast(message);
@@ -125,17 +169,14 @@ export default function Home() {
 
   const addFlight = (flight: Flight) => {
     store.addFlight(flight);
+    journeyStore.addSegment(segmentFromFlight(flight));
     setActiveTab("flights");
     setOverlay(null);
     setQuery("");
-    notify(`${flight.number} added to My Flights`);
+    notify(`${flight.number} 已加入我的行程`);
   };
 
-  const openAddFlight = () => {
-    setAddMode("suggested");
-    setQuery("");
-    setOverlay("add-flight");
-  };
+  const openAddJourney = () => setOverlay("add-journey");
 
   const openAirport = (code: string) => {
     setSelectedAirport(code);
@@ -151,7 +192,7 @@ export default function Home() {
     try {
       if (navigator.share) await navigator.share({ title, text });
       else await navigator.clipboard.writeText(text);
-      notify("Share ready");
+      notify("分享内容已准备好");
     } catch {
       /* The native share sheet can be dismissed without an error state. */
     }
@@ -161,23 +202,27 @@ export default function Home() {
     const file = event.target.files?.[0];
     if (!file) return;
     const numbers = calendarFlightNumbers(await file.text());
-    numbers.forEach((number) => store.addFlight(flightFromNumber(number)));
+    numbers.forEach((number) => {
+      const flight = flightFromNumber(number);
+      store.addFlight(flight);
+      journeyStore.addSegment(segmentFromFlight(flight));
+    });
     setOverlay(null);
     setActiveTab("flights");
     notify(
       numbers.length
-        ? `${numbers.length} calendar flight${numbers.length === 1 ? "" : "s"} imported`
-        : "No flight numbers found in that calendar",
+        ? `已从日历导入 ${numbers.length} 个航班`
+        : "日历中没有找到航班号",
     );
     event.target.value = "";
   };
 
   const title =
     activeTab === "flights"
-      ? "My Flights"
+      ? "我的行程"
       : activeTab === "friends"
-        ? "Friends"
-        : "Passport";
+        ? "同行"
+        : "旅行护照";
   const initials = state.profile?.initials ?? "V";
   const profileColor = state.profile?.color ?? "#ec6f9a";
   const mapOverlayOpen = overlay === "airports" || overlay === "airport-detail";
@@ -193,10 +238,15 @@ export default function Home() {
           selectedAirport={selectedAirport}
           weatherMode={state.weatherMode}
           resetToken={resetToken}
+          journeySegments={journeyStore.state.segments}
+          selectedJourneySegmentId={selectedJourneyId}
+          onJourneySegmentSelect={(id) => {
+            journeyStore.selectSegment(id);
+            setSelectedJourneyId(id);
+            setOverlay("journey-detail");
+          }}
           onAirportSelect={openAirport}
-          onWeatherError={(message) =>
-            notify(`${message}. Showing the satellite map.`)
-          }
+          onWeatherError={(message) => notify(`${message}，已切换为卫星地图。`)}
         />
         <StatusBar />
 
@@ -213,10 +263,10 @@ export default function Home() {
             "add-friend",
             "profile",
           ].includes(overlay ?? "") && (
-            <div className="map-tools" aria-label="Map tools">
+            <div className="map-tools" aria-label="地图工具">
               <button
                 className={mapOverlayOpen ? "active" : ""}
-                aria-label="Open airports"
+                aria-label="打开机场动态"
                 onClick={() => {
                   setSelectedAirport(null);
                   setOverlay(overlay === "airports" ? null : "airports");
@@ -230,12 +280,12 @@ export default function Home() {
                     ? "active"
                     : ""
                 }
-                aria-label="Open weather layers"
+                aria-label="打开天气图层"
                 onClick={() => setOverlay("weather")}
               >
                 <SFCloudFill size="md" />
               </button>
-              <button aria-label="Recenter map" onClick={resetMap}>
+              <button aria-label="重新居中地图" onClick={resetMap}>
                 <SFLocationNorthFill size="md" />
               </button>
             </div>
@@ -250,7 +300,8 @@ export default function Home() {
               {activeTab === "friends" && (
                 <button
                   className="round-button"
-                  aria-label="More friend options"
+                  aria-label="添加同行人"
+                  onClick={() => setOverlay("add-friend")}
                 >
                   <SFEllipsis size="md" />
                 </button>
@@ -267,7 +318,7 @@ export default function Home() {
               <button
                 className="round-button profile-button avatar-letter"
                 style={{ background: profileColor }}
-                aria-label="Open profile"
+                aria-label="打开个人资料"
                 onClick={() => {
                   setDraftName(state.profile?.name ?? "Vincent");
                   setAvatarColor(profileColor);
@@ -280,13 +331,15 @@ export default function Home() {
           </header>
 
           {activeTab === "flights" && (
-            <FlightsPanel
-              flights={state.flights}
-              onOpen={(flight) => {
-                setSelectedFlight(flight);
-                setOverlay("flight-detail");
+            <MobileJourneysPanel
+              tripName={journeyStore.state.tripName}
+              segments={journeyStore.state.segments}
+              onOpen={(segment) => {
+                journeyStore.selectSegment(segment.id);
+                setSelectedJourneyId(segment.id);
+                setOverlay("journey-detail");
               }}
-              onAdd={openAddFlight}
+              onAdd={openAddJourney}
             />
           )}
           {activeTab === "friends" && (
@@ -299,17 +352,13 @@ export default function Home() {
             />
           )}
           {activeTab === "passport" && (
-            <PassportPanel
-              flights={state.flights}
-              stats={stats}
-              onStats={setOverlay}
-            />
+            <MobileJourneyPassport segments={journeyStore.state.segments} />
           )}
 
           <BottomBar
             activeTab={activeTab}
             chooseTab={chooseTab}
-            onSearch={openAddFlight}
+            onSearch={openAddJourney}
           />
         </section>
 
@@ -336,6 +385,17 @@ export default function Home() {
               setRandomIndex((value) => value + 1);
               addFlight(flight);
             }}
+          />
+        )}
+        {overlay === "add-journey" && (
+          <JourneyComposer
+            variant="mobile"
+            onClose={() => setOverlay(null)}
+            onAdd={(segment) => {
+              journeyStore.addSegment(segment);
+              notify(`${segment.title} 已加入行程`);
+            }}
+            onFlightTools={() => setOverlay("add-flight")}
           />
         )}
         <input
@@ -397,6 +457,21 @@ export default function Home() {
             }}
           />
         )}
+        {overlay === "journey-detail" && selectedJourney && (
+          <MobileJourneyDetail
+            segment={selectedJourney}
+            onClose={() => setOverlay(null)}
+            onToggleComplete={() =>
+              journeyStore.toggleComplete(selectedJourney.id)
+            }
+            onDelete={() => {
+              journeyStore.removeSegment(selectedJourney.id);
+              setSelectedJourneyId(null);
+              setOverlay(null);
+              notify("已删除这段行程");
+            }}
+          />
+        )}
 
         {overlay &&
           [
@@ -437,7 +512,7 @@ export default function Home() {
               setFriendCode("");
               setActiveTab("friends");
               setOverlay(null);
-              notify(`${friend.name} is now sharing flights with you`);
+              notify(`${friend.name} 已开始与你共享行程`);
             }}
           />
         )}
@@ -521,18 +596,14 @@ function BottomBar({
           </button>
         ))}
       </nav>
-      <button
-        className="search-orb"
-        aria-label="Search flights"
-        onClick={onSearch}
-      >
+      <button className="search-orb" aria-label="添加行程" onClick={onSearch}>
         <SFMagnifyingglass size="xl" />
       </button>
     </footer>
   );
 }
 
-function FlightsPanel({
+export function FlightsPanel({
   flights,
   onOpen,
   onAdd,
@@ -619,27 +690,27 @@ function FriendsPanel({
           className={filter === "Everyone" ? "active" : ""}
           onClick={() => setFilter("Everyone")}
         >
-          Everyone
+          全部
         </button>
         <button
           className={filter === "Today" ? "active" : ""}
           onClick={() => setFilter("Today")}
         >
-          Today
+          今天
         </button>
         <button className="add-friend-link" onClick={onAdd}>
-          <SFPlusCircleFill size="sm" /> Add Friend
+          <SFPlusCircleFill size="sm" /> 添加同行人
         </button>
       </div>
       {!visible.length ? (
         <div className="empty-state">
           <strong>
-            {filter === "Today" ? "No Flights Today" : "Add Friends’ Flights"}
+            {filter === "Today" ? "今天没有行程" : "添加同行人的行程"}
           </strong>
           <span>
             {filter === "Today"
-              ? "All quiet for the next 24 hours"
-              : "Add a flighty friend to see their flights automatically"}
+              ? "接下来 24 小时很安静"
+              : "输入邀请码后，就能自动看到对方共享的行程"}
           </span>
         </div>
       ) : (
@@ -659,11 +730,18 @@ function FriendsPanel({
                   {friend.flight.to}
                 </small>
                 <span>
-                  {friend.flight.status} · {friend.flight.departure}
+                  {friend.flight.status === "On Time"
+                    ? "准点"
+                    : friend.flight.status === "Delayed"
+                      ? "延误"
+                      : friend.flight.status === "Landed"
+                        ? "已抵达"
+                        : "已计划"}{" "}
+                  · {friend.flight.departure}
                 </span>
               </div>
               <button
-                aria-label={`Remove ${friend.name}`}
+                aria-label={`移除 ${friend.name}`}
                 onClick={() => onRemove(friend.id)}
               >
                 <SFTrash size="sm" />
@@ -676,7 +754,7 @@ function FriendsPanel({
   );
 }
 
-function PassportPanel({
+export function PassportPanel({
   flights,
   stats,
   onStats,
@@ -1519,30 +1597,30 @@ function AddFriendSheet({
       className="full-sheet compact-sheet"
       role="dialog"
       aria-modal="true"
-      aria-label="Add Friend"
+      aria-label="添加同行人"
     >
       <SheetHeader
-        title="Add Friend"
-        subtitle="Enter a Flighty invite code to automatically share flights."
+        title="添加同行人"
+        subtitle="输入邀请码，即可自动共享彼此的行程。"
         onClose={onClose}
       />
       <div className="add-friend-hero">
         <SFPersonBadgePlus size={74} />
-        <h3>Fly together, automatically</h3>
-        <p>Your friend remains in control and can stop sharing at any time.</p>
+        <h3>同行信息，自动更新</h3>
+        <p>对方始终掌控自己的信息，也可以随时停止共享。</p>
       </div>
       <input
         className="friend-code-input"
         value={code}
         onChange={(event) => setCode(event.target.value.toUpperCase())}
-        placeholder="Invite code, e.g. JENNY48"
+        placeholder="邀请码，例如 JENNY48"
       />
       <button
         className="blue-button"
         disabled={code.trim().length < 3}
         onClick={onAdd}
       >
-        Add Friend
+        添加同行人
       </button>
     </section>
   );
@@ -1620,11 +1698,7 @@ function FlightStatsSheet({
   onClose: () => void;
 }) {
   return (
-    <section
-      className="stats-sheet"
-      role="dialog"
-      aria-label="Flight Stats"
-    >
+    <section className="stats-sheet" role="dialog" aria-label="Flight Stats">
       <StatsHeader title="Flight Stats" onClose={onClose} />
       <span className="time-pill">ALL-TIME</span>
       <div className="blueprint-hero">
@@ -1806,11 +1880,11 @@ function SheetHeader({
       </div>
       <span>
         {onShare && (
-          <button aria-label="Share" onClick={onShare}>
+          <button aria-label="分享" onClick={onShare}>
             <SFSquareAndArrowUp size="md" />
           </button>
         )}
-        <button aria-label="Close" onClick={onClose}>
+        <button aria-label="关闭" onClick={onClose}>
           <SFXmark size="md" />
         </button>
       </span>

@@ -2,24 +2,40 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://manyou-travel-ui-demo.zvcdg28tfj.chatgpt.site"),
-  title: "flighty Everything — Your flights, beautifully tracked",
-  description: "Track flights, airports, friends, weather and personal aviation stats on a live globe.",
+  metadataBase: new URL(
+    "https://manyou-travel-ui-demo.zvcdg28tfj.chatgpt.site",
+  ),
+  title: "flighty Everything — 飞机、火车、汽车与轮船旅行规划",
+  description:
+    "在网页与 iOS 上统一规划飞机、火车、汽车和轮船行程，并通过实时地图查看完整路线。",
   openGraph: {
     title: "flighty Everything",
-    description: "Flights, airports, weather and your aviation passport on one live globe.",
+    description: "飞机、火车、汽车与轮船，一张地图规划全部旅程。",
     type: "website",
-    locale: "en_US",
-    images: [{ url: "/og.png", width: 1672, height: 941, alt: "flighty Everything live flight globe" }],
+    locale: "zh_CN",
+    images: [
+      {
+        url: "/og.png",
+        width: 1672,
+        height: 941,
+        alt: "flighty Everything 多交通旅行地图",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "flighty Everything",
-    description: "Flights, airports, weather and your aviation passport on one live globe.",
+    description: "飞机、火车、汽车与轮船，一张地图规划全部旅程。",
     images: ["/og.png"],
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+export default function RootLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
+  return (
+    <html lang="zh-Hans">
+      <body>{children}</body>
+    </html>
+  );
 }
