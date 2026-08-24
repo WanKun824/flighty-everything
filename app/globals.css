@@ -33,7 +33,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .map-tools { position: absolute; z-index: 12; top: 77px; right: 18px; padding: 2px; display: grid; border: 1px solid rgba(255,255,255,.13); border-radius: 23px; background: rgba(43,43,48,.82); backdrop-filter: blur(24px) saturate(1.3); box-shadow: 0 5px 18px rgba(0,0,0,.26); }
 .map-tools button { width: 44px; height: 51px; padding: 0; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; }
 .map-tools button + button { border-top: 1px solid rgba(255,255,255,.12); }
-.flight-panel { position: absolute; z-index: 8; left: 8px; right: 8px; bottom: 8px; height: 53.5%; min-height: 360px; padding: 18px 16px 16px; border-radius: 29px; background: var(--panel); box-shadow: 0 -16px 42px rgba(0,0,0,.12), inset 0 1px rgba(255,255,255,.025); }
+.flight-panel { position: absolute; z-index: 8; left: 8px; right: 8px; bottom: 8px; height: var(--sheet-height,53.5%); min-height: 205px; padding: 18px 16px 16px; border: 1px solid rgba(255,255,255,.055); border-radius: 29px; background: rgba(23,23,28,.94); box-shadow: 0 -16px 42px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.045); -webkit-backdrop-filter: blur(40px) saturate(1.35); backdrop-filter: blur(40px) saturate(1.35); transition: height .48s cubic-bezier(.22,.8,.22,1), border-radius .3s ease; will-change: height; }
+.flight-panel.has-sheet-handle { padding-top: 27px; }
+.flight-panel.is-dragging, .mobile-journey-detail.is-dragging { transition: none !important; }
+.sheet-drag-handle { position: absolute; z-index: 12; top: 2px; left: 50%; width: 72px; height: 24px; padding: 0; border: 0; border-radius: 14px; transform: translateX(-50%); background: transparent; display: grid; place-items: center; cursor: ns-resize; touch-action: none; }
+.sheet-drag-handle span { width: 37px; height: 5px; border-radius: 99px; background: rgba(255,255,255,.31); box-shadow: 0 1px rgba(0,0,0,.16); transition: width .2s ease, background .2s ease; }
+.sheet-drag-handle:active span, .is-dragging > .sheet-drag-handle span { width: 45px; background: rgba(255,255,255,.58); }
 .panel-titlebar { display: flex; align-items: center; justify-content: space-between; }
 .panel-titlebar h1 { margin: 0; font-size: clamp(31px, 8.6vw, 41px); line-height: 1; letter-spacing: -.045em; font-weight: 720; }
 .panel-titlebar > div { display: flex; gap: 8px; }
@@ -59,7 +64,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 }
 
 @media (max-height: 720px) {
-  .flight-panel { height: 56%; }
+  .flight-panel { height: var(--sheet-height,56%); }
   .ios-status { height: 62px; padding-top: 14px; }
   .map-tools { top: 64px; }
 }
@@ -70,6 +75,21 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .map-tools button.active { color: var(--blue); background: rgba(10,132,255,.13); }
 .map-tools button:first-child { border-radius: 20px 20px 0 0; }
 .map-tools button:last-child { border-radius: 0 0 20px 20px; }
+.map-layer-switcher { position: absolute; z-index: 13; top: 78px; left: 18px; padding: 3px; border: 1px solid rgba(255,255,255,.13); border-radius: 15px; background: rgba(31,31,37,.82); box-shadow: 0 8px 24px rgba(0,0,0,.28), inset 0 1px rgba(255,255,255,.06); display: flex; gap: 2px; -webkit-backdrop-filter: blur(26px) saturate(1.35); backdrop-filter: blur(26px) saturate(1.35); }
+.map-layer-switcher button { min-width: 42px; height: 31px; padding: 0 8px; border: 0; border-radius: 11px; color: rgba(255,255,255,.57); background: transparent; font-size: 9px; font-weight: 680; cursor: pointer; }
+.map-layer-switcher button.active { color: #fff; background: rgba(10,132,255,.88); box-shadow: 0 5px 14px rgba(10,132,255,.25), inset 0 1px rgba(255,255,255,.18); }
+.map-layer-switcher button:nth-child(3).active { background: linear-gradient(135deg,#ff9f0a,#ff453a); box-shadow: 0 5px 14px rgba(255,69,58,.25); }
+.journey-vehicle-marker { width: 32px; height: 32px; padding: 0; border: 1px solid rgba(255,255,255,.72); border-radius: 11px; color: #fff; background: rgba(17,18,23,.88); box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 0 3px color-mix(in srgb,currentColor 18%,transparent); display: grid; place-items: center; cursor: pointer; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: width .2s ease, height .2s ease, filter .2s ease; }
+.journey-vehicle-marker.flight { color: #0a84ff; }.journey-vehicle-marker.train { color: #bf5af2; }.journey-vehicle-marker.car { color: #ff453a; }.journey-vehicle-marker.ferry { color: #32ade6; }
+.journey-vehicle-marker.selected { width: 38px; height: 38px; filter: drop-shadow(0 0 9px currentColor); }
+.journey-vehicle-glyph { position: relative; width: 20px; height: 20px; display: block; color: currentColor; }
+.journey-vehicle-marker.flight .journey-vehicle-glyph::before { content: "✈︎"; position: absolute; inset: -2px; color: currentColor; font-size: 22px; line-height: 22px; text-align: center; }
+.journey-vehicle-marker.train .journey-vehicle-glyph::before { content: ""; position: absolute; left: 3px; top: 1px; width: 14px; height: 15px; border: 2px solid currentColor; border-radius: 4px 4px 3px 3px; background: linear-gradient(90deg,transparent 44%,currentColor 45% 55%,transparent 56%) 2px 3px/8px 5px no-repeat; }
+.journey-vehicle-marker.train .journey-vehicle-glyph::after { content: ""; position: absolute; left: 4px; bottom: 0; width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 8px 0 currentColor; }
+.journey-vehicle-marker.car .journey-vehicle-glyph::before { content: ""; position: absolute; left: 1px; top: 8px; width: 18px; height: 8px; border: 2px solid currentColor; border-radius: 5px 5px 3px 3px; background: linear-gradient(135deg,transparent 19%,currentColor 20% 26%,transparent 27% 70%,currentColor 71% 77%,transparent 78%); }
+.journey-vehicle-marker.car .journey-vehicle-glyph::after { content: ""; position: absolute; left: 4px; bottom: 1px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 8px 0 currentColor; }
+.journey-vehicle-marker.ferry .journey-vehicle-glyph::before { content: ""; position: absolute; left: 4px; top: 3px; width: 12px; height: 9px; border: 2px solid currentColor; border-bottom: 0; border-radius: 3px 3px 0 0; box-shadow: 0 4px 0 -1px currentColor; }
+.journey-vehicle-marker.ferry .journey-vehicle-glyph::after { content: ""; position: absolute; left: 1px; bottom: 1px; width: 18px; height: 7px; border-bottom: 3px solid currentColor; border-radius: 0 0 50% 50%; transform: skewX(-18deg); }
 .avatar-letter { border: 0; color: #fff; font-size: 20px; font-weight: 500; }
 .panel-scroll { position: absolute; left: 16px; right: 16px; top: 80px; bottom: 86px; overflow-y: auto; scrollbar-width: none; }
 .panel-scroll::-webkit-scrollbar, .passport-scroll::-webkit-scrollbar, .map-sheet-scroll::-webkit-scrollbar, .add-flight-scroll::-webkit-scrollbar, .stats-sheet::-webkit-scrollbar { display: none; }
@@ -509,11 +529,24 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .journey-mode-stats > div > span { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; }.journey-mode-stats > div strong { font-size: 10px; }.journey-mode-stats > div i { height: 4px; overflow: hidden; border-radius: 3px; background: #36363d; }.journey-mode-stats > div i b { height: 100%; min-width: 4px; border-radius: inherit; display: block; }.journey-mode-stats > div em { color: #85858e; font-size: 9px; font-style: normal; text-align: right; }
 .journey-time-card p { margin: 7px 0 0; color: #777780; font-size: 9px; line-height: 1.45; }
 
-.map-sheet.mobile-journey-detail { left: 0; right: 0; top: 0; bottom: 0; width: auto; height: auto; min-height: 100%; padding: 42px 16px 30px; border-radius: 0; box-sizing: border-box; overflow-y: auto; box-shadow: none; }
+.map-sheet.mobile-journey-detail { inset: auto 0 0; width: auto; height: var(--sheet-height,84%); min-height: 0; padding: 42px 16px max(30px,env(safe-area-inset-bottom)); border: 1px solid rgba(255,255,255,.075); border-bottom: 0; border-radius: 30px 30px 0 0; box-sizing: border-box; overflow-y: auto; background: linear-gradient(rgba(17,18,23,.92),rgba(23,23,28,.965) 48%); box-shadow: 0 -24px 70px rgba(0,0,0,.48), inset 0 1px rgba(255,255,255,.05); -webkit-backdrop-filter: blur(42px) saturate(1.42); backdrop-filter: blur(42px) saturate(1.42); transition: height .5s cubic-bezier(.22,.8,.22,1), border-radius .3s ease; will-change: height; overscroll-behavior: contain; }
+.mobile-journey-detail > .detail-sheet-handle { position: sticky; z-index: 9; top: -40px; margin: -42px auto 18px; transform: none; }
+.mobile-journey-detail > .mobile-detail-close { position: sticky; z-index: 10; top: 6px; float: right; margin-top: -17px; margin-right: 1px; }
+.mobile-journey-detail { scrollbar-width: none; }
+.mobile-journey-detail::-webkit-scrollbar { display: none; }
 .mobile-detail-route { grid-template-columns: 1fr 12px 28px 12px 1fr; }
 .mobile-detail-route > svg { color: var(--mode-color,#0a84ff); justify-self: center; }
 .mobile-detail-route > span b { margin-top: 4px; color: #8b8b94; font-size: 10px; }
 .mobile-delete-journey { display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+@media (min-width: 900px) {
+  .desktop-map-card .map-layer-switcher { top: 18px; right: 112px; left: auto; }
+  .desktop-map-card .journey-vehicle-marker { transform: scale(.92); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flight-panel, .mobile-journey-detail, .sheet-drag-handle span, .journey-vehicle-marker { transition-duration: .01ms !important; }
+}
 
 /* Functional desktop calendar, companion, statistics and trip settings views. */
 .desktop-topbar { position: relative; }

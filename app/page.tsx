@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  type CSSProperties,
   type ChangeEvent,
   type ElementType,
 } from "react";
@@ -62,6 +63,7 @@ import {
 } from "./flightyData";
 import { segmentFromFlight } from "./journeyData";
 import { useJourneyStore } from "./journeyStorage";
+import { useSheetDetents } from "./useSheetDetents";
 import {
   useFlightyStore,
   type Profile,
@@ -145,6 +147,10 @@ function MobileFlighty() {
   const [draftName, setDraftName] = useState("Vincent");
   const [avatarColor, setAvatarColor] = useState("#ec6f9a");
   const [randomIndex, setRandomIndex] = useState(0);
+  const mainSheet = useSheetDetents({
+    detents: [0.31, 0.535, 0.82],
+    initial: 0.535,
+  });
   const calendarRef = useRef<HTMLInputElement>(null);
   const stats = useMemo(() => statsForFlights(state.flights), [state.flights]);
   const selectedJourney =
@@ -292,8 +298,24 @@ function MobileFlighty() {
           )}
 
         <section
-          className={`flight-panel ${activeTab === "passport" ? "passport-panel" : ""}`}
+          className={`flight-panel ${activeTab === "passport" ? "passport-panel" : "has-sheet-handle"} ${mainSheet.dragging ? "is-dragging" : ""}`}
+          style={
+            activeTab === "passport"
+              ? undefined
+              : ({
+                  "--sheet-height": `${mainSheet.fraction * 100}%`,
+                } as CSSProperties)
+          }
         >
+          {activeTab !== "passport" && (
+            <button
+              className="sheet-drag-handle"
+              aria-label="拖动调整行程面板高度"
+              {...mainSheet.handleProps}
+            >
+              <span />
+            </button>
+          )}
           <header className="panel-titlebar">
             <h1>{title}</h1>
             <div>

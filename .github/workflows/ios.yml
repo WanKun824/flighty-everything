@@ -1,4 +1,4 @@
-name: Build iOS IPA
+name: Package iOS Client
 
 on:
   workflow_dispatch:
@@ -12,6 +12,8 @@ on:
           - release-testing
           - app-store-connect
           - debugging
+  push:
+    tags: ["v*"]
 
 permissions:
   contents: read
@@ -19,16 +21,19 @@ permissions:
 jobs:
   ios:
     runs-on: macos-26
-    timeout-minutes: 35
+    timeout-minutes: 40
     env:
       P12_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
       P12_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
       PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
       KEYCHAIN_PASSWORD: ${{ secrets.IOS_KEYCHAIN_PASSWORD }}
       TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+      EXPORT_METHOD: ${{ inputs.export_method || 'release-testing' }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v6
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -36,79 +41,114 @@ jobs:
         run: npm ci
       - name: Sync Capacitor iOS project
         run: npx cap sync ios
-      - name: Build unsigned device IPA
+
+      - name: Build iOS Simulator app
         run: |
           xcodebuild \
             -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build/ios-device \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath build/ios-simulator \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            build
-          mkdir -p build/unsigned/Payload
-          cp -R build/ios-device/Build/Products/Release-iphoneos/App.app build/unsigned/Payload/
-          ditto -c -k --sequesterRsrc --keepParent build/unsigned/Payload build/manyou-unsigned.ipa
-      - name: Upload unsigned IPA
+            clean build
+          APP_PATH="$(find build/ios-simulator/Build/Products/Release-iphonesimulator -maxdepth 1 -name '*.app' -print -quit)"
+          test -n "$APP_PATH"
+          mkdir -p build/packages
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/packages/flighty-everything-ios-simulator.app.zip
+      - name: Upload iOS Simulator package
         uses: actions/upload-artifact@v7
         with:
-          path: build/manyou-unsigned.ipa
+          name: flighty-everything-ios-simulator
+          path: build/packages/flighty-everything-ios-simulator.app.zip
           archive: false
-          retention-days: 14
-      - name: Install Apple signing files
-        if: env.P12_BASE64 != '' && env.PROFILE_BASE64 != '' && env.TEAM_ID != ''
+          retention-days: 30
+
+      - name: Check signing configuration
+        id: signing
+        shell: bash
         run: |
-          CERTIFICATE_PATH="$RUNNER_TEMP/build_certificate.p12"
-          PROFILE_PATH="$RUNNER_TEMP/build_profile.mobileprovision"
-          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          if [[ -n "$P12_BASE64" && -n "$PROFILE_BASE64" && -n "$TEAM_ID" ]]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Apple signing secrets are not configured; the installable IPA step will be skipped."
+          fi
+      - name: Install Apple signing files
+        if: steps.signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          CERTIFICATE_PATH="$RUNNER_TEMP/flighty-certificate.p12"
+          PROFILE_PATH="$RUNNER_TEMP/flighty-profile.mobileprovision"
+          KEYCHAIN_PATH="$RUNNER_TEMP/flighty-signing.keychain-db"
+          TEMP_KEYCHAIN_PASSWORD="${KEYCHAIN_PASSWORD:-$(uuidgen)}"
           echo -n "$P12_BASE64" | base64 --decode -o "$CERTIFICATE_PATH"
           echo -n "$PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
-          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security create-keychain -p "$TEMP_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
-          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$TEMP_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security import "$CERTIFICATE_PATH" -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
           security list-keychain -d user -s "$KEYCHAIN_PATH"
-          security set-key-partition-list -S apple-tool:,apple: -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/build.mobileprovision"
+          security set-key-partition-list -S apple-tool:,apple: -k "$TEMP_KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security cms -D -i "$PROFILE_PATH" > "$RUNNER_TEMP/profile.plist"
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$RUNNER_TEMP/profile.plist")
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$RUNNER_TEMP/profile.plist")
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
           echo "PROFILE_NAME=$PROFILE_NAME" >> "$GITHUB_ENV"
-      - name: Archive signed app
-        if: env.P12_BASE64 != '' && env.PROFILE_BASE64 != '' && env.TEAM_ID != ''
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
+
+      - name: Archive signed iOS app
+        if: steps.signing.outputs.enabled == 'true'
         run: |
           xcodebuild \
             -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
             -destination 'generic/platform=iOS' \
-            -archivePath build/Manyou.xcarchive \
+            -archivePath build/FlightyEverything.xcarchive \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CODE_SIGN_STYLE=Manual \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             clean archive
       - name: Export signed IPA
-        if: env.P12_BASE64 != '' && env.PROFILE_BASE64 != '' && env.TEAM_ID != ''
+        if: steps.signing.outputs.enabled == 'true'
         run: |
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
-            <key>method</key><string>${{ inputs.export_method }}</string>
+            <key>method</key><string>$EXPORT_METHOD</string>
             <key>signingStyle</key><string>manual</string>
             <key>teamID</key><string>$TEAM_ID</string>
             <key>provisioningProfiles</key><dict>
-              <key>com.wankun824.manyou</key><string>$PROFILE_NAME</string>
+              <key>com.wankun824.flightyeverything</key><string>$PROFILE_NAME</string>
             </dict>
+            <key>stripSwiftSymbols</key><true/>
           </dict></plist>
           PLIST
-          xcodebuild -exportArchive -archivePath build/Manyou.xcarchive -exportPath build/signed -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
-      - name: Upload signed IPA
-        if: env.P12_BASE64 != '' && env.PROFILE_BASE64 != '' && env.TEAM_ID != ''
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/FlightyEverything.xcarchive \
+            -exportPath build/signed \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+      - name: Upload signed IPA and symbols
+        if: steps.signing.outputs.enabled == 'true'
         uses: actions/upload-artifact@v7
         with:
-          path: build/signed/*.ipa
-          archive: false
-          retention-days: 14
+          name: flighty-everything-ios-signed
+          path: |
+            build/signed/*.ipa
+            build/FlightyEverything.xcarchive/dSYMs
+          retention-days: 30
+      - name: Clean up signing files
+        if: always() && steps.signing.outputs.enabled == 'true'
+        shell: bash
+        run: |
+          security delete-keychain "$KEYCHAIN_PATH" || true
+          rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"

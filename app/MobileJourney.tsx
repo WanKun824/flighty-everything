@@ -15,6 +15,7 @@ import {
   type JourneySegment,
 } from "./journeyData";
 import Vehicle3D from "./Vehicle3D";
+import { useSheetDetents } from "./useSheetDetents";
 
 export function MobileJourneysPanel({
   tripName,
@@ -190,13 +191,31 @@ export function MobileJourneyDetail({
   onDelete: () => void;
 }) {
   const meta = MODE_META[segment.mode];
+  const detailSheet = useSheetDetents({
+    detents: [0.32, 0.58, 0.84],
+    initial: 0.84,
+    dismissible: true,
+    onDismiss: onClose,
+  });
   return (
     <section
-      className="map-sheet mobile-journey-detail"
+      className={`map-sheet mobile-journey-detail ${detailSheet.dragging ? "is-dragging" : ""}`}
       role="dialog"
       aria-label={`${segment.title}详情`}
-      style={{ "--mode-color": meta.color } as CSSProperties}
+      style={
+        {
+          "--mode-color": meta.color,
+          "--sheet-height": `${detailSheet.fraction * 100}%`,
+        } as CSSProperties
+      }
     >
+      <button
+        className="sheet-drag-handle detail-sheet-handle"
+        aria-label="拖动调整详情面板高度，继续下拉可关闭"
+        {...detailSheet.handleProps}
+      >
+        <span />
+      </button>
       <button
         className="mobile-detail-close"
         aria-label="关闭"

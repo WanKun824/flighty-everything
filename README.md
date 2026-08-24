@@ -8,8 +8,9 @@
 - Unified airplane, train, car and ferry data model with persistent add, complete and delete flows
 - iOS-style mobile journey timeline, multi-transport passport and interactive 3D vehicle details
 - Flight number/route search, calendar import, airports, favorites and Flighty-style friend invites
-- Interactive Mapbox globe with multi-color journey lines and RainViewer weather radar
+- Interactive Mapbox globe with animated multi-transport vehicles, satellite/street/Mapbox Traffic layers, and RainViewer weather radar
 - Apple SF Symbols throughout the interface
+- Three-detent, haptic mobile sheets with iOS material effects and reduced-motion support
 - Responsive web UI plus Capacitor iOS and Android shells
 
 ## Run locally
@@ -41,6 +42,24 @@ npm run ios:sync
 ```
 
 The Capacitor display name is `flighty Everything` on both platforms.
+
+## GitHub packages
+
+The Actions page exposes two downloadable build pipelines:
+
+- **Package Web Build** validates the app and uploads a deployable `flighty-everything-web-*.tar.gz` artifact.
+- **Package iOS Client** always uploads an iOS Simulator `.app.zip`. When Apple signing secrets are configured, it additionally archives and exports an installable signed IPA with Xcode's current `release-testing`, `app-store-connect`, or `debugging` export method.
+
+To enable signed IPA export, add these repository Actions secrets:
+
+| Secret | Value |
+| --- | --- |
+| `IOS_CERTIFICATE_BASE64` | Base64-encoded Apple distribution or development `.p12` |
+| `IOS_CERTIFICATE_PASSWORD` | Password for the `.p12` |
+| `IOS_PROVISIONING_PROFILE_BASE64` | Base64-encoded provisioning profile for `com.wankun824.flightyeverything` |
+| `IOS_TEAM_ID` | Apple Developer Team ID |
+| `IOS_KEYCHAIN_PASSWORD` | Optional temporary CI keychain password |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Optional restricted public Mapbox token |
 
 ## Main files
 

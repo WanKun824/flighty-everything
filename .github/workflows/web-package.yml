@@ -1,0 +1,49 @@
+name: Package Web Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate and build
+        run: npm test
+        env:
+          NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+      - name: Assemble deployable web package
+        shell: bash
+        run: |
+          mkdir -p build/packages
+          tar -czf "build/packages/flighty-everything-web-${GITHUB_SHA::7}.tar.gz" \
+            dist \
+            native-shell \
+            public \
+            package.json \
+            package-lock.json \
+            wrangler.jsonc \
+            capacitor.config.ts \
+            README.md
+      - name: Upload web package
+        uses: actions/upload-artifact@v7
+        with:
+          name: flighty-everything-web
+          path: build/packages/flighty-everything-web-*.tar.gz
+          archive: false
+          retention-days: 30
