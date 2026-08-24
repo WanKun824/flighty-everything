@@ -37,7 +37,6 @@ jobs:
             public \
             package.json \
             package-lock.json \
-            wrangler.jsonc \
             capacitor.config.ts \
             README.md
       - name: Upload web package
