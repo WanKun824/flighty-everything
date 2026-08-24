@@ -13,21 +13,22 @@ async function render() {
   );
 }
 
-test("server-renders the ORBIT journey shell and social metadata", async () => {
+test("server-renders the ORBIT animation-first shell and social metadata", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /<title>ORBIT｜让地球播放你的旅程<\/title>/);
+  assert.match(html, /<title>ORBIT｜让整个旅程，在地球上发生<\/title>/);
   assert.match(html, /property="og:image"/);
   assert.match(html, /og\.png/);
   assert.match(html, /class="orbit-app\b/);
   assert.match(html, />ORBIT</);
-  assert.match(html, /> 行程</);
-  assert.match(html, /进入沉浸模式/);
+  assert.match(html, />地球行程</);
+  assert.match(html, /日本行程动画预览/);
+  assert.match(html, /TRAVELERS ON ORBIT/);
 });
 
-test("keeps globe, real-place search, community and 3D vehicles wired", async () => {
+test("keeps globe, real-place search, community, account and 3D vehicles wired", async () => {
   const [legacy, experience, vehicle, css, workflow, handoff] = await Promise.all([
     readFile(new URL("../app/LegacyApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/StreamExperience.tsx", import.meta.url), "utf8"),
@@ -40,11 +41,13 @@ test("keeps globe, real-place search, community and 3D vehicles wired", async ()
   assert.match(legacy, /searchbox\/v1\/suggest/);
   assert.match(legacy, /searchbox\/v1\/retrieve/);
   assert.match(legacy, /NEXT_PUBLIC_MAPBOX_TOKEN/);
-  assert.match(legacy, /进入沉浸模式/);
-  assert.match(experience, /旅程正在发生/);
-  assert.match(experience, /submitComment/);
+  assert.match(legacy, /className="immersive-button"/);
+  assert.match(legacy, /is-immersive/);
+  assert.match(experience, /JOURNEYS IN MOTION/);
+  assert.match(experience, /addComment/);
   assert.match(experience, /submitAccount/);
   assert.match(experience, /createJourney/);
+  assert.match(experience, /localStorage\.setItem\("orbit-journeys"/);
   assert.match(vehicle, /GLTFLoader/);
   assert.match(vehicle, /DRACOLoader/);
   assert.match(vehicle, /\/models\/legacy-plane\.glb/);

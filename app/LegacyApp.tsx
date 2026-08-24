@@ -943,6 +943,7 @@ export function ExploreScreen() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [follow, setFollow] = useState(true);
+  const [immersive, setImmersive] = useState(false);
   const [pickingOnMap, setPickingOnMap] = useState(false);
   const [mapDraft, setMapDraft] = useState<{ coordinate: [number, number]; name: string; address: string; country?: string } | null>(null);
   const [clockMode, setClockMode] = useState<JourneyClockMode>("preview");
@@ -959,7 +960,6 @@ export function ExploreScreen() {
   // 面板的显隐。位置和尺寸由 JourneyPanel 自己管，只有「在不在」需要这一层知道 ——
   // 键盘的 J 和相机让位都要读它。
   const [panelHidden, setPanelHidden] = useState(false);
-  const [immersive, setImmersive] = useState(false);
   const [transport, setTransport] = useState<Transport>("flight");
   // 调试面板与行程库的局部状态。
   const [debugOpen, setDebugOpen] = useState(false);
@@ -1328,6 +1328,7 @@ export function ExploreScreen() {
         onZoomRate={setZoomFactor}
       />
       <header className="globe-bar frosted-panel">
+        <button type="button" className="map-immersive-button" aria-label="Enter immersive journey view" title="Immersive view (I)" onClick={() => { setImmersive(true); setPanelHidden(true); }}><span>Immersive</span></button>
         {/* 全站只有这一个搜索框，添加面板挂在它下面。聚焦就展开面板，
             打过的字直接就是 query —— 不再有第二个输入框，也不用把字倒过去。 */}
         <div className="globe-search"><SFMagnifyingglass size="sm" /><input value={query} placeholder="搜索机场、车站、港口或景点" aria-label="搜索地图" onFocus={() => setAdding(true)} onChange={(event) => { setQuery(event.target.value); setAdding(true); }} />{searching && <i />}</div>
