@@ -42,21 +42,20 @@ jobs:
       - name: Sync Capacitor iOS project
         run: npx cap sync ios
 
-      - name: Build iOS Simulator app
+      - name: Archive iOS Simulator app
         run: |
           xcodebuild \
             -project ios/App/App.xcodeproj \
             -scheme App \
             -configuration Release \
-            -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath build/ios-simulator \
+            -archivePath build/FlightyEverything-Simulator.xcarchive \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
-            clean build
-          APP_PATH="$(find build/ios-simulator/Build/Products/Release-iphonesimulator -maxdepth 1 -name '*.app' -print -quit)"
-          test -n "$APP_PATH"
+            clean archive
+          APP_PATH="build/FlightyEverything-Simulator.xcarchive/Products/Applications/App.app"
+          test -f "$APP_PATH/App"
           mkdir -p build/packages
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/packages/flighty-everything-ios-simulator.app.zip
       - name: Upload iOS Simulator package

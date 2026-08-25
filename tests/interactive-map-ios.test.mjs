@@ -51,6 +51,7 @@ test("packages a simulator app and only exports a correctly signed IPA", async (
   ]);
 
   assert.match(workflow, /generic\/platform=iOS Simulator/);
+  assert.match(workflow, /FlightyEverything-Simulator\.xcarchive/);
   assert.match(workflow, /flighty-everything-ios-simulator\.app\.zip/);
   assert.match(workflow, /com\.wankun824\.flightyeverything/);
   assert.match(workflow, /release-testing/);
