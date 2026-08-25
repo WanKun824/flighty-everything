@@ -19,6 +19,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 
 .flighty-page { width: 100vw; height: 100dvh; display: grid; place-items: center; overflow: hidden; color: #fff; background: radial-gradient(circle at 50% 12%, #1a2134, #050507 48%, #000); }
 .flighty-device { position: relative; width: min(100vw, 470px); height: min(100dvh, 960px); min-height: 660px; overflow: hidden; isolation: isolate; background: #000; box-shadow: 0 30px 110px rgba(0,0,0,.7); }
+.flighty-boot-screen { position: absolute; inset: 0; display: grid; place-content: center; gap: 10px; color: #f7f8fb; text-align: center; background: radial-gradient(circle at 50% 38%,#142d4d,#05070a 58%); }
+.flighty-boot-screen strong { font-size: 25px; letter-spacing: -.045em; }.flighty-boot-screen strong em { color: #8d94a0; font-size: 13px; font-style: normal; }.flighty-boot-screen span { color: #8d94a0; font-size: 12px; }
 .flight-globe { position: absolute; inset: 0; background: radial-gradient(circle at 46% 34%, #162d54 0 17%, #07101f 36%, #000 62%); }
 .flight-globe-map { position: absolute; inset: 0; opacity: 0; transition: opacity .7s ease; }
 .flight-globe.loaded .flight-globe-map { opacity: 1; }

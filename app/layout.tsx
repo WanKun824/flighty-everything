@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "./journey-theme.css";
 
-const appearanceScript = `(()=>{try{const k="flighty-everything:appearance:v1";const v=localStorage.getItem(k);const m=v==="light"||v==="dark"||v==="system"?v:"system";const r=m==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):m;document.documentElement.dataset.appearance=m;document.documentElement.dataset.theme=r;document.documentElement.style.colorScheme=r}catch{document.documentElement.dataset.appearance="system";document.documentElement.dataset.theme="dark"}})()`;
-
 export const metadata: Metadata = {
   metadataBase: new URL(
     "https://manyou-travel-ui-demo.zvcdg28tfj.chatgpt.site",
@@ -37,10 +35,9 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-Hans" suppressHydrationWarning>
+    <html lang="zh-Hans" data-appearance="system" data-theme="dark" suppressHydrationWarning>
       <head>
         <meta name="theme-color" content="#05070a" />
-        <script dangerouslySetInnerHTML={{ __html: appearanceScript }} />
       </head>
       <body>{children}</body>
     </html>

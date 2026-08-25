@@ -45,7 +45,7 @@ test("keeps the live globe, radar, Apple icons and multi-transport persistence w
     css,
     workflow,
   ] = await Promise.all([
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/DesktopJourney.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/FlightGlobe.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/flightyStorage.ts", import.meta.url), "utf8"),
@@ -79,9 +79,10 @@ test("keeps the live globe, radar, Apple icons and multi-transport persistence w
 });
 
 test("every product class used in active JSX has a CSS rule", async () => {
-  const [page, desktop, mobile, composer, globe, vehicle, css] =
+  const [page, flightyApp, desktop, mobile, composer, globe, vehicle, css] =
     await Promise.all([
       readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+      readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/DesktopJourney.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/MobileJourney.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/JourneyComposer.tsx", import.meta.url), "utf8"),
@@ -91,7 +92,7 @@ test("every product class used in active JSX has a CSS rule", async () => {
     ]);
 
   const used = new Set();
-  for (const source of [page, desktop, mobile, composer, globe, vehicle]) {
+  for (const source of [page, flightyApp, desktop, mobile, composer, globe, vehicle]) {
     let clean = source;
     for (let pass = 0; pass < 3; pass += 1)
       clean = clean.replace(/\$\{[^{}]*\}/g, " ");

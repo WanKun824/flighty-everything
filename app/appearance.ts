@@ -33,10 +33,10 @@ function applyMode(mode: AppearanceMode) {
 }
 
 function modeSnapshot(): AppearanceMode {
-  const value = document.documentElement.dataset.appearance;
-  if (validMode(value)) return value;
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  return validMode(stored) ? stored : "system";
+  if (validMode(stored)) return stored;
+  const value = document.documentElement.dataset.appearance;
+  return validMode(value) ? value : "system";
 }
 
 function subscribeMode(onChange: () => void) {

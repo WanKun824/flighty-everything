@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
-import Link from "next/link";
 import SFArrowLeft from "sf-symbols-lib/monochrome/SFArrowLeft";
 import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
 import SFMoonStarsFill from "sf-symbols-lib/monochrome/SFMoonStarsFill";
@@ -48,7 +47,7 @@ export default function CommunityJourneyPage({ journey }: { journey: CommunityJo
         <FlightGlobe airportsVisible={false} selectedAirport={null} weatherMode="none" resetToken={0} journeySegments={[journey]} selectedJourneySegmentId={journey.id} theme={appearance.resolved} onJourneySegmentSelect={() => undefined} onAirportSelect={() => undefined} onWeatherError={() => undefined} />
       </section>
       <header className="community-detail-toolbar liquid-glass-control">
-        <Link href="/community" aria-label="返回社区"><SFArrowLeft size="sm" /><span>社区</span></Link>
+        <a href="/community" aria-label="返回社区"><SFArrowLeft size="sm" /><span>社区</span></a>
         <strong>flighty <em>Everything</em></strong>
         <span>
           <button aria-label={`切换到${appearance.resolved === "dark" ? "浅色" : "深色"}模式`} onClick={appearance.cycle}>{appearance.resolved === "dark" ? <SFSunMaxFill size="sm" /> : <SFMoonStarsFill size="sm" />}</button>

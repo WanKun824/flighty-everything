@@ -23,9 +23,12 @@ test("uses the four exact 3D assets recovered from the supplied source archive",
 });
 
 test("community publishing is durable and exposes vehicle, service and stations on share pages", async () => {
-  const [home, communityRoute, experience, cardUi, detail, detailRoute, client, api, schema, helper, migration, hosting, globalCss] = await Promise.all([
+  const [homeRoute, home, communityRoute, communityShell, detailShell, experience, cardUi, detail, detailRoute, client, api, schema, helper, migration, hosting, globalCss] = await Promise.all([
     read("../app/page.tsx"),
+    read("../app/FlightyApp.tsx"),
     read("../app/community/page.tsx"),
+    read("../app/CommunityClientShell.tsx"),
+    read("../app/CommunityDetailClientShell.tsx"),
     read("../app/JourneyExperience27.tsx"),
     read("../app/JourneyCommunityUI.tsx"),
     read("../app/CommunityJourneyPage.tsx"),
@@ -40,7 +43,10 @@ test("community publishing is durable and exposes vehicle, service and stations 
   ]);
   assert.match(home, /href="\/community"/);
   assert.match(home, /aria-label="打开旅行社区"/);
-  assert.match(communityRoute, /JourneyExperience27/);
+  assert.match(homeRoute, /lazy\(\(\) => import\("\.\/FlightyApp"\)\)/);
+  assert.match(communityRoute, /CommunityClientShell/);
+  assert.match(communityShell, /lazy\(\(\) => import\("\.\/JourneyExperience27"\)\)/);
+  assert.match(detailShell, /lazy\(\(\) => import\("\.\/CommunityJourneyPage"\)\)/);
   assert.match(globalCss, /\.panel-titlebar \{ position: relative; z-index: 3/);
   assert.match(experience, /publishCommunityJourney/);
   assert.match(experience, /fetchCommunityJourneys/);

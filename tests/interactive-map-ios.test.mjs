@@ -30,7 +30,7 @@ test("wires real 3D vehicles and all three production map modes", async () => {
 
 test("keeps mobile sheets draggable, keyboard accessible and haptic", async () => {
   const [page, mobile, hook, haptics, css, packageJson] = await Promise.all([
-    read("../app/page.tsx"),
+    read("../app/FlightyApp.tsx"),
     read("../app/MobileJourney.tsx"),
     read("../app/useSheetDetents.ts"),
     read("../app/nativeHaptics.ts"),
@@ -51,7 +51,7 @@ test("keeps mobile sheets draggable, keyboard accessible and haptic", async () =
 
 test("persists light, dark and system appearance across the map and native shell", async () => {
   const [page, appearance, globe, css, layout] = await Promise.all([
-    read("../app/page.tsx"),
+    read("../app/FlightyApp.tsx"),
     read("../app/appearance.ts"),
     read("../app/FlightGlobe.tsx"),
     read("../app/globals.css"),

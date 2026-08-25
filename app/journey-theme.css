@@ -40,6 +40,8 @@ body { background: var(--j-bg); }
   color: var(--j-text);
   background: var(--j-bg);
 }
+.community-boot-screen { display:grid; place-content:center; gap:10px; text-align:center; background:radial-gradient(circle at 50% 38%,#142d4d,#05070a 58%); }
+.community-boot-screen strong { font-size:25px; letter-spacing:-.045em; }.community-boot-screen strong em { color:var(--j-muted); font-size:13px; font-style:normal; }.community-boot-screen span { color:var(--j-muted); font-size:12px; }
 
 .journey-map-canvas,
 .journey-map-canvas .flight-globe { position: absolute; inset: 0; }

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import CommunityJourneyPage from "../../CommunityJourneyPage";
+import CommunityDetailClientShell from "../../CommunityDetailClientShell";
 import { rowToCommunityJourney } from "../../communityData";
 import { MODE_META } from "../../journeyData";
 import { findCommunityJourneyRow } from "../../../db/communityQueries";
@@ -45,9 +44,9 @@ export default async function JourneyPage({ params }: PageProps) {
       <main className="community-not-found">
         <span>404</span><h1>没有找到这条社区行程</h1>
         <p>它可能已被移除，或者社区服务暂时不可用。</p>
-        <Link href="/community">返回 flighty Everything 社区</Link>
+        <a href="/community">返回 flighty Everything 社区</a>
       </main>
     );
   }
-  return <CommunityJourneyPage journey={journey} />;
+  return <CommunityDetailClientShell journey={journey} />;
 }

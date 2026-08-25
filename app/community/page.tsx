@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import JourneyExperience27 from "../JourneyExperience27";
+import CommunityClientShell from "../CommunityClientShell";
 
 export const metadata: Metadata = {
   title: "旅行社区 · flighty Everything",
@@ -7,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function CommunityPage() {
-  return <JourneyExperience27 />;
+  return <CommunityClientShell />;
 }
