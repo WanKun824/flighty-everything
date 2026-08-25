@@ -21,6 +21,9 @@ type Props = {
   journeySegments?: JourneySegment[];
   selectedJourneySegmentId?: string | null;
   onJourneySegmentSelect?: (id: string) => void;
+  vehicleScale?: number;
+  animationSpeed?: number;
+  motionEnabled?: boolean;
 };
 
 type RadarResponse = {
@@ -59,6 +62,9 @@ export default function FlightGlobe({
   journeySegments = [],
   selectedJourneySegmentId = null,
   onJourneySegmentSelect,
+  vehicleScale = 1,
+  animationSpeed = 1,
+  motionEnabled = true,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
@@ -206,6 +212,9 @@ export default function FlightGlobe({
       const element = document.createElement("button");
       element.type = "button";
       element.className = `journey-vehicle-marker ${segment.mode} ${segment.id === selectedJourneySegmentId ? "selected" : ""}`;
+      element.style.setProperty("--vehicle-size", `${32 * vehicleScale}px`);
+      element.style.setProperty("--vehicle-selected-size", `${38 * vehicleScale}px`);
+      element.style.setProperty("--vehicle-glyph-scale", String(vehicleScale));
       element.setAttribute(
         "aria-label",
         `${segment.title} · ${transportLabel(segment.mode)}正在路线中移动`,
@@ -243,8 +252,8 @@ export default function FlightGlobe({
     const animate = (now: number) => {
       for (const item of markers) {
         const base = item.segment.status === "complete" ? 1 : item.segment.progress;
-        const duration = animationDuration(item.segment.mode);
-        const moving = reduceMotion.matches
+        const duration = animationDuration(item.segment.mode) / Math.max(0.25, animationSpeed);
+        const moving = reduceMotion.matches || !motionEnabled
           ? base
           : item.segment.status === "complete"
             ? 1
@@ -261,7 +270,7 @@ export default function FlightGlobe({
       cancelAnimationFrame(frame);
       for (const item of markers) item.marker.remove();
     };
-  }, [journeySegments, selectedJourneySegmentId, loaded, styleRevision]);
+  }, [journeySegments, selectedJourneySegmentId, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled]);
 
   useEffect(() => {
     const map = mapRef.current;

@@ -22,9 +22,9 @@ test("wires animated vehicles and all three production map modes", async () => {
   assert.match(css, /\.map-layer-switcher/);
 });
 
-test("keeps mobile sheets draggable, keyboard accessible and haptic", async () => {
-  const [page, mobile, hook, haptics, css, packageJson] = await Promise.all([
-    read("../app/page.tsx"),
+test("keeps the immersive map and native sheets accessible and haptic", async () => {
+  const [experience, mobile, hook, haptics, css, packageJson] = await Promise.all([
+    read("../app/JourneyExperience.tsx"),
     read("../app/MobileJourney.tsx"),
     read("../app/useSheetDetents.ts"),
     read("../app/nativeHaptics.ts"),
@@ -32,7 +32,11 @@ test("keeps mobile sheets draggable, keyboard accessible and haptic", async () =
     read("../package.json"),
   ]);
 
-  assert.match(page, /\[0\.31, 0\.535, 0\.82\]/);
+  assert.match(experience, /requestFullscreen/);
+  assert.match(experience, /document\.exitFullscreen/);
+  assert.match(experience, /event\.key === "Escape"/);
+  assert.match(experience, /aria-label="进入沉浸模式"/);
+  assert.match(experience, /type="range"/);
   assert.match(mobile, /\[0\.32, 0\.58, 0\.84\]/);
   assert.match(hook, /setPointerCapture/);
   assert.match(hook, /ArrowDown/);

@@ -1,4 +1,27 @@
-// Intentionally empty by default.
-// Add Drizzle tables here when the site actually needs a database.
-// See examples/d1/db/schema.ts for an opt-in example.
-export {};
+import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+
+export const communityJourneys = sqliteTable("community_journeys", {
+  id: text("id").primaryKey(),
+  creatorName: text("creator_name").notNull(),
+  title: text("title").notNull(),
+  caption: text("caption").notNull(),
+  mode: text("mode", { enum: ["flight", "train", "car", "ferry"] }).notNull(),
+  service: text("service").notNull(),
+  originCode: text("origin_code").notNull(),
+  originName: text("origin_name").notNull(),
+  originCity: text("origin_city").notNull(),
+  originLongitude: integer("origin_longitude").notNull(),
+  originLatitude: integer("origin_latitude").notNull(),
+  destinationCode: text("destination_code").notNull(),
+  destinationName: text("destination_name").notNull(),
+  destinationCity: text("destination_city").notNull(),
+  destinationLongitude: integer("destination_longitude").notNull(),
+  destinationLatitude: integer("destination_latitude").notNull(),
+  date: text("date").notNull(),
+  departure: text("departure").notNull(),
+  arrival: text("arrival").notNull(),
+  durationMinutes: integer("duration_minutes").notNull(),
+  note: text("note").notNull(),
+  likes: integer("likes").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
+});
