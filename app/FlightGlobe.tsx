@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { AIRPORTS, airportByCode } from "./flightyData";
 import type { WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
+import Vehicle3D from "./Vehicle3D";
 
 const MAPBOX_TOKEN =
   process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
@@ -24,6 +26,7 @@ type Props = {
   vehicleScale?: number;
   animationSpeed?: number;
   motionEnabled?: boolean;
+  theme?: "light" | "dark";
 };
 
 type RadarResponse = {
@@ -38,12 +41,10 @@ type LiveData = {
   selectedJourneySegmentId: string | null;
 };
 
-type AnimatedMarker = {
-  marker: import("mapbox-gl").Marker;
-  element: HTMLButtonElement;
-  coordinates: [number, number][];
+type RiderPortal = {
+  host: HTMLElement;
   segment: JourneySegment;
-  phase: number;
+  heading: number;
 };
 
 const BASEMAP_LABELS: Array<{ id: BasemapMode; label: string }> = [
@@ -65,11 +66,13 @@ export default function FlightGlobe({
   vehicleScale = 1,
   animationSpeed = 1,
   motionEnabled = true,
+  theme = "dark",
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const mapboxRef = useRef<typeof import("mapbox-gl").default | null>(null);
   const basemapRef = useRef<BasemapMode>("satellite");
+  const basemapThemeRef = useRef<"light" | "dark">(theme);
   const liveDataRef = useRef<LiveData>({
     airportsVisible,
     selectedAirport,
@@ -85,6 +88,11 @@ export default function FlightGlobe({
   const [styleRevision, setStyleRevision] = useState(0);
   const [radarUpdated, setRadarUpdated] = useState<string | null>(null);
   const [basemap, setBasemap] = useState<BasemapMode>("satellite");
+  const [riderPortal, setRiderPortal] = useState<RiderPortal | null>(null);
+
+  useEffect(() => {
+    basemapThemeRef.current = theme;
+  }, [theme]);
 
   useEffect(() => {
     liveDataRef.current = {
@@ -131,7 +139,7 @@ export default function FlightGlobe({
 
       map.on("style.load", () => {
         if (disposed) return;
-        configureBasemap(map, basemapRef.current);
+        configureBasemap(map, basemapRef.current, basemapThemeRef.current);
         installProductLayers(map, liveDataRef.current, basemapRef.current);
         setLoaded(true);
         setStyleRevision((value) => value + 1);
@@ -177,6 +185,12 @@ export default function FlightGlobe({
 
   useEffect(() => {
     const map = mapRef.current;
+    if (!map || !loaded) return;
+    configureBasemap(map, basemapRef.current, theme);
+  }, [theme, loaded, styleRevision]);
+
+  useEffect(() => {
+    const map = mapRef.current;
     if (!map || !loaded || !map.getLayer("flighty-airport-dots")) return;
     const visibility = airportsVisible ? "visible" : "none";
     map.setLayoutProperty("flighty-airport-glow", "visibility", visibility);
@@ -207,60 +221,66 @@ export default function FlightGlobe({
     const map = mapRef.current;
     const mapboxgl = mapboxRef.current;
     if (!map || !mapboxgl || !loaded) return;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const markers: AnimatedMarker[] = journeySegments.map((segment, index) => {
-      const element = document.createElement("button");
-      element.type = "button";
-      element.className = `journey-vehicle-marker ${segment.mode} ${segment.id === selectedJourneySegmentId ? "selected" : ""}`;
-      element.style.setProperty("--vehicle-size", `${32 * vehicleScale}px`);
-      element.style.setProperty("--vehicle-selected-size", `${38 * vehicleScale}px`);
-      element.style.setProperty("--vehicle-glyph-scale", String(vehicleScale));
-      element.setAttribute(
-        "aria-label",
-        `${segment.title} · ${transportLabel(segment.mode)}正在路线中移动`,
-      );
-      const glyph = document.createElement("span");
-      glyph.className = "journey-vehicle-glyph";
-      element.appendChild(glyph);
-      element.addEventListener("click", () =>
-        callbacksRef.current.onJourneySegmentSelect?.(segment.id),
-      );
-      const coordinates = greatCircleCoordinates(
-        segment.origin.coordinate,
-        segment.destination.coordinate,
-        96,
-      );
-      const marker = new mapboxgl.Marker({
-        element,
-        anchor: "center",
-        rotationAlignment: "map",
-        pitchAlignment: "map",
-      })
-        .setLngLat(coordinates[0])
-        .addTo(map);
-      return {
-        marker,
-        element,
-        coordinates,
-        segment,
-        phase: index / Math.max(1, journeySegments.length),
-      };
-    });
+    const segment =
+      journeySegments.find((item) => item.id === selectedJourneySegmentId) ??
+      journeySegments.find((item) => item.status === "active") ??
+      journeySegments[0];
+    if (!segment) return;
 
+    const element = document.createElement("button");
+    element.type = "button";
+    element.className = `journey-vehicle-3d-marker ${segment.mode}`;
+    element.style.setProperty("--vehicle-3d-size", `${104 * vehicleScale}px`);
+    element.setAttribute(
+      "aria-label",
+      `${segment.title} · ${transportLabel(segment.mode)}正在路线中移动`,
+    );
+    element.addEventListener("click", () =>
+      callbacksRef.current.onJourneySegmentSelect?.(segment.id),
+    );
+
+    const modelHost = document.createElement("span");
+    modelHost.className = "journey-vehicle-3d-host";
+    element.appendChild(modelHost);
+    let publishedHeading = Number.NaN;
+    setRiderPortal({ host: modelHost, segment, heading: 0 });
+
+    const coordinates = greatCircleCoordinates(
+      segment.origin.coordinate,
+      segment.destination.coordinate,
+      128,
+    );
+    const marker = new mapboxgl.Marker({
+      element,
+      anchor: "center",
+      rotationAlignment: "viewport",
+      pitchAlignment: "viewport",
+    })
+      .setLngLat(coordinates[0])
+      .addTo(map);
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const startedAt = performance.now();
     let frame = 0;
     const animate = (now: number) => {
-      for (const item of markers) {
-        const base = item.segment.status === "complete" ? 1 : item.segment.progress;
-        const duration = animationDuration(item.segment.mode) / Math.max(0.25, animationSpeed);
-        const moving = reduceMotion.matches || !motionEnabled
-          ? base
-          : item.segment.status === "complete"
-            ? 1
-            : (base + item.phase + (now - startedAt) / duration) % 1;
-        const point = pointAlong(item.coordinates, moving);
-        item.marker.setLngLat(point.coordinate);
-        item.marker.setRotation(point.bearing);
+      const base = segment.status === "complete" ? 1 : segment.progress;
+      const duration = animationDuration(segment.mode) / Math.max(0.25, animationSpeed);
+      const moving = reduceMotion.matches || !motionEnabled
+        ? base
+        : segment.status === "complete"
+          ? 1
+          : (base + (now - startedAt) / duration) % 1;
+      const point = pointAlong(coordinates, moving);
+      marker.setLngLat(point.coordinate);
+      const screenHeading = (point.bearing - map.getBearing() + 360) % 360;
+      const headingDelta = Math.abs(((screenHeading - publishedHeading + 540) % 360) - 180);
+      if (!Number.isFinite(publishedHeading) || headingDelta > 2) {
+        publishedHeading = screenHeading;
+        setRiderPortal((current) =>
+          current?.host === modelHost
+            ? { ...current, heading: screenHeading }
+            : current,
+        );
       }
       frame = requestAnimationFrame(animate);
     };
@@ -268,7 +288,8 @@ export default function FlightGlobe({
 
     return () => {
       cancelAnimationFrame(frame);
-      for (const item of markers) item.marker.remove();
+      marker.remove();
+      setRiderPortal((current) => current?.host === modelHost ? null : current);
     };
   }, [journeySegments, selectedJourneySegmentId, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled]);
 
@@ -414,6 +435,17 @@ export default function FlightGlobe({
       className={`flight-globe ${loaded ? "loaded" : ""} ${weatherMode !== "none" ? "weather-on" : ""}`}
     >
       <div ref={hostRef} className="flight-globe-map" />
+      {riderPortal && createPortal(
+        <Vehicle3D
+          kind={riderPortal.segment.mode}
+          view="map"
+          heading={riderPortal.heading}
+          progress={riderPortal.segment.progress}
+          rate={Math.max(0.25, animationSpeed)}
+          className="journey-vehicle-3d-model"
+        />,
+        riderPortal.host,
+      )}
       <div className="globe-loading">正在载入实时地球…</div>
       <div className="map-layer-switcher" role="group" aria-label="地图图层">
         {BASEMAP_LABELS.map((item) => (
@@ -439,9 +471,13 @@ export default function FlightGlobe({
   );
 }
 
-function configureBasemap(map: import("mapbox-gl").Map, mode: BasemapMode) {
+function configureBasemap(
+  map: import("mapbox-gl").Map,
+  mode: BasemapMode,
+  theme: "light" | "dark",
+) {
   try {
-    map.setConfigProperty("basemap", "lightPreset", "night");
+    map.setConfigProperty("basemap", "lightPreset", theme === "light" ? "day" : "night");
     map.setConfigProperty("basemap", "showPointOfInterestLabels", mode !== "satellite");
     map.setConfigProperty("basemap", "showTransitLabels", mode !== "satellite");
     map.setConfigProperty("basemap", "showRoadLabels", mode !== "satellite");
@@ -449,9 +485,9 @@ function configureBasemap(map: import("mapbox-gl").Map, mode: BasemapMode) {
     /* Continue with style defaults if a future Mapbox style changes a property. */
   }
   map.setFog({
-    color: "rgb(5, 9, 18)",
-    "high-color": "rgb(15, 28, 52)",
-    "space-color": "rgb(0, 0, 2)",
+    color: theme === "light" ? "rgb(219, 232, 246)" : "rgb(5, 9, 18)",
+    "high-color": theme === "light" ? "rgb(178, 210, 242)" : "rgb(15, 28, 52)",
+    "space-color": theme === "light" ? "rgb(230, 239, 249)" : "rgb(0, 0, 2)",
     "horizon-blend": 0.08,
     "star-intensity": 0.72,
   });

@@ -5,9 +5,19 @@ import { communityJourneys } from "../../../../db/schema";
 
 const MODES = new Set(["flight", "train", "car", "ferry"]);
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await ensureCommunitySchema();
+    const id = clean(new URL(request.url).searchParams.get("id"), 100);
+    if (id) {
+      const [journey] = await getDb()
+        .select()
+        .from(communityJourneys)
+        .where(eq(communityJourneys.id, id))
+        .limit(1);
+      if (!journey) return Response.json({ error: "行程不存在" }, { status: 404 });
+      return Response.json({ journey });
+    }
     const journeys = await getDb()
       .select()
       .from(communityJourneys)
@@ -119,6 +129,6 @@ function readPlace(value: unknown) {
 }
 
 function responseError(error: unknown) {
-  const message = error instanceof Error ? error.message : "社区服务暂不可用";
-  return Response.json({ error: message }, { status: 500 });
+  console.error("Community journey request failed", error);
+  return Response.json({ error: "社区服务暂时不可用，请稍后重试" }, { status: 500 });
 }

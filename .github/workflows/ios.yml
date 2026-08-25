@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   ios:
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 40
     env:
       P12_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
@@ -32,6 +32,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Verify Apple Silicon and iOS 27 SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "arm64"
+          xcodebuild -version
+          IOS_SDK_VERSION="$(xcrun --sdk iphoneos --show-sdk-version)"
+          test "${IOS_SDK_VERSION%%.*}" = "27"
+          echo "Building on Apple Silicon with iOS SDK $IOS_SDK_VERSION"
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -63,6 +72,40 @@ jobs:
         with:
           name: flighty-everything-ios-simulator
           path: build/packages/flighty-everything-ios-simulator.app.zip
+          archive: false
+          retention-days: 30
+
+      - name: Build unsigned Apple Silicon device IPA
+        run: |
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/FlightyEverything-Unsigned.xcarchive \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            clean archive
+          APP_PATH="build/FlightyEverything-Unsigned.xcarchive/Products/Applications/App.app"
+          test -f "$APP_PATH/App"
+          lipo -info "$APP_PATH/App" | tee build/device-architectures.txt
+          grep -q "arm64" build/device-architectures.txt
+          mkdir -p build/unsigned/Payload build/packages
+          ditto "$APP_PATH" build/unsigned/Payload/App.app
+          (
+            cd build/unsigned
+            /usr/bin/zip -qry ../packages/flighty-everything-ios-arm64-unsigned.ipa Payload
+          )
+          unzip -t build/packages/flighty-everything-ios-arm64-unsigned.ipa
+      - name: Upload unsigned device IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: flighty-everything-ios-arm64-unsigned
+          path: |
+            build/packages/flighty-everything-ios-arm64-unsigned.ipa
+            build/device-architectures.txt
           archive: false
           retention-days: 30
 

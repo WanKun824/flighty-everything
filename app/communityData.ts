@@ -8,7 +8,7 @@ export type CommunityJourney = JourneySegment & {
   createdAt: string;
 };
 
-type CommunityRow = {
+export type CommunityRow = {
   id: string;
   creatorName: string;
   title: string;
@@ -49,6 +49,15 @@ export async function fetchCommunityJourneys() {
   if (!response.ok) throw new Error("社区行程加载失败");
   const data = (await response.json()) as { journeys?: CommunityRow[] };
   return (data.journeys ?? []).map(rowToCommunityJourney);
+}
+
+export async function fetchCommunityJourney(id: string) {
+  const response = await fetch(`/api/community/journeys?id=${encodeURIComponent(id)}`, {
+    cache: "no-store",
+  });
+  const data = (await response.json()) as { journey?: CommunityRow; error?: string };
+  if (!response.ok || !data.journey) throw new Error(data.error || "行程加载失败");
+  return rowToCommunityJourney(data.journey);
 }
 
 export async function publishCommunityJourney(segment: JourneySegment, creatorName: string, caption: string) {
@@ -92,7 +101,7 @@ export function cloneCommunityJourney(journey: CommunityJourney): JourneySegment
   };
 }
 
-function rowToCommunityJourney(row: CommunityRow): CommunityJourney {
+export function rowToCommunityJourney(row: CommunityRow): CommunityJourney {
   const originCoordinate: [number, number] = [row.originLongitude / 1_000_000, row.originLatitude / 1_000_000];
   const destinationCoordinate: [number, number] = [row.destinationLongitude / 1_000_000, row.destinationLatitude / 1_000_000];
   return {
@@ -128,6 +137,11 @@ function rowToCommunityJourney(row: CommunityRow): CommunityJourney {
     likes: row.likes,
     createdAt: new Date(row.createdAt).toISOString(),
   };
+}
+
+export function communityJourneyHref(id: string, origin?: string) {
+  const path = `/journey/${encodeURIComponent(id)}`;
+  return origin ? new URL(path, origin).toString() : path;
 }
 
 function haversineKm(origin: [number, number], destination: [number, number]) {

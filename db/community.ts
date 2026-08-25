@@ -36,6 +36,9 @@ export async function ensureCommunitySchema() {
     )`),
     d1.prepare(`CREATE INDEX IF NOT EXISTS idx_community_journeys_created_at
       ON community_journeys(created_at DESC)`),
+    d1.prepare(`CREATE INDEX IF NOT EXISTS idx_community_journeys_mode_created_at
+      ON community_journeys(mode, created_at DESC)`),
   ]);
+  await d1.prepare("PRAGMA optimize").run();
   return d1;
 }

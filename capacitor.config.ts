@@ -14,7 +14,7 @@ const config: CapacitorConfig = {
   ios: {
     scheme: "FlightyEverything",
     contentInset: "automatic",
-    backgroundColor: "#F8F8FA",
+    backgroundColor: "#00000000",
   },
   android: {
     backgroundColor: "#F9F9FF",

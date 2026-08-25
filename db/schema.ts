@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const communityJourneys = sqliteTable("community_journeys", {
   id: text("id").primaryKey(),
@@ -24,4 +24,7 @@ export const communityJourneys = sqliteTable("community_journeys", {
   note: text("note").notNull(),
   likes: integer("likes").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp_ms" }).notNull(),
-});
+}, (table) => [
+  index("idx_community_journeys_created_at").on(table.createdAt),
+  index("idx_community_journeys_mode_created_at").on(table.mode, table.createdAt),
+]);
