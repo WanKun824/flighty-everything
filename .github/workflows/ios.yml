@@ -103,9 +103,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: flighty-everything-ios-arm64-unsigned
-          path: |
-            build/packages/flighty-everything-ios-arm64-unsigned.ipa
-            build/device-architectures.txt
+          path: build/packages/flighty-everything-ios-arm64-unsigned.ipa
           archive: false
           retention-days: 30
 

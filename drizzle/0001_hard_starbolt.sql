@@ -1,2 +1,2 @@
-CREATE INDEX `idx_community_journeys_created_at` ON `community_journeys` (`created_at`);--> statement-breakpoint
-CREATE INDEX `idx_community_journeys_mode_created_at` ON `community_journeys` (`mode`,`created_at`);
+CREATE INDEX IF NOT EXISTS `idx_community_journeys_created_at` ON `community_journeys` (`created_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `idx_community_journeys_mode_created_at` ON `community_journeys` (`mode`,`created_at`);

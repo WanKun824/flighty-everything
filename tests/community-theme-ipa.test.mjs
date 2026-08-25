@@ -23,7 +23,7 @@ test("uses the four exact 3D assets recovered from the supplied source archive",
 });
 
 test("community publishing is durable and exposes vehicle, service and stations on share pages", async () => {
-  const [home, communityRoute, experience, cardUi, detail, detailRoute, client, api, schema, helper, hosting, globalCss] = await Promise.all([
+  const [home, communityRoute, experience, cardUi, detail, detailRoute, client, api, schema, helper, migration, hosting, globalCss] = await Promise.all([
     read("../app/page.tsx"),
     read("../app/community/page.tsx"),
     read("../app/JourneyExperience27.tsx"),
@@ -34,6 +34,7 @@ test("community publishing is durable and exposes vehicle, service and stations 
     read("../app/api/community/journeys/route.ts"),
     read("../db/schema.ts"),
     read("../db/community.ts"),
+    read("../drizzle/0001_hard_starbolt.sql"),
     read("../.openai/hosting.json"),
     read("../app/globals.css"),
   ]);
@@ -57,6 +58,7 @@ test("community publishing is durable and exposes vehicle, service and stations 
   assert.match(api, /export async function PATCH/);
   assert.match(schema, /communityJourneys/);
   assert.match(helper, /PRAGMA optimize/);
+  assert.match(migration, /CREATE INDEX IF NOT EXISTS/);
   assert.match(hosting, /"d1": "DB"/);
 });
 
