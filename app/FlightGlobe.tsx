@@ -355,7 +355,6 @@ export default function FlightGlobe({
           const currentCenter = map.getCenter();
           followCamera = {
             center: [currentCenter.lng, currentCenter.lat],
-            bearing: map.getBearing(),
           };
           followedAt = now;
           wasFollowing = true;
@@ -363,13 +362,12 @@ export default function FlightGlobe({
         if (now - followedAt >= 28) {
           followCamera = smoothFollowCamera(
             followCamera,
-            { center: point.coordinate, bearing: point.bearing },
+            { center: point.coordinate },
             now - followedAt,
           );
           followedAt = now;
           map.jumpTo({
             center: followCamera.center,
-            bearing: followCamera.bearing,
           });
         }
       } else {

@@ -25,7 +25,6 @@ import SFGlobe from "sf-symbols-lib/monochrome/SFGlobe";
 import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
 import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
 import SFLocationFill from "sf-symbols-lib/monochrome/SFLocationFill";
-import SFLocationNorthFill from "sf-symbols-lib/monochrome/SFLocationNorthFill";
 import SFMapFill from "sf-symbols-lib/monochrome/SFMapFill";
 import SFMagnifyingglass from "sf-symbols-lib/monochrome/SFMagnifyingglass";
 import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
@@ -276,9 +275,6 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 onClick={() => setFollowVehicle((value) => !value)}
               >
                 <SFLocationFill size="md" />
-              </button>
-              <button aria-label="重新居中地图" onClick={resetMap}>
-                <SFLocationNorthFill size="md" />
               </button>
             </div>
           )}

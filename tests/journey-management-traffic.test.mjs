@@ -40,10 +40,11 @@ test("scenic-place search includes exact landmark matches before remote fallback
 });
 
 test("car routes use live traffic while train status remains explicitly provider-scoped", async () => {
-  const [traffic, globe, cards] = await Promise.all([
+  const [traffic, globe, cards, mobileApp] = await Promise.all([
     read("../app/roadTraffic.ts"),
     read("../app/FlightGlobe.tsx"),
     read("../app/JourneyCommunityUI.tsx"),
+    read("../app/FlightyApp.tsx"),
   ]);
   assert.match(traffic, /mapbox\/driving-traffic/);
   assert.match(traffic, /congestion,duration,distance,closure/);
@@ -53,20 +54,22 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.match(globe, /smoothFollowCamera/);
   assert.doesNotMatch(globe, /zoom: map\.getZoom\(\)/);
   assert.doesNotMatch(globe, /pitch: map\.getPitch\(\)/);
+  assert.doesNotMatch(globe, /bearing: followCamera/);
+  assert.match(mobileApp, /aria-label="跟随载具视角"/);
+  assert.doesNotMatch(mobileApp, /aria-label="重新居中地图"/);
   assert.match(cards, /运营方 GTFS-RT/);
   assert.equal(roadTrafficLabel({ delayMinutes: 12, incidentCount: 0 }), "拥堵 · 预计多 12 分钟");
 });
 
-test("follow camera smooths heading without changing the user's zoom or pitch", () => {
+test("follow camera moves only the center without changing zoom, pitch or bearing", () => {
   const next = smoothFollowCamera(
-    { center: [139.7, 35.6], bearing: 179 },
-    { center: [139.8, 35.7], bearing: -179 },
+    { center: [139.7, 35.6] },
+    { center: [139.8, 35.7] },
     32,
   );
   assert.ok(next.center[0] > 139.7 && next.center[0] < 139.8);
   assert.ok(next.center[1] > 35.6 && next.center[1] < 35.7);
-  assert.ok(next.bearing > 179 && next.bearing < 181);
-  assert.deepEqual(Object.keys(next).sort(), ["bearing", "center"]);
+  assert.deepEqual(Object.keys(next), ["center"]);
 });
 
 test("passport cards provide per-trip color and landmark motifs", async () => {
