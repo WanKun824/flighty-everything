@@ -13,7 +13,7 @@ import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import { communityJourneyHref, type CommunityJourney } from "./communityData";
 import { MODE_META, type JourneySegment } from "./journeyData";
 
-export function JourneyCard({ segment, community, active, liked = false, onClick, onLike, onSave }: {
+export function JourneyCard({ segment, community, active, liked = false, onClick, onLike, onSave, onDetail }: {
   segment: JourneySegment;
   community?: CommunityJourney;
   active: boolean;
@@ -21,6 +21,7 @@ export function JourneyCard({ segment, community, active, liked = false, onClick
   onClick: () => void;
   onLike?: () => void;
   onSave?: () => void;
+  onDetail?: () => void;
 }) {
   const meta = MODE_META[segment.mode];
   const detailHref = community && !community.communityId.startsWith("fallback-")
@@ -39,7 +40,9 @@ export function JourneyCard({ segment, community, active, liked = false, onClick
       {community && (
         <span className="community-card-actions">
           <button aria-label={`喜欢 ${segment.title}`} className={liked ? "liked" : ""} onClick={onLike}>{liked ? <SFHeartFill size="xs" /> : <SFHeart size="xs" />}<small>{community.likes}</small></button>
-          {detailHref && <a href={detailHref}>详情</a>}
+          {onDetail
+            ? <button onClick={onDetail}>详情</button>
+            : detailHref && <a href={detailHref}>详情</a>}
           <button onClick={onSave}><SFPlus size="xs" />保存</button>
         </span>
       )}

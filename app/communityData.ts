@@ -44,7 +44,39 @@ export const FALLBACK_COMMUNITY: CommunityJourney[] = INITIAL_JOURNEY_SEGMENTS.s
   createdAt: new Date(Date.UTC(2026, 7, 24 - index)).toISOString(),
 }));
 
+const NATIVE_COMMUNITY_KEY = "flighty-everything:native-community:v1";
+
+export function isBundledNativeApp() {
+  if (typeof window === "undefined") return false;
+  const capacitor = (window as Window & {
+    Capacitor?: { isNativePlatform?: () => boolean };
+  }).Capacitor;
+  return capacitor?.isNativePlatform?.() === true
+    || window.location.protocol === "capacitor:"
+    || window.location.protocol === "ionic:";
+}
+
+function readNativeCommunity() {
+  try {
+    const raw = window.localStorage.getItem(NATIVE_COMMUNITY_KEY);
+    if (!raw) return FALLBACK_COMMUNITY;
+    const stored = JSON.parse(raw) as CommunityJourney[];
+    return Array.isArray(stored) && stored.length ? stored : FALLBACK_COMMUNITY;
+  } catch {
+    return FALLBACK_COMMUNITY;
+  }
+}
+
+function writeNativeCommunity(journeys: CommunityJourney[]) {
+  try {
+    window.localStorage.setItem(NATIVE_COMMUNITY_KEY, JSON.stringify(journeys));
+  } catch {
+    /* The current session remains usable when device storage is unavailable. */
+  }
+}
+
 export async function fetchCommunityJourneys() {
+  if (isBundledNativeApp()) return readNativeCommunity();
   const response = await fetch("/api/community/journeys", { cache: "no-store" });
   if (!response.ok) throw new Error("社区行程加载失败");
   const data = (await response.json()) as { journeys?: CommunityRow[] };
@@ -52,6 +84,11 @@ export async function fetchCommunityJourneys() {
 }
 
 export async function fetchCommunityJourney(id: string) {
+  if (isBundledNativeApp()) {
+    const journey = readNativeCommunity().find((item) => item.communityId === id);
+    if (!journey) throw new Error("行程不存在");
+    return journey;
+  }
   const response = await fetch(`/api/community/journeys?id=${encodeURIComponent(id)}`, {
     cache: "no-store",
   });
@@ -61,6 +98,20 @@ export async function fetchCommunityJourney(id: string) {
 }
 
 export async function publishCommunityJourney(segment: JourneySegment, creatorName: string, caption: string) {
+  if (isBundledNativeApp()) {
+    const communityId = `native-${crypto.randomUUID()}`;
+    const journey: CommunityJourney = {
+      ...segment,
+      id: `map-${communityId}`,
+      communityId,
+      creatorName,
+      caption,
+      likes: 0,
+      createdAt: new Date().toISOString(),
+    };
+    writeNativeCommunity([journey, ...readNativeCommunity()]);
+    return journey;
+  }
   const response = await fetch("/api/community/journeys", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -72,6 +123,17 @@ export async function publishCommunityJourney(segment: JourneySegment, creatorNa
 }
 
 export async function likeCommunityJourney(id: string) {
+  if (isBundledNativeApp()) {
+    let updated: CommunityJourney | undefined;
+    const journeys = readNativeCommunity().map((journey) => {
+      if (journey.communityId !== id) return journey;
+      updated = { ...journey, likes: journey.likes + 1 };
+      return updated;
+    });
+    if (!updated) throw new Error("行程不存在");
+    writeNativeCommunity(journeys);
+    return updated;
+  }
   const response = await fetch("/api/community/journeys", {
     method: "PATCH",
     headers: { "content-type": "application/json" },

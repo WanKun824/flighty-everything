@@ -54,8 +54,8 @@ body { background: var(--j-bg); }
   background: var(--j-map-shade);
   transition: background .35s ease, opacity .35s ease;
 }
-.journey-experience .map-layer-switcher { top: 108px; left: auto; right: 30px; }
-.journey-experience .weather-credit { display: none; }
+.journey-experience .map-layer-switcher { top: 108px; left: auto; right: 30px; transform:none; }
+.journey-experience .map-data-credits { left:auto; right:14px; bottom:10px; }
 
 .liquid-glass-control {
   border: 1px solid var(--j-line);
@@ -194,7 +194,7 @@ body { background: var(--j-bg); }
 .community-detail-map::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(3,5,8,.82), rgba(3,5,8,.12) 54%, rgba(3,5,8,.38)); }
 :root[data-theme="light"] .community-detail-map::after { background: linear-gradient(90deg, rgba(238,244,251,.82), rgba(238,244,251,.1) 54%, rgba(238,244,251,.36)); }
 .community-detail .map-layer-switcher { top: 90px; right: 24px; left: auto; }
-.community-detail .weather-credit { display: none; }
+.community-detail .map-data-credits { left:auto; right:14px; }
 .community-detail-toolbar { position: absolute; z-index: 20; top: max(18px, env(safe-area-inset-top)); left: 24px; right: 24px; height: 58px; padding: 8px 10px; border-radius: 20px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
 .community-detail-toolbar > a, .community-detail-toolbar > span button { position: relative; z-index: 1; height: 40px; padding: 0 12px; border: 0; border-radius: 13px; color: var(--j-text); background: var(--j-surface-soft); display: inline-flex; align-items: center; gap: 6px; font-size: 11px; text-decoration: none; cursor: pointer; }
 .community-detail-toolbar > a { justify-self: start; }

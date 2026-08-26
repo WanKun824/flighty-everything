@@ -30,7 +30,10 @@ import Vehicle3D from "./Vehicle3D";
 
 type Surface = "mine" | "discover";
 
-export default function JourneyExperience27() {
+export default function JourneyExperience27({ onHome, onOpenCommunity }: {
+  onHome?: () => void;
+  onOpenCommunity?: (journey: CommunityJourney) => void;
+} = {}) {
   const store = useJourneyStore();
   const { state } = store;
   const appearance = useAppearance();
@@ -157,7 +160,11 @@ export default function JourneyExperience27() {
       </section>
 
       <header className="journey-glass-bar liquid-glass-control">
-        <a className="journey-wordmark" href="#top" aria-label="flighty Everything 首页"><span><SFGlobeAsiaAustraliaFill size="sm" /></span><b>flighty</b><em>Everything</em></a>
+        <a className="journey-wordmark" href="#top" aria-label="flighty Everything 首页" onClick={(event) => {
+          if (!onHome) return;
+          event.preventDefault();
+          onHome();
+        }}><span><SFGlobeAsiaAustraliaFill size="sm" /></span><b>flighty</b><em>Everything</em></a>
         <nav aria-label="行程视图">
           <button className={surface === "mine" ? "active" : ""} onClick={() => setSurface("mine")}>我的行程</button>
           <button className={surface === "discover" ? "active" : ""} onClick={() => setSurface("discover")}>社区</button>
@@ -196,7 +203,7 @@ export default function JourneyExperience27() {
           {surface === "mine" ? state.segments.map((segment) => (
             <JourneyCard key={segment.id} segment={segment} active={segment.id === selectedMine?.id} onClick={() => store.selectSegment(segment.id)} />
           )) : community.map((journey) => (
-            <JourneyCard key={journey.communityId} segment={journey} community={journey} active={journey.communityId === selectedCommunity?.communityId} liked={likedIds.includes(journey.communityId)} onClick={() => setSelectedCommunityId(journey.communityId)} onLike={() => void like(journey)} onSave={() => saveCommunity(journey)} />
+            <JourneyCard key={journey.communityId} segment={journey} community={journey} active={journey.communityId === selectedCommunity?.communityId} liked={likedIds.includes(journey.communityId)} onClick={() => setSelectedCommunityId(journey.communityId)} onLike={() => void like(journey)} onSave={() => saveCommunity(journey)} onDetail={onOpenCommunity ? () => onOpenCommunity(journey) : undefined} />
           ))}
         </div>
       </section>

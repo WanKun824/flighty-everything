@@ -48,6 +48,16 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Build bundled native frontend
+        run: |
+          npm run native:build
+          test -f native-shell/index.html
+          test -d native-shell/assets
+          test -f native-shell/models/legacy-plane.glb
+          if grep -R "manyou-travel-ui-demo.*chatgpt.site" native-shell/index.html native-shell/assets; then
+            echo "The native bundle must not redirect to the hosted website."
+            exit 1
+          fi
       - name: Sync Capacitor iOS project
         run: npx cap sync ios
 

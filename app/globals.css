@@ -79,10 +79,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .map-tools button:first-child { border-radius: 21px 21px 0 0; }
 .map-tools button:nth-child(2) { border-radius: 0 0 21px 21px; }
 .map-tools button:last-child { width: 44px; height: 44px; margin-top: 12px; border-radius: 50%; }
-.map-layer-switcher { display: none; }
+.map-layer-switcher { position: absolute; z-index: 9; top: 55px; left: 50%; padding: 4px; transform: translateX(-50%); display: flex; gap: 2px; border: 1px solid rgba(255,255,255,.13); border-radius: 15px; background: rgba(23,25,31,.72); box-shadow: 0 8px 26px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.12); -webkit-backdrop-filter: blur(22px) saturate(1.2); backdrop-filter: blur(22px) saturate(1.2); }
 .map-layer-switcher button { min-width: 42px; height: 31px; padding: 0 8px; border: 0; border-radius: 11px; color: rgba(255,255,255,.57); background: transparent; font-size: 9px; font-weight: 680; cursor: pointer; }
 .map-layer-switcher button.active { color: #fff; background: rgba(10,132,255,.88); box-shadow: 0 5px 14px rgba(10,132,255,.25), inset 0 1px rgba(255,255,255,.18); }
-.map-layer-switcher button:nth-child(3).active { background: linear-gradient(135deg,#ff9f0a,#ff453a); box-shadow: 0 5px 14px rgba(255,69,58,.25); }
+.map-layer-switcher button:nth-child(3).active { background: linear-gradient(135deg,#30a46c,#0a84ff); box-shadow: 0 5px 14px rgba(10,132,255,.25); }
+.map-layer-switcher button:nth-child(5).active { background: linear-gradient(135deg,#ff9f0a,#ff453a); box-shadow: 0 5px 14px rgba(255,69,58,.25); }
 .journey-vehicle-marker { width: 32px; height: 32px; padding: 0; border: 1px solid rgba(255,255,255,.72); border-radius: 11px; color: #fff; background: rgba(17,18,23,.88); box-shadow: 0 6px 18px rgba(0,0,0,.4), 0 0 0 3px color-mix(in srgb,currentColor 18%,transparent); display: grid; place-items: center; cursor: pointer; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); transition: width .2s ease, height .2s ease, filter .2s ease; }
 .journey-vehicle-marker.flight { color: #0a84ff; }.journey-vehicle-marker.train { color: #bf5af2; }.journey-vehicle-marker.car { color: #ff453a; }.journey-vehicle-marker.ferry { color: #32ade6; }
 .journey-vehicle-marker.selected { width: 38px; height: 38px; filter: drop-shadow(0 0 9px currentColor); }
@@ -98,6 +99,19 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .journey-vehicle-3d-marker { width: var(--vehicle-3d-size,104px); height: calc(var(--vehicle-3d-size,104px) * .72); padding: 0; overflow: visible; border: 0; outline: 0; background: transparent; filter: drop-shadow(0 8px 12px rgba(2,8,18,.48)); cursor: pointer; transition: width .25s ease,height .25s ease,filter .25s ease; }
 .journey-vehicle-3d-marker:focus-visible { filter: drop-shadow(0 0 12px #0a84ff) drop-shadow(0 8px 12px rgba(2,8,18,.48)); }
 .journey-vehicle-3d-host, .journey-vehicle-3d-model, .journey-vehicle-3d-model canvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+.journey-vehicle-3d-host { position: relative; isolation: isolate; }
+.journey-vehicle-3d-host::before { content:""; position:absolute; z-index:-1; left:50%; top:55%; width:58%; height:4px; border-radius:99px; opacity:var(--journey-motion-trail,0); transform:translate(-96%,-50%); transform-origin:right center; background:linear-gradient(90deg,transparent,currentColor); filter:blur(2px); transition:opacity .18s ease; }
+.journey-vehicle-3d-marker.flight .journey-vehicle-3d-host::before { color:rgba(220,241,255,.9); width:76%; height:3px; box-shadow:0 7px 0 rgba(220,241,255,.28); }
+.journey-vehicle-3d-marker.car .journey-vehicle-3d-host::before { color:rgba(255,69,58,.5); width:44%; height:2px; }
+.journey-vehicle-3d-marker.train .journey-vehicle-3d-host::before { color:rgba(191,90,242,.45); width:48%; height:2px; }
+.journey-vehicle-3d-marker.ferry .journey-vehicle-3d-host::before { color:rgba(50,173,230,.62); width:58%; height:8px; background:repeating-radial-gradient(ellipse at right, currentColor 0 2px, transparent 3px 7px); filter:blur(1px); }
+.journey-vehicle-3d-marker[data-motion-stage="departing"] { filter:drop-shadow(0 7px 12px rgba(2,8,18,.46)) saturate(1.04); }
+.journey-vehicle-3d-marker[data-motion-stage="arriving"] { filter:drop-shadow(0 5px 9px rgba(2,8,18,.4)) saturate(.94); }
+.journey-weather-marker { width:34px; height:34px; color:#fff; border:1px solid rgba(255,255,255,.34); border-radius:13px; background:rgba(21,24,31,.78); box-shadow:0 7px 20px rgba(0,0,0,.32),inset 0 1px rgba(255,255,255,.2); display:grid; place-items:center; -webkit-backdrop-filter:blur(18px) saturate(1.3); backdrop-filter:blur(18px) saturate(1.3); }
+.journey-weather-marker > span, .journey-weather-symbol { width:100%; height:100%; display:grid; place-items:center; }
+.journey-weather-symbol.is-clear, .journey-weather-symbol.is-partly-cloudy { color:#ffd60a; }
+.journey-weather-symbol.is-rain, .journey-weather-symbol.is-heavy-rain, .journey-weather-symbol.is-drizzle { color:#64d2ff; }
+.journey-weather-symbol.is-snow { color:#d9f2ff; }.journey-weather-symbol.is-storm { color:#bf5af2; }
 .avatar-letter { border: 0; color: #fff; font-size: 20px; font-weight: 500; }
 .panel-scroll { position: absolute; left: 16px; right: 16px; top: 80px; bottom: 86px; overflow-y: auto; scrollbar-width: none; }
 .panel-scroll::-webkit-scrollbar, .passport-scroll::-webkit-scrollbar, .map-sheet-scroll::-webkit-scrollbar, .add-flight-scroll::-webkit-scrollbar, .stats-sheet::-webkit-scrollbar { display: none; }
@@ -278,8 +292,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .weather-legend i { width: 7px; height: 7px; border-radius: 50%; }
 .weather-legend .green { background:#46e65c; }.weather-legend .yellow { background:#ffe14b; }.weather-legend .orange { background:#ff9f0a; }.weather-legend .red { background:#ff453a; }.weather-legend .pink { background:#dd35cf; }.weather-legend .snow-1 { background:#d8efff; }.weather-legend .snow-2 { background:#6da9ff; }.weather-legend .snow-3 { background:#3568e9; }.weather-legend .snow-4 { background:#161a9c; }
 .weather-legend small { margin-left: 5px; color: #9a9aa2; font-size: 7px; }
-.weather-credit { position: absolute; z-index: 6; top: 95px; left: 10px; color: rgba(255,255,255,.42); font-size: 7px; text-decoration: none; opacity: 0; pointer-events: none; }
-.weather-on .weather-credit { opacity: 1; pointer-events: auto; }
+.map-data-credits { position:absolute; z-index:6; left:10px; bottom:8px; display:flex; gap:7px; }
+.map-data-credits a { color:rgba(255,255,255,.44); font-size:7px; text-decoration:none; }
+
+.native-boot-screen { width:100vw; height:100dvh; margin:0; color:#f7f8fb; background:radial-gradient(circle at 50% 38%,#152b49,#05070a 60%); display:grid; place-content:center; justify-items:center; gap:17px; }
+.native-boot-screen span { font-size:25px; font-weight:760; letter-spacing:-.045em; }.native-boot-screen em { color:#8f98a7; font-size:13px; font-style:normal; }.native-boot-screen i { width:28px; height:28px; border:3px solid rgba(255,255,255,.16); border-top-color:#0a84ff; border-radius:50%; animation:native-spin .8s linear infinite; }
+@keyframes native-spin { to { transform:rotate(360deg); } }
 
 .flight-detail-sheet { height: 57%; }
 .flight-status-pill { display: inline-flex; margin-top: 8px; padding: 4px 8px; border-radius: 99px; color: #30d158; background: rgba(48,209,88,.11); font-size: 9px; font-weight: 700; }

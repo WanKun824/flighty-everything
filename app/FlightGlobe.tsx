@@ -5,13 +5,15 @@ import { createPortal } from "react-dom";
 import { AIRPORTS, airportByCode } from "./flightyData";
 import type { WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
+import { JourneyWeatherIcon, useJourneyWeather, type JourneyWeatherObservation } from "./journeyWeather";
 import Vehicle3D from "./Vehicle3D";
+import { vehicleStageMotion } from "./vehicleMotion";
 
 const MAPBOX_TOKEN =
   process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
   "pk.eyJ1IjoidmluY2VudGxlZTg3NiIsImEiOiJjbXAyZHB5OHowZjh3MndzZHY0ZWs3Z3FsIn0.DC32avSkIOG7VpPwMgetjw";
 
-export type BasemapMode = "satellite" | "streets" | "traffic";
+export type BasemapMode = "standard" | "satellite" | "terrain" | "navigation" | "traffic";
 
 type Props = {
   airportsVisible: boolean;
@@ -45,12 +47,20 @@ type RiderPortal = {
   host: HTMLElement;
   segment: JourneySegment;
   heading: number;
+  progress: number;
+};
+
+type WeatherPortal = {
+  host: HTMLElement;
+  observation: JourneyWeatherObservation;
 };
 
 const BASEMAP_LABELS: Array<{ id: BasemapMode; label: string }> = [
+  { id: "standard", label: "标准" },
   { id: "satellite", label: "卫星" },
-  { id: "streets", label: "街道" },
-  { id: "traffic", label: "交通" },
+  { id: "terrain", label: "地形" },
+  { id: "navigation", label: "导航" },
+  { id: "traffic", label: "路况" },
 ];
 
 export default function FlightGlobe({
@@ -71,7 +81,7 @@ export default function FlightGlobe({
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const mapboxRef = useRef<typeof import("mapbox-gl").default | null>(null);
-  const basemapRef = useRef<BasemapMode>("satellite");
+  const basemapRef = useRef<BasemapMode>("standard");
   const basemapThemeRef = useRef<"light" | "dark">(theme);
   const liveDataRef = useRef<LiveData>({
     airportsVisible,
@@ -87,8 +97,13 @@ export default function FlightGlobe({
   const [loaded, setLoaded] = useState(false);
   const [styleRevision, setStyleRevision] = useState(0);
   const [radarUpdated, setRadarUpdated] = useState<string | null>(null);
-  const [basemap, setBasemap] = useState<BasemapMode>("satellite");
+  const [basemap, setBasemap] = useState<BasemapMode>("standard");
   const [riderPortal, setRiderPortal] = useState<RiderPortal | null>(null);
+  const [weatherPortals, setWeatherPortals] = useState<WeatherPortal[]>([]);
+  const selectedWeatherSegment = journeySegments.find((item) => item.id === selectedJourneySegmentId)
+    ?? journeySegments.find((item) => item.status === "active")
+    ?? journeySegments[0];
+  const weatherObservations = useJourneyWeather(selectedWeatherSegment);
 
   useEffect(() => {
     basemapThemeRef.current = theme;
@@ -125,7 +140,7 @@ export default function FlightGlobe({
       mapboxgl.accessToken = MAPBOX_TOKEN;
       const map = new mapboxgl.Map({
         container: hostRef.current,
-        style: styleUrl("satellite"),
+        style: styleUrl("standard"),
         projection: "globe",
         center: [126, 27],
         zoom: 2.05,
@@ -243,7 +258,7 @@ export default function FlightGlobe({
     modelHost.className = "journey-vehicle-3d-host";
     element.appendChild(modelHost);
     let publishedHeading = Number.NaN;
-    setRiderPortal({ host: modelHost, segment, heading: 0 });
+    setRiderPortal({ host: modelHost, segment, heading: 0, progress: segment.progress });
 
     const coordinates = greatCircleCoordinates(
       segment.origin.coordinate,
@@ -262,6 +277,8 @@ export default function FlightGlobe({
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const startedAt = performance.now();
     let frame = 0;
+    let publishedProgressAt = 0;
+    let publishedStage = "";
     const animate = (now: number) => {
       const base = segment.status === "complete" ? 1 : segment.progress;
       const duration = animationDuration(segment.mode) / Math.max(0.25, animationSpeed);
@@ -272,6 +289,13 @@ export default function FlightGlobe({
           : (base + (now - startedAt) / duration) % 1;
       const point = pointAlong(coordinates, moving);
       marker.setLngLat(point.coordinate);
+      const stageMotion = vehicleStageMotion(segment.mode, moving);
+      element.style.setProperty("--journey-motion-trail", stageMotion.trail.toFixed(3));
+      if (stageMotion.stage !== publishedStage) {
+        publishedStage = stageMotion.stage;
+        element.dataset.motionStage = stageMotion.stage;
+        element.setAttribute("aria-label", `${segment.title} · ${transportLabel(segment.mode)}${motionStageLabel(stageMotion.stage)}`);
+      }
       const screenHeading = (point.bearing - map.getBearing() + 360) % 360;
       const headingDelta = Math.abs(((screenHeading - publishedHeading + 540) % 360) - 180);
       if (!Number.isFinite(publishedHeading) || headingDelta > 2) {
@@ -281,6 +305,10 @@ export default function FlightGlobe({
             ? { ...current, heading: screenHeading }
             : current,
         );
+      }
+      if (now - publishedProgressAt > 160) {
+        publishedProgressAt = now;
+        setRiderPortal((current) => current?.host === modelHost ? { ...current, progress: moving } : current);
       }
       frame = requestAnimationFrame(animate);
     };
@@ -292,6 +320,30 @@ export default function FlightGlobe({
       setRiderPortal((current) => current?.host === modelHost ? null : current);
     };
   }, [journeySegments, selectedJourneySegmentId, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const mapboxgl = mapboxRef.current;
+    if (!map || !mapboxgl || !loaded || !weatherObservations.length) {
+      const timer = window.setTimeout(() => setWeatherPortals([]), 0);
+      return () => window.clearTimeout(timer);
+    }
+    const nextPortals: WeatherPortal[] = [];
+    const markers = weatherObservations.map((observation) => {
+      const element = document.createElement("div");
+      element.className = `journey-weather-marker is-${observation.id}`;
+      const host = document.createElement("span");
+      element.appendChild(host);
+      nextPortals.push({ host, observation });
+      return new mapboxgl.Marker({ element, anchor: "bottom", offset: [0, -9] })
+        .setLngLat(observation.coordinate)
+        .addTo(map);
+    });
+    setWeatherPortals(nextPortals);
+    return () => {
+      markers.forEach((marker) => marker.remove());
+    };
+  }, [loaded, styleRevision, weatherObservations]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -421,6 +473,9 @@ export default function FlightGlobe({
     setBasemap(next);
     if (!map) return;
     if (previousUrl === nextUrl) {
+      configureBasemap(map, next, basemapThemeRef.current);
+      if (next === "terrain") installTerrain(map);
+      else removeTerrain(map);
       if (next === "traffic") installTrafficLayers(map);
       else removeTrafficLayers(map);
       setStyleRevision((value) => value + 1);
@@ -440,12 +495,17 @@ export default function FlightGlobe({
           kind={riderPortal.segment.mode}
           view="map"
           heading={riderPortal.heading}
-          progress={riderPortal.segment.progress}
+          progress={riderPortal.progress}
           rate={Math.max(0.25, animationSpeed)}
           className="journey-vehicle-3d-model"
         />,
         riderPortal.host,
       )}
+      {weatherPortals.map((portal) => createPortal(
+        <JourneyWeatherIcon observation={portal.observation} />,
+        portal.host,
+        `${portal.observation.id}-${portal.observation.coordinate.join("-")}`,
+      ))}
       <div className="globe-loading">正在载入实时地球…</div>
       <div className="map-layer-switcher" role="group" aria-label="地图图层">
         {BASEMAP_LABELS.map((item) => (
@@ -466,7 +526,10 @@ export default function FlightGlobe({
           {radarUpdated && <small>更新于 {radarUpdated}</small>}
         </div>
       )}
-      <a className="weather-credit" href="https://www.rainviewer.com/" target="_blank" rel="noreferrer">天气数据：RainViewer</a>
+      <span className="map-data-credits">
+        <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 Open-Meteo</a>
+        {weatherMode !== "none" && <a href="https://www.rainviewer.com/" target="_blank" rel="noreferrer">雷达 RainViewer</a>}
+      </span>
     </div>
   );
 }
@@ -491,6 +554,8 @@ function configureBasemap(
     "horizon-blend": 0.08,
     "star-intensity": 0.72,
   });
+  if (mode === "terrain") installTerrain(map);
+  else removeTerrain(map);
 }
 
 function installProductLayers(
@@ -498,6 +563,7 @@ function installProductLayers(
   data: LiveData,
   mode: BasemapMode,
 ) {
+  if (mode === "terrain") installTerrain(map);
   if (mode === "traffic") installTrafficLayers(map);
   if (!map.getSource("flighty-airports")) {
     map.addSource("flighty-airports", {
@@ -612,6 +678,23 @@ function installProductLayers(
   }
 }
 
+function installTerrain(map: import("mapbox-gl").Map) {
+  if (!map.getSource("flighty-terrain-dem")) {
+    map.addSource("flighty-terrain-dem", {
+      type: "raster-dem",
+      url: "mapbox://mapbox.mapbox-terrain-dem-v1",
+      tileSize: 512,
+      maxzoom: 14,
+    });
+  }
+  map.setTerrain({ source: "flighty-terrain-dem", exaggeration: 1.35 });
+}
+
+function removeTerrain(map: import("mapbox-gl").Map) {
+  if (!map.getTerrain()) return;
+  map.setTerrain(null);
+}
+
 function installTrafficLayers(map: import("mapbox-gl").Map) {
   if (!map.getSource("flighty-traffic")) {
     map.addSource("flighty-traffic", {
@@ -663,9 +746,10 @@ function removeTrafficLayers(map: import("mapbox-gl").Map) {
 }
 
 function styleUrl(mode: BasemapMode) {
-  return mode === "satellite"
-    ? "mapbox://styles/mapbox/standard-satellite"
-    : "mapbox://styles/mapbox/standard";
+  if (mode === "satellite") return "mapbox://styles/mapbox/standard-satellite";
+  if (mode === "terrain") return "mapbox://styles/mapbox/outdoors-v12";
+  if (mode === "navigation") return "mapbox://styles/mapbox/navigation-day-v1";
+  return "mapbox://styles/mapbox/standard";
 }
 
 function airportFeatures(selectedAirport: string | null) {
@@ -769,4 +853,8 @@ function animationDuration(mode: JourneyMode) {
 
 function transportLabel(mode: JourneyMode) {
   return { flight: "飞机", train: "火车", car: "汽车", ferry: "轮船" }[mode];
+}
+
+function motionStageLabel(stage: "departing" | "cruising" | "arriving") {
+  return { departing: "正在出发", cruising: "正在途中", arriving: "正在抵达" }[stage];
 }

@@ -14,7 +14,7 @@ import { formatJourneyDuration, MODE_META } from "./journeyData";
 import { useJourneyStore } from "./journeyStorage";
 import Vehicle3D from "./Vehicle3D";
 
-export default function CommunityJourneyPage({ journey }: { journey: CommunityJourney }) {
+export default function CommunityJourneyPage({ journey, onBack }: { journey: CommunityJourney; onBack?: () => void }) {
   const appearance = useAppearance();
   const store = useJourneyStore();
   const [saved, setSaved] = useState(false);
@@ -47,7 +47,11 @@ export default function CommunityJourneyPage({ journey }: { journey: CommunityJo
         <FlightGlobe airportsVisible={false} selectedAirport={null} weatherMode="none" resetToken={0} journeySegments={[journey]} selectedJourneySegmentId={journey.id} theme={appearance.resolved} onJourneySegmentSelect={() => undefined} onAirportSelect={() => undefined} onWeatherError={() => undefined} />
       </section>
       <header className="community-detail-toolbar liquid-glass-control">
-        <a href="/community" aria-label="返回社区"><SFArrowLeft size="sm" /><span>社区</span></a>
+        <a href="/community" aria-label="返回社区" onClick={(event) => {
+          if (!onBack) return;
+          event.preventDefault();
+          onBack();
+        }}><SFArrowLeft size="sm" /><span>社区</span></a>
         <strong>flighty <em>Everything</em></strong>
         <span>
           <button aria-label={`切换到${appearance.resolved === "dark" ? "浅色" : "深色"}模式`} onClick={appearance.cycle}>{appearance.resolved === "dark" ? <SFSunMaxFill size="sm" /> : <SFMoonStarsFill size="sm" />}</button>

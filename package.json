@@ -1,6 +1,6 @@
 {
   "name": "flighty-everything",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -10,10 +10,12 @@
     "build": "vinext build",
     "start": "vinext start",
     "test": "npm run build && node --experimental-strip-types --test tests/*.test.mjs",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "native:sync": "cap sync",
-    "android:debug": "cap sync android && cd android && gradlew.bat assembleDebug",
-    "ios:sync": "cap sync ios",
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern native-shell --ignore-pattern release",
+    "native:build": "vite build --config vite.native.config.ts",
+    "native:sync": "npm run native:build && cap sync",
+    "native:preview": "vite --config vite.native.config.ts",
+    "android:debug": "npm run native:build && cap sync android && cd android && gradlew.bat assembleDebug",
+    "ios:sync": "npm run native:build && cap sync ios",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { curveModel, flattenMaterials, paintModel, smoothModel, type PaintName } from "./vehicleShading";
+import { vehicleStageMotion } from "./vehicleMotion";
 
 export type VehicleKind = "flight" | "car" | "train" | "ferry";
 
@@ -527,16 +528,17 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
       } else {
         // progress 只当相位种子：同一种载具在不同航段的姿态不会撞在同一帧上。
         const phase = elapsed * beat + progressRef.current * .05;
-        presentation.position.z = Math.sin(phase * motion.rise[1] * Math.PI * 2) * motion.rise[0] * bodyHeight;
+        const stageMotion = vehicleStageMotion(kind, progressRef.current);
+        presentation.position.z = (Math.sin(phase * motion.rise[1] * Math.PI * 2) * motion.rise[0] + stageMotion.lift) * bodyHeight;
         const bank = THREE.MathUtils.clamp(bankRate * motion.bank, -BANK_LIMIT, BANK_LIMIT);
         presentation.rotation.x = Math.sin(phase * motion.roll[1] * Math.PI * 2) * motion.roll[0] - bank;
-        presentation.rotation.y = Math.sin(phase * motion.pitch[1] * Math.PI * 2 + 1.1) * motion.pitch[0];
+        presentation.rotation.y = Math.sin(phase * motion.pitch[1] * Math.PI * 2 + 1.1) * motion.pitch[0] + stageMotion.pitch;
         shadowMaterial.opacity = motion.shadow[0] + Math.sin(phase * motion.rise[1] * Math.PI * 2) * motion.shadow[1];
         if (motion.wheel) {
           // 轮子节点的本地 +X 就是轮轴，几何又正好以节点原点为心，所以绕 x 转即原地滚。
           // 转速用 playRate 本身，既不折 follow 也不夹上限：车身可以「不那么跟」倍速，
           // 轮子跟不上就是在打滑。四种载具里只有汽车有轮子，这条不影响别的。
-          const spin = motion.wheel * playRate * delta;
+          const spin = motion.wheel * playRate * stageMotion.velocity * delta;
           for (const wheel of wheels) wheel.rotation.x += spin;
         }
       }

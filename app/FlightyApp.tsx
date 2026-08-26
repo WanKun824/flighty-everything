@@ -100,11 +100,11 @@ const tabs: Array<{ id: Tab; label: string; icon: ElementType }> = [
   { id: "passport", label: "旅迹", icon: SFBookClosedFill },
 ];
 
-export default function FlightyApp() {
-  return <MobileFlighty />;
+export default function FlightyApp({ onOpenCommunity }: { onOpenCommunity?: () => void } = {}) {
+  return <MobileFlighty onOpenCommunity={onOpenCommunity} />;
 }
 
-function MobileFlighty() {
+function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const store = useFlightyStore();
   const journeyStore = useJourneyStore();
   const appearance = useAppearance();
@@ -318,6 +318,11 @@ function MobileFlighty() {
                 href="/community"
                 aria-label="打开旅行社区"
                 title="旅行社区"
+                onClick={(event) => {
+                  if (!onOpenCommunity) return;
+                  event.preventDefault();
+                  onOpenCommunity();
+                }}
               >
                 <SFGlobe size="md" />
               </a>

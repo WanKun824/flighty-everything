@@ -4,15 +4,20 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("wires real 3D vehicles and all three production map modes", async () => {
-  const [globe, vehicle, css] = await Promise.all([
+test("wires real 3D vehicles, weather checkpoints and five production map modes", async () => {
+  const [globe, vehicle, weather, css] = await Promise.all([
     read("../app/FlightGlobe.tsx"),
     read("../app/Vehicle3D.tsx"),
+    read("../app/journeyWeather.tsx"),
     read("../app/globals.css"),
   ]);
 
-  for (const mode of ["satellite", "streets", "traffic"])
+  for (const mode of ["standard", "satellite", "terrain", "navigation", "traffic"])
     assert.match(globe, new RegExp(`id: "${mode}"`));
+  assert.match(globe, /mapbox:\/\/styles\/mapbox\/standard-satellite/);
+  assert.match(globe, /mapbox:\/\/styles\/mapbox\/outdoors-v12/);
+  assert.match(globe, /mapbox:\/\/styles\/mapbox\/navigation-day-v1/);
+  assert.match(globe, /mapbox:\/\/mapbox\.mapbox-terrain-dem-v1/);
   assert.match(globe, /mapbox:\/\/mapbox\.mapbox-traffic-v1/);
   assert.match(globe, /"source-layer": "traffic"/);
   for (const congestion of ["low", "moderate", "heavy", "severe"])
@@ -26,6 +31,12 @@ test("wires real 3D vehicles and all three production map modes", async () => {
     assert.match(vehicle, new RegExp(model.replace(".", "\\.")));
   assert.match(css, /\.journey-vehicle-3d-marker/);
   assert.match(css, /\.map-layer-switcher/);
+  assert.match(weather, /api\.open-meteo\.com\/v1\/forecast/);
+  for (const role of ["origin", "node", "destination"])
+    assert.match(weather, new RegExp(`id: "${role}"`));
+  for (const symbol of ["SFSunMaxFill", "SFCloudRainFill", "SFCloudSnowFill", "SFCloudBoltRainFill"])
+    assert.match(weather, new RegExp(symbol));
+  assert.match(css, /\.journey-weather-marker/);
 });
 
 test("keeps mobile sheets draggable, keyboard accessible and haptic", async () => {
@@ -70,10 +81,14 @@ test("persists light, dark and system appearance across the map and native shell
 });
 
 test("packages simulator and clearly labeled device IPA while signed export stays gated", async () => {
-  const [workflow, plist, scene] = await Promise.all([
+  const [workflow, plist, scene, capacitor, packageJson, nativeConfig, nativeEntry] = await Promise.all([
     read("../.github/workflows/ios.yml"),
     read("../ios/App/App/Info.plist"),
     read("../ios/App/App/SceneDelegate.swift"),
+    read("../capacitor.config.ts"),
+    read("../package.json"),
+    read("../vite.native.config.ts"),
+    read("../native/main.tsx"),
   ]);
 
   assert.match(workflow, /generic\/platform=iOS Simulator/);
@@ -83,6 +98,14 @@ test("packages simulator and clearly labeled device IPA while signed export stay
   assert.match(workflow, /FlightyEverything-Simulator\.xcarchive/);
   assert.match(workflow, /flighty-everything-ios-simulator\.app\.zip/);
   assert.match(workflow, /flighty-everything-ios-arm64-unsigned\.ipa/);
+  assert.match(workflow, /Build bundled native frontend/);
+  assert.match(workflow, /npm run native:build/);
+  assert.doesNotMatch(capacitor, /server\s*:/);
+  assert.doesNotMatch(capacitor, /chatgpt\.site/);
+  assert.match(packageJson, /"ios:sync": "npm run native:build && cap sync ios"/);
+  assert.match(nativeConfig, /outDir: "\.\.\/native-shell"/);
+  assert.match(nativeEntry, /createRoot/);
+  assert.match(nativeEntry, /JourneyExperience27/);
   assert.match(workflow, /com\.wankun824\.flightyeverything/);
   assert.match(workflow, /release-testing/);
   assert.match(workflow, /if: steps\.signing\.outputs\.enabled == 'true'/);
