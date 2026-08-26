@@ -14,6 +14,7 @@ import {
   type JourneyMode,
   type JourneySegment,
 } from "./journeyData";
+import { JourneyWeatherIcon, useJourneyWeather } from "./journeyWeather";
 import Vehicle3D from "./Vehicle3D";
 import { useSheetDetents } from "./useSheetDetents";
 
@@ -95,6 +96,10 @@ export function MobileJourneysPanel({
             </span>
             <span className="mobile-segment-side">
               <em>{segment.date.split(" · ")[0]}</em>
+              <MobileSegmentWeather
+                segment={segment}
+                active={segment.id === active?.id}
+              />
               <SFChevronRight size="xs" />
             </span>
             {index < segments.length - 1 && (
@@ -104,6 +109,23 @@ export function MobileJourneysPanel({
         ))}
       </div>
     </div>
+  );
+}
+
+function MobileSegmentWeather({
+  segment,
+  active,
+}: {
+  segment: JourneySegment;
+  active: boolean;
+}) {
+  const weather = useJourneyWeather(active ? segment : undefined);
+  const destination = weather.find((item) => item.id === "destination");
+  if (!destination) return null;
+  return (
+    <span className="mobile-segment-weather">
+      <JourneyWeatherIcon observation={destination} />
+    </span>
   );
 }
 

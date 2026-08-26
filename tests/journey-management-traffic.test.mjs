@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { smoothFollowCamera } from "../app/followCamera.ts";
 import { JOURNEY_PLACES, createJourneySegmentBetween } from "../app/journeyData.ts";
 import { roadTrafficLabel } from "../app/roadTraffic.ts";
 
@@ -48,10 +49,24 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.match(traffic, /congestion,duration,distance,closure/);
   assert.match(traffic, /depart_at: "now"/);
   assert.match(globe, /roadTraffic\[item\.id\]\?\.coordinates/);
-  assert.match(globe, /zoom: map\.getZoom\(\)/);
-  assert.match(globe, /bearing: point\.bearing/);
+  assert.match(globe, /followVehicleRef\.current/);
+  assert.match(globe, /smoothFollowCamera/);
+  assert.doesNotMatch(globe, /zoom: map\.getZoom\(\)/);
+  assert.doesNotMatch(globe, /pitch: map\.getPitch\(\)/);
   assert.match(cards, /运营方 GTFS-RT/);
   assert.equal(roadTrafficLabel({ delayMinutes: 12, incidentCount: 0 }), "拥堵 · 预计多 12 分钟");
+});
+
+test("follow camera smooths heading without changing the user's zoom or pitch", () => {
+  const next = smoothFollowCamera(
+    { center: [139.7, 35.6], bearing: 179 },
+    { center: [139.8, 35.7], bearing: -179 },
+    32,
+  );
+  assert.ok(next.center[0] > 139.7 && next.center[0] < 139.8);
+  assert.ok(next.center[1] > 35.6 && next.center[1] < 35.7);
+  assert.ok(next.bearing > 179 && next.bearing < 181);
+  assert.deepEqual(Object.keys(next).sort(), ["bearing", "center"]);
 });
 
 test("passport cards provide per-trip color and landmark motifs", async () => {

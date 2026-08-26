@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AIRPORTS, airportByCode } from "./flightyData";
 import type { WeatherMode } from "./flightyStorage";
+import { smoothFollowCamera, type FollowCameraState } from "./followCamera";
 import type { JourneyMode, JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
 import { fetchRoadTraffic, type RoadTrafficRoute } from "./roadTraffic";
@@ -81,6 +82,7 @@ export default function FlightGlobe({
   const mapboxRef = useRef<typeof import("mapbox-gl").default | null>(null);
   const basemapRef = useRef<BasemapMode>("standard");
   const basemapThemeRef = useRef<"light" | "dark">(theme);
+  const followVehicleRef = useRef(followVehicle);
   const liveDataRef = useRef<LiveData>({
     airportsVisible,
     selectedAirport,
@@ -101,6 +103,10 @@ export default function FlightGlobe({
   useEffect(() => {
     basemapThemeRef.current = theme;
   }, [theme]);
+
+  useEffect(() => {
+    followVehicleRef.current = followVehicle;
+  }, [followVehicle]);
 
   useEffect(() => {
     liveDataRef.current = {
@@ -312,7 +318,9 @@ export default function FlightGlobe({
     const startedAt = performance.now() - playback[0].duration * Math.max(0, Math.min(1, preferredSegment.progress));
     let frame = 0;
     let publishedProgressAt = 0;
-    let followedAt = 0;
+    let followedAt = performance.now();
+    let wasFollowing = false;
+    let followCamera: FollowCameraState | null = null;
     let publishedStage = "";
     const animate = (now: number) => {
       let moving = Math.max(0, Math.min(1, preferredSegment.progress));
@@ -342,14 +350,31 @@ export default function FlightGlobe({
       }
       const point = pointAlong(coordinates, moving);
       marker.setLngLat(point.coordinate);
-      if (followVehicle && now - followedAt > 120) {
-        followedAt = now;
-        map.jumpTo({
-          center: point.coordinate,
-          bearing: point.bearing,
-          zoom: map.getZoom(),
-          pitch: map.getPitch(),
-        });
+      if (followVehicleRef.current) {
+        if (!wasFollowing || !followCamera) {
+          const currentCenter = map.getCenter();
+          followCamera = {
+            center: [currentCenter.lng, currentCenter.lat],
+            bearing: map.getBearing(),
+          };
+          followedAt = now;
+          wasFollowing = true;
+        }
+        if (now - followedAt >= 28) {
+          followCamera = smoothFollowCamera(
+            followCamera,
+            { center: point.coordinate, bearing: point.bearing },
+            now - followedAt,
+          );
+          followedAt = now;
+          map.jumpTo({
+            center: followCamera.center,
+            bearing: followCamera.bearing,
+          });
+        }
+      } else {
+        wasFollowing = false;
+        followCamera = null;
       }
       const stageMotion = vehicleStageMotion(segment.mode, moving);
       element.style.setProperty("--journey-motion-trail", stageMotion.trail.toFixed(3));
@@ -381,7 +406,7 @@ export default function FlightGlobe({
       marker.remove();
       setRiderPortal((current) => current?.host === modelHost ? null : current);
     };
-  }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled, followVehicle]);
+  }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -399,7 +424,7 @@ export default function FlightGlobe({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !loaded || !selectedJourneySegmentId || followVehicle) return;
+    if (!map || !loaded || !selectedJourneySegmentId || followVehicleRef.current) return;
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
@@ -413,7 +438,7 @@ export default function FlightGlobe({
       ],
       { padding: 110, maxZoom: 7, duration: 850, essential: true },
     );
-  }, [selectedJourneySegmentId, journeySegments, loaded, styleRevision, followVehicle]);
+  }, [selectedJourneySegmentId, journeySegments, loaded, styleRevision]);
 
   useEffect(() => {
     const map = mapRef.current;

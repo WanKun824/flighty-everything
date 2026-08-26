@@ -24,6 +24,7 @@ import SFEllipsis from "sf-symbols-lib/monochrome/SFEllipsis";
 import SFGlobe from "sf-symbols-lib/monochrome/SFGlobe";
 import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
 import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
+import SFLocationFill from "sf-symbols-lib/monochrome/SFLocationFill";
 import SFLocationNorthFill from "sf-symbols-lib/monochrome/SFLocationNorthFill";
 import SFMapFill from "sf-symbols-lib/monochrome/SFMapFill";
 import SFMagnifyingglass from "sf-symbols-lib/monochrome/SFMagnifyingglass";
@@ -117,6 +118,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     null,
   );
   const [resetToken, setResetToken] = useState(0);
+  const [followVehicle, setFollowVehicle] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [addMode, setAddMode] = useState<AddMode>("suggested");
@@ -174,6 +176,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   };
 
   const resetMap = () => {
+    setFollowVehicle(false);
     setSelectedAirport(null);
     setResetToken((value) => value + 1);
   };
@@ -226,7 +229,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         <FlightGlobe
           airportsVisible={mapOverlayOpen}
           selectedAirport={selectedAirport}
-          weatherMode={state.weatherMode}
+          weatherMode="none"
           resetToken={resetToken}
           journeySegments={journeyStore.state.segments}
           selectedJourneySegmentId={selectedJourneyId}
@@ -238,6 +241,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           onAirportSelect={openAirport}
           onWeatherError={(message) => notify(`${message}，已切换为卫星地图。`)}
           theme={appearance.resolved}
+          followVehicle={followVehicle}
         />
         <StatusBar />
 
@@ -266,15 +270,12 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 <SFMapFill size="md" />
               </button>
               <button
-                className={
-                  overlay === "weather" || state.weatherMode !== "none"
-                    ? "active"
-                    : ""
-                }
-                aria-label="打开天气图层"
-                onClick={() => setOverlay("weather")}
+                className={followVehicle ? "active" : ""}
+                aria-label="跟随载具视角"
+                aria-pressed={followVehicle}
+                onClick={() => setFollowVehicle((value) => !value)}
               >
-                <SFCloudFill size="md" />
+                <SFLocationFill size="md" />
               </button>
               <button aria-label="重新居中地图" onClick={resetMap}>
                 <SFLocationNorthFill size="md" />

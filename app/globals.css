@@ -553,7 +553,11 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .mobile-segment-main > div b { margin: 0; color: #fff; font-size: 11px; }
 .mobile-segment-main > div i { height: 1px; background: #494950; }
 .mobile-segment-side em { color: #d9d9df; font-size: 9px; font-style: normal; font-weight: 680; white-space: nowrap; }
+.mobile-segment-weather { min-height: 19px; margin-top: 7px; display: grid; place-items: center; color: #8fbff6; }
+.mobile-segment-weather .journey-weather-symbol { width: 19px; height: 19px; display: grid; place-items: center; }
+.mobile-segment-weather svg { margin: 0; width: 15px; height: 15px; }
 .mobile-segment-side svg { margin-top: 16px; color: #65656e; }
+.mobile-segment-weather + svg { margin-top: 7px; }
 .mobile-segment-card > .mobile-timeline-line { left: 25px; top: 51px; bottom: -10px; }
 
 .journey-passport-hero > h2 { margin: 12px 0 0; max-width: 75%; font-size: 31px; line-height: 1; letter-spacing: -.05em; }
