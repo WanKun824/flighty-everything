@@ -61,6 +61,34 @@ export const MODE_META: Record<
 
 export const JOURNEY_PLACES: JourneyPlace[] = [
   {
+    code: "ASK",
+    name: "浅草寺",
+    city: "东京",
+    coordinate: [139.7967, 35.7148],
+    kind: "place",
+  },
+  {
+    code: "TWR",
+    name: "东京铁塔",
+    city: "东京",
+    coordinate: [139.7454, 35.6586],
+    kind: "place",
+  },
+  {
+    code: "FSI",
+    name: "伏见稻荷大社",
+    city: "京都",
+    coordinate: [135.7727, 34.9671],
+    kind: "place",
+  },
+  {
+    code: "CHU",
+    name: "地中美术馆",
+    city: "直岛",
+    coordinate: [133.9951, 34.4493],
+    kind: "place",
+  },
+  {
     code: "HKG",
     name: "香港国际机场 · T1",
     city: "香港",

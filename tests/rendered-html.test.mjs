@@ -28,10 +28,9 @@ test("server-renders the Chinese flighty Everything journey shell and social met
   );
   assert.match(html, /property="og:image"/);
   assert.match(html, /og\.png/);
-  assert.match(html, /class="flighty-page"/);
-  assert.match(html, /class="flighty-device"/);
-  assert.match(html, />我的行程</);
-  assert.match(html, /aria-label="打开机场动态"/);
+  assert.match(html, /class="journey-experience journey-27 community-boot-screen"/);
+  assert.match(html, /flighty <em>Everything<\/em>/);
+  assert.match(html, />正在连接旅行社区…</);
 });
 
 test("keeps the live globe, radar, Apple icons and multi-transport persistence wired", async () => {

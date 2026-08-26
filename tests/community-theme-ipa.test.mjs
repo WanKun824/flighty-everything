@@ -43,7 +43,8 @@ test("community publishing is durable and exposes vehicle, service and stations 
   ]);
   assert.match(home, /href="\/community"/);
   assert.match(home, /aria-label="打开旅行社区"/);
-  assert.match(homeRoute, /lazy\(\(\) => import\("\.\/FlightyApp"\)\)/);
+  assert.match(homeRoute, /CommunityClientShell/);
+  assert.doesNotMatch(homeRoute, /FlightyApp/);
   assert.match(communityRoute, /CommunityClientShell/);
   assert.match(communityShell, /lazy\(\(\) => import\("\.\/JourneyExperience27"\)\)/);
   assert.match(detailShell, /lazy\(\(\) => import\("\.\/CommunityJourneyPage"\)\)/);
@@ -81,6 +82,7 @@ test("follows system appearance and uses iOS 27 plus an Apple Silicon IPA runner
   assert.match(appearance, /prefers-color-scheme: dark/);
   assert.match(appearance, /flighty-everything:appearance:v1/);
   assert.match(themeCss, /:root\[data-theme="light"\]/);
+  assert.match(themeCss, /data-theme="light"\] \.journey-map-intro/);
   assert.match(themeCss, /prefers-reduced-transparency/);
   assert.match(themeCss, /prefers-reduced-motion/);
   assert.match(layout, /suppressHydrationWarning/);

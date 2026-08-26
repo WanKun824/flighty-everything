@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { createJourneySegmentBetween } from "../app/journeyData.ts";
+import { JOURNEY_PLACES, createJourneySegmentBetween } from "../app/journeyData.ts";
 import { roadTrafficLabel } from "../app/roadTraffic.ts";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
@@ -30,6 +30,12 @@ test("custom place segments preserve exact endpoint continuity and naming", () =
   const second = createJourneySegmentBetween({ mode: "train", origin: first.destination, destination: { ...node, code: "KYO", name: "京都站", city: "京都", coordinate: [135.7588, 34.9858] }, date: "2026-09-18" });
   assert.equal(first.title, "寺院到车站");
   assert.deepEqual(first.destination, second.origin);
+});
+
+test("scenic-place search includes exact landmark matches before remote fallback", () => {
+  const landmarkNames = new Set(JOURNEY_PLACES.map((place) => place.name));
+  for (const name of ["浅草寺", "东京铁塔", "伏见稻荷大社", "地中美术馆"])
+    assert.ok(landmarkNames.has(name), `${name} should be available as an exact scenic-place result`);
 });
 
 test("car routes use live traffic while train status remains explicitly provider-scoped", async () => {
