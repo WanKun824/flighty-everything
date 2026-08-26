@@ -35,9 +35,14 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="zh-Hans" data-appearance="system" data-theme="dark" suppressHydrationWarning>
+    <html lang="zh-Hans" data-appearance="system" data-theme="light" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#05070a" />
+        <meta name="theme-color" content="#eef4fb" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var key="flighty-everything:appearance:v1";var saved=localStorage.getItem(key);var mode=saved==="light"||saved==="dark"||saved==="system"?saved:"system";var resolved=mode==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):mode;var root=document.documentElement;root.dataset.appearance=mode;root.dataset.theme=resolved;root.style.colorScheme=resolved;}catch(e){}})();`,
+          }}
+        />
       </head>
       <body>{children}</body>
     </html>

@@ -1,17 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AIRPORTS, airportByCode } from "./flightyData";
 import type { WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
-import { JourneyWeatherIcon, useJourneyWeather, type JourneyWeatherObservation } from "./journeyWeather";
+import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
+import { fetchRoadTraffic, type RoadTrafficRoute } from "./roadTraffic";
 import Vehicle3D from "./Vehicle3D";
 import { vehicleStageMotion } from "./vehicleMotion";
-
-const MAPBOX_TOKEN =
-  process.env.NEXT_PUBLIC_MAPBOX_TOKEN ||
-  "pk.eyJ1IjoidmluY2VudGxlZTg3NiIsImEiOiJjbXAyZHB5OHowZjh3MndzZHY0ZWs3Z3FsIn0.DC32avSkIOG7VpPwMgetjw";
 
 export type BasemapMode = "standard" | "satellite" | "terrain" | "navigation" | "traffic";
 
@@ -29,6 +26,9 @@ type Props = {
   animationSpeed?: number;
   motionEnabled?: boolean;
   theme?: "light" | "dark";
+  basemap?: BasemapMode;
+  followVehicle?: boolean;
+  onRoadTrafficChange?: (routes: Record<string, RoadTrafficRoute>) => void;
 };
 
 type RadarResponse = {
@@ -50,12 +50,7 @@ type RiderPortal = {
   progress: number;
 };
 
-type WeatherPortal = {
-  host: HTMLElement;
-  observation: JourneyWeatherObservation;
-};
-
-const BASEMAP_LABELS: Array<{ id: BasemapMode; label: string }> = [
+export const BASEMAP_OPTIONS: Array<{ id: BasemapMode; label: string }> = [
   { id: "standard", label: "标准" },
   { id: "satellite", label: "卫星" },
   { id: "terrain", label: "地形" },
@@ -77,6 +72,9 @@ export default function FlightGlobe({
   animationSpeed = 1,
   motionEnabled = true,
   theme = "dark",
+  basemap: controlledBasemap,
+  followVehicle = false,
+  onRoadTrafficChange,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
@@ -97,13 +95,8 @@ export default function FlightGlobe({
   const [loaded, setLoaded] = useState(false);
   const [styleRevision, setStyleRevision] = useState(0);
   const [radarUpdated, setRadarUpdated] = useState<string | null>(null);
-  const [basemap, setBasemap] = useState<BasemapMode>("standard");
+  const [roadTraffic, setRoadTraffic] = useState<Record<string, RoadTrafficRoute>>({});
   const [riderPortal, setRiderPortal] = useState<RiderPortal | null>(null);
-  const [weatherPortals, setWeatherPortals] = useState<WeatherPortal[]>([]);
-  const selectedWeatherSegment = journeySegments.find((item) => item.id === selectedJourneySegmentId)
-    ?? journeySegments.find((item) => item.status === "active")
-    ?? journeySegments[0];
-  const weatherObservations = useJourneyWeather(selectedWeatherSegment);
 
   useEffect(() => {
     basemapThemeRef.current = theme;
@@ -137,7 +130,7 @@ export default function FlightGlobe({
     void import("mapbox-gl").then(({ default: mapboxgl }) => {
       if (disposed || !hostRef.current) return;
       mapboxRef.current = mapboxgl;
-      mapboxgl.accessToken = MAPBOX_TOKEN;
+      mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
       const map = new mapboxgl.Map({
         container: hostRef.current,
         style: styleUrl("standard"),
@@ -224,23 +217,71 @@ export default function FlightGlobe({
       map.getSource("flighty-journey-lines") as
         | import("mapbox-gl").GeoJSONSource
         | undefined
-    )?.setData(journeyLineFeatures(journeySegments, selectedJourneySegmentId));
+    )?.setData(
+      journeyLineFeatures(journeySegments, selectedJourneySegmentId, roadTraffic),
+    );
     (
       map.getSource("flighty-journey-stops") as
         | import("mapbox-gl").GeoJSONSource
         | undefined
     )?.setData(journeyStopFeatures(journeySegments, selectedJourneySegmentId));
-  }, [journeySegments, selectedJourneySegmentId, loaded, styleRevision]);
+  }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, styleRevision]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    const carSegments = journeySegments.filter((segment) => segment.mode === "car");
+    if (!carSegments.length) {
+      void Promise.resolve().then(() => {
+        if (controller.signal.aborted) return;
+        setRoadTraffic({});
+        onRoadTrafficChange?.({});
+      });
+      return () => controller.abort();
+    }
+    void Promise.all(
+      carSegments.map((segment) =>
+        fetchRoadTraffic(segment, controller.signal).catch(() => null),
+      ),
+    ).then((routes) => {
+      if (controller.signal.aborted) return;
+      const next = Object.fromEntries(
+        routes
+          .filter((route): route is RoadTrafficRoute => Boolean(route))
+          .map((route) => [route.segmentId, route]),
+      );
+      setRoadTraffic(next);
+      onRoadTrafficChange?.(next);
+    });
+    return () => controller.abort();
+  }, [journeySegments, onRoadTrafficChange]);
 
   useEffect(() => {
     const map = mapRef.current;
     const mapboxgl = mapboxRef.current;
     if (!map || !mapboxgl || !loaded) return;
-    const segment =
+    const preferredSegment =
       journeySegments.find((item) => item.id === selectedJourneySegmentId) ??
       journeySegments.find((item) => item.status === "active") ??
       journeySegments[0];
-    if (!segment) return;
+    if (!preferredSegment) return;
+    const preferredIndex = Math.max(0, journeySegments.findIndex((item) => item.id === preferredSegment.id));
+    const playbackSegments = [
+      ...journeySegments.slice(preferredIndex),
+      ...journeySegments.slice(0, preferredIndex),
+    ];
+    const playback = playbackSegments.map((item) => ({
+      segment: item,
+      coordinates: roadTraffic[item.id]?.coordinates ?? greatCircleCoordinates(
+        item.origin.coordinate,
+        item.destination.coordinate,
+        128,
+      ),
+      duration: animationDuration(item.mode) / Math.max(0.25, animationSpeed),
+    }));
+    const totalDuration = playback.reduce((sum, item) => sum + item.duration, 0);
+    let playbackIndex = 0;
+    let segment = playback[0].segment;
+    let coordinates = playback[0].coordinates;
 
     const element = document.createElement("button");
     element.type = "button";
@@ -250,9 +291,7 @@ export default function FlightGlobe({
       "aria-label",
       `${segment.title} · ${transportLabel(segment.mode)}正在路线中移动`,
     );
-    element.addEventListener("click", () =>
-      callbacksRef.current.onJourneySegmentSelect?.(segment.id),
-    );
+    element.addEventListener("click", () => callbacksRef.current.onJourneySegmentSelect?.(segment.id));
 
     const modelHost = document.createElement("span");
     modelHost.className = "journey-vehicle-3d-host";
@@ -260,11 +299,6 @@ export default function FlightGlobe({
     let publishedHeading = Number.NaN;
     setRiderPortal({ host: modelHost, segment, heading: 0, progress: segment.progress });
 
-    const coordinates = greatCircleCoordinates(
-      segment.origin.coordinate,
-      segment.destination.coordinate,
-      128,
-    );
     const marker = new mapboxgl.Marker({
       element,
       anchor: "center",
@@ -275,20 +309,48 @@ export default function FlightGlobe({
       .addTo(map);
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const startedAt = performance.now();
+    const startedAt = performance.now() - playback[0].duration * Math.max(0, Math.min(1, preferredSegment.progress));
     let frame = 0;
     let publishedProgressAt = 0;
+    let followedAt = 0;
     let publishedStage = "";
     const animate = (now: number) => {
-      const base = segment.status === "complete" ? 1 : segment.progress;
-      const duration = animationDuration(segment.mode) / Math.max(0.25, animationSpeed);
-      const moving = reduceMotion.matches || !motionEnabled
-        ? base
-        : segment.status === "complete"
-          ? 1
-          : (base + (now - startedAt) / duration) % 1;
+      let moving = Math.max(0, Math.min(1, preferredSegment.progress));
+      if (!reduceMotion.matches && motionEnabled) {
+        const elapsed = (now - startedAt) % totalDuration;
+        let cursor = 0;
+        let nextIndex = playback.length - 1;
+        for (let index = 0; index < playback.length; index += 1) {
+          if (elapsed < cursor + playback[index].duration) {
+            nextIndex = index;
+            break;
+          }
+          cursor += playback[index].duration;
+        }
+        moving = (elapsed - cursor) / playback[nextIndex].duration;
+        if (nextIndex !== playbackIndex) {
+          playbackIndex = nextIndex;
+          segment = playback[nextIndex].segment;
+          coordinates = playback[nextIndex].coordinates;
+          publishedHeading = Number.NaN;
+          publishedStage = "";
+          element.className = `journey-vehicle-3d-marker ${segment.mode}`;
+          setRiderPortal((current) => current?.host === modelHost
+            ? { ...current, segment, progress: moving }
+            : current);
+        }
+      }
       const point = pointAlong(coordinates, moving);
       marker.setLngLat(point.coordinate);
+      if (followVehicle && now - followedAt > 120) {
+        followedAt = now;
+        map.jumpTo({
+          center: point.coordinate,
+          bearing: point.bearing,
+          zoom: map.getZoom(),
+          pitch: map.getPitch(),
+        });
+      }
       const stageMotion = vehicleStageMotion(segment.mode, moving);
       element.style.setProperty("--journey-motion-trail", stageMotion.trail.toFixed(3));
       if (stageMotion.stage !== publishedStage) {
@@ -319,31 +381,7 @@ export default function FlightGlobe({
       marker.remove();
       setRiderPortal((current) => current?.host === modelHost ? null : current);
     };
-  }, [journeySegments, selectedJourneySegmentId, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    const mapboxgl = mapboxRef.current;
-    if (!map || !mapboxgl || !loaded || !weatherObservations.length) {
-      const timer = window.setTimeout(() => setWeatherPortals([]), 0);
-      return () => window.clearTimeout(timer);
-    }
-    const nextPortals: WeatherPortal[] = [];
-    const markers = weatherObservations.map((observation) => {
-      const element = document.createElement("div");
-      element.className = `journey-weather-marker is-${observation.id}`;
-      const host = document.createElement("span");
-      element.appendChild(host);
-      nextPortals.push({ host, observation });
-      return new mapboxgl.Marker({ element, anchor: "bottom", offset: [0, -9] })
-        .setLngLat(observation.coordinate)
-        .addTo(map);
-    });
-    setWeatherPortals(nextPortals);
-    return () => {
-      markers.forEach((marker) => marker.remove());
-    };
-  }, [loaded, styleRevision, weatherObservations]);
+  }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled, followVehicle]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -361,7 +399,7 @@ export default function FlightGlobe({
 
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || !loaded || !selectedJourneySegmentId) return;
+    if (!map || !loaded || !selectedJourneySegmentId || followVehicle) return;
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
@@ -375,7 +413,7 @@ export default function FlightGlobe({
       ],
       { padding: 110, maxZoom: 7, duration: 850, essential: true },
     );
-  }, [selectedJourneySegmentId, journeySegments, loaded, styleRevision]);
+  }, [selectedJourneySegmentId, journeySegments, loaded, styleRevision, followVehicle]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -464,13 +502,12 @@ export default function FlightGlobe({
     };
   }, [weatherMode, loaded, styleRevision]);
 
-  const switchBasemap = (next: BasemapMode) => {
-    if (next === basemap) return;
+  const switchBasemap = useCallback((next: BasemapMode) => {
+    if (next === basemapRef.current) return;
     const map = mapRef.current;
     const previousUrl = styleUrl(basemapRef.current);
     const nextUrl = styleUrl(next);
     basemapRef.current = next;
-    setBasemap(next);
     if (!map) return;
     if (previousUrl === nextUrl) {
       configureBasemap(map, next, basemapThemeRef.current);
@@ -483,7 +520,11 @@ export default function FlightGlobe({
     }
     setLoaded(false);
     map.setStyle(nextUrl);
-  };
+  }, []);
+
+  useEffect(() => {
+    if (controlledBasemap) switchBasemap(controlledBasemap);
+  }, [controlledBasemap, switchBasemap]);
 
   return (
     <div
@@ -501,24 +542,7 @@ export default function FlightGlobe({
         />,
         riderPortal.host,
       )}
-      {weatherPortals.map((portal) => createPortal(
-        <JourneyWeatherIcon observation={portal.observation} />,
-        portal.host,
-        `${portal.observation.id}-${portal.observation.coordinate.join("-")}`,
-      ))}
       <div className="globe-loading">正在载入实时地球…</div>
-      <div className="map-layer-switcher" role="group" aria-label="地图图层">
-        {BASEMAP_LABELS.map((item) => (
-          <button
-            key={item.id}
-            className={basemap === item.id ? "active" : ""}
-            aria-pressed={basemap === item.id}
-            onClick={() => switchBasemap(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
       {weatherMode !== "none" && (
         <div className="weather-legend">
           <span>雨</span><i className="green" /><i className="yellow" /><i className="orange" /><i className="red" /><i className="pink" />
@@ -527,7 +551,6 @@ export default function FlightGlobe({
         </div>
       )}
       <span className="map-data-credits">
-        <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">天气 Open-Meteo</a>
         {weatherMode !== "none" && <a href="https://www.rainviewer.com/" target="_blank" rel="noreferrer">雷达 RainViewer</a>}
       </span>
     </div>
@@ -596,7 +619,7 @@ function installProductLayers(
       source: "flighty-journey-lines",
       slot: "top",
       paint: {
-        "line-color": ["get", "color"],
+        "line-color": ["coalesce", ["get", "trafficColor"], ["get", "color"]],
         "line-width": ["case", ["get", "selected"], 10, 7],
         "line-opacity": 0.16,
         "line-blur": 5,
@@ -611,7 +634,7 @@ function installProductLayers(
       slot: "top",
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
-        "line-color": ["get", "color"],
+        "line-color": ["coalesce", ["get", "trafficColor"], ["get", "color"]],
         "line-width": ["case", ["get", "selected"], 3.5, 2.2],
         "line-opacity": ["case", ["get", "selected"], 1, 0.72],
         "line-dasharray": [2, 1.6],
@@ -774,22 +797,38 @@ const journeyColor = {
   ferry: "#32ade6",
 } as const;
 
-function journeyLineFeatures(segments: JourneySegment[], selectedId: string | null) {
+function journeyLineFeatures(
+  segments: JourneySegment[],
+  selectedId: string | null,
+  roadTraffic: Record<string, RoadTrafficRoute> = {},
+) {
   return {
     type: "FeatureCollection" as const,
-    features: segments.map((segment) => ({
-      type: "Feature" as const,
-      properties: {
-        segmentId: segment.id,
-        color: journeyColor[segment.mode],
-        selected: segment.id === selectedId,
-      },
-      geometry: {
-        type: "LineString" as const,
-        coordinates: greatCircleCoordinates(segment.origin.coordinate, segment.destination.coordinate),
-      },
-    })),
+    features: segments.map((segment) => {
+      const traffic = roadTraffic[segment.id];
+      return {
+        type: "Feature" as const,
+        properties: {
+          segmentId: segment.id,
+          color: journeyColor[segment.mode],
+          trafficColor: traffic ? congestionColor(traffic.congestion) : null,
+          selected: segment.id === selectedId,
+        },
+        geometry: {
+          type: "LineString" as const,
+          coordinates: traffic?.coordinates ?? greatCircleCoordinates(segment.origin.coordinate, segment.destination.coordinate),
+        },
+      };
+    }),
   };
+}
+
+function congestionColor(levels: RoadTrafficRoute["congestion"]) {
+  if (levels.includes("severe")) return "#ff453a";
+  if (levels.includes("heavy")) return "#ff9f0a";
+  if (levels.includes("moderate")) return "#ffd60a";
+  if (levels.includes("low")) return "#30d158";
+  return "#ff453a";
 }
 
 function journeyStopFeatures(segments: JourneySegment[], selectedId: string | null) {

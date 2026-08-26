@@ -246,8 +246,23 @@ export function createJourneySegment(input: {
   departure?: string;
   note?: string;
 }) {
-  const origin = place(input.from);
-  const destination = place(input.to);
+  return createJourneySegmentBetween({
+    ...input,
+    origin: place(input.from),
+    destination: place(input.to),
+  });
+}
+
+export function createJourneySegmentBetween(input: {
+  mode: JourneyMode;
+  origin: JourneyPlace;
+  destination: JourneyPlace;
+  date: string;
+  departure?: string;
+  note?: string;
+  title?: string;
+}) {
+  const { origin, destination } = input;
   const distanceKm = Math.max(
     3,
     Math.round(haversineKm(origin.coordinate, destination.coordinate)),
@@ -263,7 +278,7 @@ export function createJourneySegment(input: {
     id: `journey-${input.mode}-${Date.now()}`,
     mode: input.mode,
     service: defaultService(input.mode, distanceKm),
-    title: `${origin.city}到${destination.city}`,
+    title: input.title?.trim() || `${origin.city} → ${destination.city}`,
     origin,
     destination,
     date: dateLabel(input.date),

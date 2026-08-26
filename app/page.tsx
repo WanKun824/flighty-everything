@@ -6,7 +6,7 @@ const FlightyApp = lazy(() => import("./FlightyApp"));
 
 function BootScreen() {
   return (
-    <main className="flighty-page" data-theme="dark">
+    <main className="flighty-page">
       <section className="flighty-device" aria-label="flighty Everything 正在启动">
         <div className="flighty-boot-screen">
           <strong>flighty <em>Everything</em></strong>

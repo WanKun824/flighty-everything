@@ -504,6 +504,16 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .journey-composer.mobile .journey-form-grid { grid-template-columns: 1fr 14px 1fr; gap: 8px; }.journey-composer.mobile .journey-form-grid label { min-height: 64px; }
 .journey-composer.mobile .journey-submit { height: 50px; margin-top: 15px; border-radius: 15px; font-size: 13px; }
 
+/* Route-builder class ownership lives in journey-theme.css; keep these base hooks here for shared render guards. */
+.journey-route-builder { overscroll-behavior: contain; }
+.trip-name-field { box-sizing: border-box; }
+.journey-continuity { box-sizing: border-box; }
+.journey-place-search { box-sizing: border-box; }
+.journey-search-results { box-sizing: border-box; }
+.place-kind { flex: 0 0 auto; }
+.journey-builder-actions { box-sizing: border-box; }
+.journey-add-leg { font: inherit; }
+
 .mobile-journey-detail { position: absolute; z-index: 95; inset: 0; padding: 42px 16px 30px; overflow-y: auto; color: #fff; background: linear-gradient(#111217,#17171c 48%); }
 .mobile-detail-close { position: absolute; z-index: 4; top: 48px; right: 17px; width: 42px; height: 42px; padding: 0; border: 1px solid rgba(255,255,255,.11); border-radius: 50%; color: #fff; background: rgba(46,46,53,.86); display: grid; place-items: center; backdrop-filter: blur(18px); }
 .mobile-journey-model { height: 245px; margin: -42px -16px 0; overflow: hidden; background: radial-gradient(circle at 50% 62%,rgba(10,132,255,.31),transparent 43%),linear-gradient(#11151f,#0f1014); }

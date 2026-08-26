@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import SFArrowDownLeftAndArrowUpRight from "sf-symbols-lib/monochrome/SFArrowDownLeftAndArrowUpRight";
 import SFGlobeAsiaAustraliaFill from "sf-symbols-lib/monochrome/SFGlobeAsiaAustraliaFill";
 import SFLocationNorthFill from "sf-symbols-lib/monochrome/SFLocationNorthFill";
+import SFMapFill from "sf-symbols-lib/monochrome/SFMapFill";
 import SFMoonStarsFill from "sf-symbols-lib/monochrome/SFMoonStarsFill";
 import SFPlus from "sf-symbols-lib/monochrome/SFPlus";
 import SFSliderHorizontal3 from "sf-symbols-lib/monochrome/SFSliderHorizontal3";
@@ -20,12 +21,14 @@ import {
   publishCommunityJourney,
   type CommunityJourney,
 } from "./communityData";
-import FlightGlobe from "./FlightGlobe";
+import FlightGlobe, { BASEMAP_OPTIONS, type BasemapMode } from "./FlightGlobe";
 import { AnimationControls, JourneyCard, PublishDialog } from "./JourneyCommunityUI";
 import JourneyComposer from "./JourneyComposer";
+import { TripManagerDialog, TripPassportStrip } from "./JourneyPassportUI";
 import { MODE_META, type JourneySegment } from "./journeyData";
 import { useJourneyPreferences } from "./journeyPreferences";
 import { useJourneyStore } from "./journeyStorage";
+import type { RoadTrafficRoute } from "./roadTraffic";
 import Vehicle3D from "./Vehicle3D";
 
 type Surface = "mine" | "discover";
@@ -42,6 +45,11 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
   const [immersive, setImmersive] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
+  const [mapMenuOpen, setMapMenuOpen] = useState(false);
+  const [tripManagerOpen, setTripManagerOpen] = useState(false);
+  const [basemap, setBasemap] = useState<BasemapMode>("standard");
+  const [followVehicle, setFollowVehicle] = useState(false);
+  const [roadTraffic, setRoadTraffic] = useState<Record<string, RoadTrafficRoute>>({});
   const [publishOpen, setPublishOpen] = useState(false);
   const [resetToken, setResetToken] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
@@ -76,6 +84,7 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
   }, []);
 
   const selectedMine = state.segments.find((item) => item.id === state.selectedSegmentId) ?? state.segments[0];
+  const activeTrip = state.trips.find((item) => item.id === state.activeTripId) ?? state.trips[0];
   const selectedCommunity = community.find((item) => item.communityId === selectedCommunityId) ?? community[0];
   const selected = surface === "mine" ? selectedMine : selectedCommunity;
   const mapSegments = useMemo(() => surface === "mine" ? state.segments : community, [surface, state.segments, community]);
@@ -139,7 +148,7 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
         <FlightGlobe
           airportsVisible={false}
           selectedAirport={null}
-          weatherMode={state.weatherMode}
+          weatherMode="none"
           resetToken={resetToken}
           journeySegments={mapSegments}
           selectedJourneySegmentId={selectedMapId ?? null}
@@ -147,6 +156,9 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
           animationSpeed={preferences.animationSpeed}
           motionEnabled={preferences.motionEnabled}
           theme={appearance.resolved}
+          basemap={basemap}
+          followVehicle={followVehicle}
+          onRoadTrafficChange={setRoadTraffic}
           onJourneySegmentSelect={(id) => {
             if (surface === "mine") store.selectSegment(id);
             else {
@@ -170,7 +182,6 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
           <button className={surface === "discover" ? "active" : ""} onClick={() => setSurface("discover")}>社区</button>
         </nav>
         <div className="journey-header-actions">
-          <button className="journey-icon-button" aria-label={`切换到${appearance.resolved === "dark" ? "浅色" : "深色"}模式`} onClick={appearance.cycle}>{appearance.resolved === "dark" ? <SFSunMaxFill size="sm" /> : <SFMoonStarsFill size="sm" />}</button>
           <button className="journey-icon-button" aria-label="分享当前行程" onClick={() => void shareJourney()}><SFSquareAndArrowUp size="sm" /></button>
           <button className="journey-add-button" onClick={() => setPublishOpen(true)}><SFSquareAndArrowUp size="xs" />发布行程</button>
           <button className="journey-icon-button journey-new-button" aria-label="新建行程" onClick={() => setComposerOpen(true)}><SFPlus size="sm" /></button>
@@ -184,24 +195,38 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
         {surface === "discover" && <span className={`community-status ${communityStatus}`}><i />{communityStatus === "live" ? "社区已同步" : communityStatus === "loading" ? "正在同步社区" : "离线精选"}</span>}
       </div>
 
-      <div className="journey-map-actions liquid-glass-control">
-        <button aria-label="进入沉浸模式" onClick={() => void enterImmersive()}><SFArrowDownLeftAndArrowUpRight size="sm" /><span>沉浸</span></button>
-        <button className={controlsOpen ? "active" : ""} aria-label="打开动画设置" onClick={() => setControlsOpen((value) => !value)}><SFSliderHorizontal3 size="sm" /><span>动画</span></button>
-        <button aria-label="重新定位地图" onClick={() => setResetToken((value) => value + 1)}><SFLocationNorthFill size="sm" /></button>
+      <div className="journey-map-actions liquid-glass-control" aria-label="地图菜单">
+        <button className={mapMenuOpen ? "active" : ""} aria-label="打开地图菜单" onClick={() => setMapMenuOpen((value) => !value)}><SFMapFill size="sm" /><span>地图</span></button>
+        <button className={followVehicle ? "active" : ""} aria-pressed={followVehicle} aria-label="跟随载具视角" onClick={() => setFollowVehicle((value) => !value)}><SFLocationNorthFill size="sm" /><span>跟随</span></button>
+        <button aria-label="重新定位地图" onClick={() => { setFollowVehicle(false); setResetToken((value) => value + 1); }}><SFGlobeAsiaAustraliaFill size="sm" /><span>全览</span></button>
       </div>
 
+      {mapMenuOpen && !immersive && (
+        <aside className="journey-map-menu-popover" aria-label="地图显示设置">
+          <header><span><SFMapFill size="sm" />地图显示</span><button aria-label="关闭地图菜单" onClick={() => setMapMenuOpen(false)}><SFXmark size="xs" /></button></header>
+          <section><small>地图图层</small><div className="map-menu-options">{BASEMAP_OPTIONS.map((item) => <button key={item.id} className={basemap === item.id ? "active" : ""} aria-pressed={basemap === item.id} onClick={() => setBasemap(item.id)}>{item.label}</button>)}</div></section>
+          <section><small>界面模式</small><div className="map-menu-options appearance">{(["system", "light", "dark"] as const).map((mode) => <button key={mode} className={appearance.mode === mode ? "active" : ""} aria-pressed={appearance.mode === mode} onClick={() => appearance.setMode(mode)}>{mode === "system" ? "跟随系统" : mode === "light" ? <><SFSunMaxFill size="xs" />浅色</> : <><SFMoonStarsFill size="xs" />深色</>}</button>)}</div></section>
+          <div className="map-menu-utilities">
+            <button onClick={() => { setControlsOpen(true); setMapMenuOpen(false); }}><SFSliderHorizontal3 size="xs" />3D 动画</button>
+            <button onClick={() => void enterImmersive()}><SFArrowDownLeftAndArrowUpRight size="xs" />沉浸地图</button>
+          </div>
+          <p>天气已移入行程票卡，地图上不再显示天气标记。</p>
+        </aside>
+      )}
+
       {selected && !immersive && (
-        <aside className="journey-live-preview" style={{ "--journey-accent": MODE_META[selected.mode].color } as CSSProperties}>
+        <aside className={`journey-live-preview ${surface}`} style={{ "--journey-accent": MODE_META[selected.mode].color } as CSSProperties}>
           <div className="journey-live-model"><Vehicle3D kind={selected.mode} view="hero" progress={selected.progress} rate={preferences.animationSpeed} /></div>
           <div><small>{surface === "mine" ? "LIVE 3D JOURNEY" : `${selectedCommunity?.creatorName ?? "旅行者"} 分享`}</small><strong>{selected.title}</strong><span>{selected.origin.code}<i />{selected.destination.code}</span></div>
         </aside>
       )}
 
-      <section className="journey-card-dock" aria-label={surface === "mine" ? "我的行程列表" : "社区行程列表"}>
+      <section className={`journey-card-dock ${surface}`} aria-label={surface === "mine" ? "我的行程列表" : "社区行程列表"}>
+        {surface === "mine" && <TripPassportStrip trips={state.trips} activeTripId={state.activeTripId} onSelect={store.selectTrip} onCreate={() => { store.createTrip(); setComposerOpen(true); }} onManage={() => setTripManagerOpen(true)} />}
         <header><div><small>{surface === "mine" ? "YOUR JOURNEYS" : "COMMUNITY"}</small><strong>{surface === "mine" ? "我的行程" : "社区分享"}</strong></div><span>{mapSegments.length} 条路线</span></header>
         <div className="journey-card-rail">
           {surface === "mine" ? state.segments.map((segment) => (
-            <JourneyCard key={segment.id} segment={segment} active={segment.id === selectedMine?.id} onClick={() => store.selectSegment(segment.id)} />
+            <JourneyCard key={segment.id} segment={segment} active={segment.id === selectedMine?.id} roadTraffic={roadTraffic[segment.id]} onClick={() => store.selectSegment(segment.id)} />
           )) : community.map((journey) => (
             <JourneyCard key={journey.communityId} segment={journey} community={journey} active={journey.communityId === selectedCommunity?.communityId} liked={likedIds.includes(journey.communityId)} onClick={() => setSelectedCommunityId(journey.communityId)} onLike={() => void like(journey)} onSave={() => saveCommunity(journey)} onDetail={onOpenCommunity ? () => onOpenCommunity(journey) : undefined} />
           ))}
@@ -210,7 +235,8 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
 
       {controlsOpen && !immersive && <AnimationControls vehicleScale={preferences.vehicleScale} animationSpeed={preferences.animationSpeed} motionEnabled={preferences.motionEnabled} onScale={(vehicleScale) => updatePreferences({ vehicleScale })} onSpeed={(animationSpeed) => updatePreferences({ animationSpeed })} onMotion={(motionEnabled) => updatePreferences({ motionEnabled })} onReset={resetPreferences} onClose={() => setControlsOpen(false)} />}
       {immersive && <button className="journey-exit-immersive" onClick={() => setImmersive(false)}><SFXmark size="xs" />退出沉浸</button>}
-      {composerOpen && <JourneyComposer variant="desktop" onClose={() => setComposerOpen(false)} onAdd={store.addSegment} />}
+      {composerOpen && <JourneyComposer variant="desktop" tripName={state.tripName} initialOrigin={state.segments.at(-1)?.destination} onClose={() => setComposerOpen(false)} onAddMany={(segments, tripName) => { store.renameTrip(tripName); store.addSegments(segments); }} />}
+      {tripManagerOpen && activeTrip && <TripManagerDialog trip={activeTrip} tripCount={state.trips.length} onClose={() => setTripManagerOpen(false)} onRename={store.renameTrip} onAppearance={store.updateTripAppearance} onDelete={() => { store.deleteTrip(activeTrip.id); setTripManagerOpen(false); }} onCreate={store.createTrip} onUpdateSegment={store.updateSegment} onRemoveSegment={store.removeSegment} />}
       {publishOpen && <PublishDialog segments={state.segments} selectedId={selectedMine?.id} onClose={() => setPublishOpen(false)} onPublish={publish} />}
       {toast && <div className="journey-toast" role="status">{toast}</div>}
     </main>

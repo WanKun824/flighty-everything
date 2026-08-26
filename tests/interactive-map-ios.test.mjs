@@ -4,11 +4,13 @@ import test from "node:test";
 
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
-test("wires real 3D vehicles, weather checkpoints and five production map modes", async () => {
-  const [globe, vehicle, weather, css] = await Promise.all([
+test("wires real 3D vehicles, card-only weather and five production map modes", async () => {
+  const [globe, vehicle, weather, cards, journeyPage, css] = await Promise.all([
     read("../app/FlightGlobe.tsx"),
     read("../app/Vehicle3D.tsx"),
     read("../app/journeyWeather.tsx"),
+    read("../app/JourneyCommunityUI.tsx"),
+    read("../app/JourneyExperience27.tsx"),
     read("../app/globals.css"),
   ]);
 
@@ -30,13 +32,18 @@ test("wires real 3D vehicles, weather checkpoints and five production map modes"
   for (const model of ["legacy-plane.glb", "porsche.glb", "train.glb", "boat.glb"])
     assert.match(vehicle, new RegExp(model.replace(".", "\\.")));
   assert.match(css, /\.journey-vehicle-3d-marker/);
-  assert.match(css, /\.map-layer-switcher/);
+  assert.match(journeyPage, /BASEMAP_OPTIONS/);
+  assert.match(journeyPage, /journey-map-menu-popover/);
+  assert.doesNotMatch(globe, /JourneyWeatherIcon/);
+  assert.doesNotMatch(globe, /journey-weather-marker/);
   assert.match(weather, /api\.open-meteo\.com\/v1\/forecast/);
   for (const role of ["origin", "node", "destination"])
     assert.match(weather, new RegExp(`id: "${role}"`));
   for (const symbol of ["SFSunMaxFill", "SFCloudRainFill", "SFCloudSnowFill", "SFCloudBoltRainFill"])
     assert.match(weather, new RegExp(symbol));
-  assert.match(css, /\.journey-weather-marker/);
+  assert.match(cards, /journey-ticket-strip/);
+  assert.match(cards, /JourneyWeatherIcon/);
+  assert.match(css, /\.journey-weather-symbol/);
 });
 
 test("keeps mobile sheets draggable, keyboard accessible and haptic", async () => {

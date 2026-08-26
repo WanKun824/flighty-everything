@@ -12,12 +12,15 @@ import SFSquareAndArrowUp from "sf-symbols-lib/monochrome/SFSquareAndArrowUp";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import { communityJourneyHref, type CommunityJourney } from "./communityData";
 import { MODE_META, type JourneySegment } from "./journeyData";
+import { JourneyWeatherIcon, useJourneyWeather } from "./journeyWeather";
+import { roadTrafficLabel, type RoadTrafficRoute } from "./roadTraffic";
 
-export function JourneyCard({ segment, community, active, liked = false, onClick, onLike, onSave, onDetail }: {
+export function JourneyCard({ segment, community, active, liked = false, roadTraffic, onClick, onLike, onSave, onDetail }: {
   segment: JourneySegment;
   community?: CommunityJourney;
   active: boolean;
   liked?: boolean;
+  roadTraffic?: RoadTrafficRoute;
   onClick: () => void;
   onLike?: () => void;
   onSave?: () => void;
@@ -37,6 +40,7 @@ export function JourneyCard({ segment, community, active, liked = false, onClick
           {community && <small>{community.creatorName} · {community.caption}</small>}
         </span>
       </button>
+      {!community && <JourneyCardTravelDetails segment={segment} active={active} roadTraffic={roadTraffic} />}
       {community && (
         <span className="community-card-actions">
           <button aria-label={`喜欢 ${segment.title}`} className={liked ? "liked" : ""} onClick={onLike}>{liked ? <SFHeartFill size="xs" /> : <SFHeart size="xs" />}<small>{community.likes}</small></button>
@@ -47,6 +51,30 @@ export function JourneyCard({ segment, community, active, liked = false, onClick
         </span>
       )}
     </article>
+  );
+}
+
+function JourneyCardTravelDetails({ segment, active, roadTraffic }: {
+  segment: JourneySegment;
+  active: boolean;
+  roadTraffic?: RoadTrafficRoute;
+}) {
+  const weather = useJourneyWeather(active ? segment : undefined);
+  const destinationWeather = weather.find((item) => item.id === "destination") ?? weather.at(-1);
+  const status = segment.mode === "car"
+    ? (roadTraffic ? roadTrafficLabel(roadTraffic) : "正在取得实时路况")
+    : segment.mode === "train"
+      ? "计划车次 · 可接入运营方 GTFS-RT"
+      : segment.mode === "flight"
+        ? "航班票务"
+        : "船票信息";
+  return (
+    <div className="journey-ticket-strip" aria-label={`${segment.service} 票务与天气`}>
+      <span className="journey-ticket-code"><small>TICKET</small><strong>{segment.service}</strong></span>
+      <span className="journey-ticket-times"><b>{segment.departure}</b><i /><b>{segment.arrival}</b><small>{status}</small></span>
+      <span className="journey-ticket-note" title={segment.note}>{segment.note}</span>
+      {destinationWeather && <span className="journey-card-weather"><JourneyWeatherIcon observation={destinationWeather} /></span>}
+    </div>
   );
 }
 
