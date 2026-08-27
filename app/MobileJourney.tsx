@@ -1,8 +1,10 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import SFBookClosedFill from "sf-symbols-lib/monochrome/SFBookClosedFill";
 import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
 import SFChevronRight from "sf-symbols-lib/monochrome/SFChevronRight";
+import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
 import SFPlus from "sf-symbols-lib/monochrome/SFPlus";
 import SFTrash from "sf-symbols-lib/monochrome/SFTrash";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
@@ -15,6 +17,7 @@ import {
   type JourneySegment,
 } from "./journeyData";
 import { JourneyWeatherIcon, useJourneyWeather } from "./journeyWeather";
+import type { JourneyTrip } from "./journeyStorage";
 import Vehicle3D from "./Vehicle3D";
 import { useSheetDetents } from "./useSheetDetents";
 
@@ -23,38 +26,51 @@ export function MobileJourneysPanel({
   segments,
   onOpen,
   onAdd,
+  onEditNames,
+  onSaveToPassport,
+  savedToPassport,
 }: {
   tripName: string;
   segments: JourneySegment[];
   onOpen: (segment: JourneySegment) => void;
   onAdd: () => void;
+  onEditNames: () => void;
+  onSaveToPassport: () => void;
+  savedToPassport: boolean;
 }) {
   const stats = journeyStats(segments);
   const active =
     segments.find((segment) => segment.status === "active") ?? segments[0];
   return (
     <div className="panel-scroll mobile-journey-scroll">
-      <button
-        className="mobile-plan-card"
-        onClick={() => active && onOpen(active)}
-      >
-        <span>
-          <small>正在规划</small>
-          <b>8 日 · {stats.modes} 种交通</b>
-        </span>
-        <strong>{tripName}</strong>
-        <p>香港 · 东京 · 京都 · 直岛</p>
-        <div>
-          <i
-            style={{ width: `${Math.max(8, active?.progress ?? 0) * 100}%` }}
-          />
-        </div>
-        <footer>
-          <span>{stats.segments} 段行程</span>
-          <span>{stats.distanceKm.toLocaleString("zh-CN")} km</span>
-          <SFChevronRight size="xs" />
-        </footer>
-      </button>
+      <div className="mobile-plan-card-wrap">
+        <button
+          className="mobile-plan-card"
+          onClick={() => active && onOpen(active)}
+        >
+          <span>
+            <small>正在规划</small>
+            <b>8 日 · {stats.modes} 种交通</b>
+          </span>
+          <strong>{tripName}</strong>
+          <p>香港 · 东京 · 京都 · 直岛</p>
+          <div>
+            <i
+              style={{ width: `${Math.max(0.08, active?.progress ?? 0) * 100}%` }}
+            />
+          </div>
+          <footer>
+            <span>{stats.segments} 段行程</span>
+            <span>{stats.distanceKm.toLocaleString("zh-CN")} km</span>
+            <SFChevronRight size="xs" />
+          </footer>
+        </button>
+        <button className="mobile-plan-edit" aria-label="编辑行程名称" onClick={onEditNames}><SFPencil size="xs" /></button>
+        <button className={`mobile-plan-save ${savedToPassport ? "saved" : ""}`} onClick={onSaveToPassport}>
+          {savedToPassport ? <SFCheckmarkCircleFill size="xs" /> : <SFBookClosedFill size="xs" />}
+          {savedToPassport ? "已保存到旅迹" : "保存到旅迹"}
+        </button>
+      </div>
       <div className="mobile-section-heading">
         <span>接下来的行程</span>
         <button onClick={onAdd}>
@@ -130,10 +146,18 @@ function MobileSegmentWeather({
 }
 
 export function MobileJourneyPassport({
-  segments,
+  trips,
+  activeTripId,
+  onSelect,
+  onEdit,
 }: {
-  segments: JourneySegment[];
+  trips: JourneyTrip[];
+  activeTripId: string;
+  onSelect: (id: string) => void;
+  onEdit: (trip: JourneyTrip) => void;
 }) {
+  const savedTrips = trips.filter((trip) => Boolean(trip.savedToPassportAt));
+  const segments = savedTrips.flatMap((trip) => trip.segments);
   const stats = journeyStats(segments);
   const counts = (Object.keys(MODE_META) as JourneyMode[]).map((mode) => ({
     mode,
@@ -196,6 +220,23 @@ export function MobileJourneyPassport({
         <small>总在途时间</small>
         <strong>{formatJourneyDuration(stats.durationMinutes)}</strong>
         <p>不只记录飞行，也记录铁路、公路与海上时间。</p>
+      </section>
+      <section className="mobile-passport-trips">
+        <header><span>已保存的行程</span><small>{savedTrips.length} 本旅迹</small></header>
+        {savedTrips.map((trip) => {
+          const tripStats = journeyStats(trip.segments);
+          return (
+            <div className={`mobile-passport-trip ${trip.id === activeTripId ? "active" : ""}`} key={trip.id} style={{ "--trip-color": trip.color } as CSSProperties}>
+              <button onClick={() => onSelect(trip.id)}>
+                <small>TRIP PASSPORT</small>
+                <strong>{trip.name}</strong>
+                <span>{tripStats.segments} 段 · {tripStats.cities} 城 · {tripStats.distanceKm.toLocaleString("zh-CN")} km</span>
+              </button>
+              <button aria-label={`编辑 ${trip.name}`} onClick={() => onEdit(trip)}><SFPencil size="xs" /></button>
+            </div>
+          );
+        })}
+        {!savedTrips.length && <p>还没有保存的旅迹。回到“行程”后点击“保存到旅迹”。</p>}
       </section>
     </div>
   );

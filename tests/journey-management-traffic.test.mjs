@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { smoothFollowCamera } from "../app/followCamera.ts";
 import { JOURNEY_PLACES, createJourneySegmentBetween } from "../app/journeyData.ts";
 import { roadTrafficLabel } from "../app/roadTraffic.ts";
 
@@ -16,12 +15,18 @@ test("custom route builder connects searched places without teleporting between 
   assert.match(search, /search\/searchbox\/v1\/suggest/);
   assert.match(search, /search\/searchbox\/v1\/retrieve/);
   assert.match(composer, /setOrigin\(segment\.destination\)/);
+  assert.match(composer, /originSuggestions/);
+  assert.match(composer, /minQueryLength/);
   assert.match(composer, /onAddMany/);
   assert.match(composer, /保存整个行程/);
   assert.match(store, /flighty-everything:journey:v2/);
   assert.match(store, /selectTrip/);
   assert.match(store, /createTrip/);
   assert.match(store, /updateTripAppearance/);
+  assert.match(store, /renameCollection/);
+  assert.match(store, /renameTripById/);
+  assert.match(store, /saveCurrentTripToPassport/);
+  assert.match(store, /savedToPassportAt/);
 });
 
 test("custom place segments preserve exact endpoint continuity and naming", () => {
@@ -51,25 +56,18 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.match(traffic, /depart_at: "now"/);
   assert.match(globe, /roadTraffic\[item\.id\]\?\.coordinates/);
   assert.match(globe, /followVehicleRef\.current/);
-  assert.match(globe, /smoothFollowCamera/);
+  assert.match(globe, /pointAt\(path, moving\)/);
+  assert.doesNotMatch(globe, /map\.triggerRepaint\(\)/);
+  assert.match(globe, /1000 \/ 30/);
   assert.doesNotMatch(globe, /zoom: map\.getZoom\(\)/);
   assert.doesNotMatch(globe, /pitch: map\.getPitch\(\)/);
   assert.doesNotMatch(globe, /bearing: followCamera/);
-  assert.match(mobileApp, /aria-label="跟随载具视角"/);
+  assert.match(globe, /bearing: 0/);
+  assert.match(mobileApp, /const followVehicle = true/);
+  assert.doesNotMatch(mobileApp, /aria-label="跟随载具视角"/);
   assert.doesNotMatch(mobileApp, /aria-label="重新居中地图"/);
   assert.match(cards, /运营方 GTFS-RT/);
   assert.equal(roadTrafficLabel({ delayMinutes: 12, incidentCount: 0 }), "拥堵 · 预计多 12 分钟");
-});
-
-test("follow camera moves only the center without changing zoom, pitch or bearing", () => {
-  const next = smoothFollowCamera(
-    { center: [139.7, 35.6] },
-    { center: [139.8, 35.7] },
-    32,
-  );
-  assert.ok(next.center[0] > 139.7 && next.center[0] < 139.8);
-  assert.ok(next.center[1] > 35.6 && next.center[1] < 35.7);
-  assert.deepEqual(Object.keys(next), ["center"]);
 });
 
 test("passport cards provide per-trip color and landmark motifs", async () => {

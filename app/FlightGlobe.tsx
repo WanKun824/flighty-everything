@@ -4,10 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AIRPORTS, airportByCode } from "./flightyData";
 import type { WeatherMode } from "./flightyStorage";
-import { smoothFollowCamera, type FollowCameraState } from "./followCamera";
 import type { JourneyMode, JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
 import { fetchRoadTraffic, type RoadTrafficRoute } from "./roadTraffic";
+import { measure, pointAt, unwrap, type LegPath } from "./routeGeometry";
 import Vehicle3D from "./Vehicle3D";
 import { vehicleStageMotion } from "./vehicleMotion";
 
@@ -144,9 +144,10 @@ export default function FlightGlobe({
         center: [126, 27],
         zoom: 2.05,
         pitch: 0,
-        bearing: -8,
+        bearing: 0,
         antialias: true,
         attributionControl: false,
+        fadeDuration: 0,
       });
       instance = map;
       mapRef.current = map;
@@ -275,19 +276,23 @@ export default function FlightGlobe({
       ...journeySegments.slice(preferredIndex),
       ...journeySegments.slice(0, preferredIndex),
     ];
-    const playback = playbackSegments.map((item) => ({
-      segment: item,
-      coordinates: roadTraffic[item.id]?.coordinates ?? greatCircleCoordinates(
+    const playback = playbackSegments.map((item) => {
+      const road = roadTraffic[item.id]?.coordinates;
+      const coordinates = road ?? greatCircleCoordinates(
         item.origin.coordinate,
         item.destination.coordinate,
         128,
-      ),
-      duration: animationDuration(item.mode) / Math.max(0.25, animationSpeed),
-    }));
+      );
+      return {
+        segment: item,
+        path: measure(item.mode, unwrap(coordinates), road ? "road" : "geodesic"),
+        duration: animationDuration(item.mode) / Math.max(0.25, animationSpeed),
+      };
+    });
     const totalDuration = playback.reduce((sum, item) => sum + item.duration, 0);
     let playbackIndex = 0;
     let segment = playback[0].segment;
-    let coordinates = playback[0].coordinates;
+    let path: LegPath = playback[0].path;
 
     const element = document.createElement("button");
     element.type = "button";
@@ -311,16 +316,16 @@ export default function FlightGlobe({
       rotationAlignment: "viewport",
       pitchAlignment: "viewport",
     })
-      .setLngLat(coordinates[0])
+      .setLngLat(path.coordinates[0])
       .addTo(map);
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     const startedAt = performance.now() - playback[0].duration * Math.max(0, Math.min(1, preferredSegment.progress));
     let frame = 0;
     let publishedProgressAt = 0;
-    let followedAt = performance.now();
     let wasFollowing = false;
-    let followCamera: FollowCameraState | null = null;
+    let followedCoordinate: [number, number] | null = null;
+    let lastFollowCameraAt = 0;
     let publishedStage = "";
     const animate = (now: number) => {
       let moving = Math.max(0, Math.min(1, preferredSegment.progress));
@@ -339,7 +344,7 @@ export default function FlightGlobe({
         if (nextIndex !== playbackIndex) {
           playbackIndex = nextIndex;
           segment = playback[nextIndex].segment;
-          coordinates = playback[nextIndex].coordinates;
+          path = playback[nextIndex].path;
           publishedHeading = Number.NaN;
           publishedStage = "";
           element.className = `journey-vehicle-3d-marker ${segment.mode}`;
@@ -348,31 +353,28 @@ export default function FlightGlobe({
             : current);
         }
       }
-      const point = pointAlong(coordinates, moving);
-      marker.setLngLat(point.coordinate);
+      const point = pointAt(path, moving);
       if (followVehicleRef.current) {
-        if (!wasFollowing || !followCamera) {
-          const currentCenter = map.getCenter();
-          followCamera = {
-            center: [currentCenter.lng, currentCenter.lat],
-          };
-          followedAt = now;
+        if (!wasFollowing) {
           wasFollowing = true;
+          element.classList.add("is-following");
         }
-        if (now - followedAt >= 28) {
-          followCamera = smoothFollowCamera(
-            followCamera,
-            { center: point.coordinate },
-            now - followedAt,
-          );
-          followedAt = now;
+        if (
+          !followedCoordinate ||
+          now - lastFollowCameraAt >= 1000 / 30
+        ) {
+          followedCoordinate = point.coordinate;
+          lastFollowCameraAt = now;
+          marker.setLngLat(point.coordinate);
           map.jumpTo({
-            center: followCamera.center,
+            center: point.coordinate,
           });
         }
       } else {
+        if (wasFollowing) element.classList.remove("is-following");
         wasFollowing = false;
-        followCamera = null;
+        followedCoordinate = null;
+        marker.setLngLat(point.coordinate);
       }
       const stageMotion = vehicleStageMotion(segment.mode, moving);
       element.style.setProperty("--journey-motion-trail", stageMotion.trail.toFixed(3));
@@ -445,7 +447,7 @@ export default function FlightGlobe({
       center: [126, 27],
       zoom: weatherMode === "none" ? 2.05 : 1.85,
       pitch: 0,
-      bearing: -8,
+      bearing: 0,
       duration: 820,
       essential: true,
     });
@@ -892,21 +894,6 @@ function greatCircleCoordinates(a: [number, number], b: [number, number], steps 
 
 function vector(longitude: number, latitude: number): [number, number, number] {
   return [Math.cos(latitude) * Math.cos(longitude), Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude)];
-}
-
-function pointAlong(coordinates: [number, number][], progress: number) {
-  const position = Math.max(0, Math.min(1, progress)) * (coordinates.length - 1);
-  const index = Math.min(coordinates.length - 2, Math.floor(position));
-  const ratio = position - index;
-  const from = coordinates[index];
-  const to = coordinates[index + 1];
-  let longitudeDelta = to[0] - from[0];
-  if (longitudeDelta > 180) longitudeDelta -= 360;
-  if (longitudeDelta < -180) longitudeDelta += 360;
-  const longitude = from[0] + longitudeDelta * ratio;
-  const latitude = from[1] + (to[1] - from[1]) * ratio;
-  const bearing = (Math.atan2(longitudeDelta * Math.cos((latitude * Math.PI) / 180), to[1] - from[1]) * 180) / Math.PI;
-  return { coordinate: [longitude, latitude] as [number, number], bearing };
 }
 
 function animationDuration(mode: JourneyMode) {

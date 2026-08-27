@@ -1,6 +1,6 @@
 import { JOURNEY_PLACES, type JourneyPlace } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
-import { stopKindOf } from "./placeSearch";
+import { minQueryLength, stopKindOf } from "./placeSearch";
 
 export type JourneyPlaceSuggestion = {
   id: string;
@@ -44,7 +44,7 @@ export async function searchJourneyPlaces(
   signal?: AbortSignal,
 ) {
   const query = rawQuery.trim();
-  if (query.length < 2) return [];
+  if (query.length < minQueryLength(query)) return [];
   const normalized = query.toLocaleLowerCase();
   const local: JourneyPlaceSuggestion[] = JOURNEY_PLACES
     .filter((place) => `${place.code} ${place.name} ${place.city}`.toLocaleLowerCase().includes(normalized))

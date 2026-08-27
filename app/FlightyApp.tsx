@@ -24,7 +24,6 @@ import SFEllipsis from "sf-symbols-lib/monochrome/SFEllipsis";
 import SFGlobe from "sf-symbols-lib/monochrome/SFGlobe";
 import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
 import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
-import SFLocationFill from "sf-symbols-lib/monochrome/SFLocationFill";
 import SFMapFill from "sf-symbols-lib/monochrome/SFMapFill";
 import SFMagnifyingglass from "sf-symbols-lib/monochrome/SFMagnifyingglass";
 import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
@@ -65,7 +64,7 @@ import {
   type Region,
 } from "./flightyData";
 import { segmentFromFlight } from "./journeyData";
-import { useJourneyStore } from "./journeyStorage";
+import { useJourneyStore, type JourneyTrip } from "./journeyStorage";
 import { useSheetDetents } from "./useSheetDetents";
 import {
   useFlightyStore,
@@ -83,6 +82,7 @@ type Overlay =
   | "weather"
   | "flight-detail"
   | "journey-detail"
+  | "journey-names"
   | "friends-intro"
   | "profile-name"
   | "profile-avatar"
@@ -117,7 +117,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     null,
   );
   const [resetToken, setResetToken] = useState(0);
-  const [followVehicle, setFollowVehicle] = useState(false);
+  const followVehicle = true;
   const [toast, setToast] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [addMode, setAddMode] = useState<AddMode>("suggested");
@@ -130,6 +130,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   );
   const [friendCode, setFriendCode] = useState("");
   const [draftName, setDraftName] = useState("Vincent");
+  const [draftCollectionName, setDraftCollectionName] = useState("我的行程");
+  const [draftTripName, setDraftTripName] = useState("");
+  const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [avatarColor, setAvatarColor] = useState("#ec6f9a");
   const [randomIndex, setRandomIndex] = useState(0);
   const mainSheet = useSheetDetents({
@@ -142,6 +145,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     journeyStore.state.segments.find(
       (segment) => segment.id === selectedJourneyId,
     ) ?? null;
+  const currentTrip = journeyStore.state.trips.find(
+    (trip) => trip.id === journeyStore.state.activeTripId,
+  );
 
   const notify = (message: string) => {
     setToast(message);
@@ -169,13 +175,20 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
 
   const openAddJourney = () => setOverlay("add-journey");
 
+  const openJourneyNames = (trip: JourneyTrip = currentTrip ?? journeyStore.state.trips[0]) => {
+    if (!trip) return;
+    setEditingTripId(trip.id);
+    setDraftCollectionName(journeyStore.state.collectionName);
+    setDraftTripName(trip.name);
+    setOverlay("journey-names");
+  };
+
   const openAirport = (code: string) => {
     setSelectedAirport(code);
     setOverlay("airport-detail");
   };
 
   const resetMap = () => {
-    setFollowVehicle(false);
     setSelectedAirport(null);
     setResetToken((value) => value + 1);
   };
@@ -211,7 +224,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
 
   const title =
     activeTab === "flights"
-      ? "我的行程"
+      ? journeyStore.state.collectionName
       : activeTab === "friends"
         ? "同行"
         : "旅行护照";
@@ -256,6 +269,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             "friends-ready",
             "add-friend",
             "profile",
+            "journey-names",
           ].includes(overlay ?? "") && (
             <div className="map-tools" aria-label="地图工具">
               <button
@@ -268,38 +282,25 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               >
                 <SFMapFill size="md" />
               </button>
-              <button
-                className={followVehicle ? "active" : ""}
-                aria-label="跟随载具视角"
-                aria-pressed={followVehicle}
-                onClick={() => setFollowVehicle((value) => !value)}
-              >
-                <SFLocationFill size="md" />
-              </button>
             </div>
           )}
 
         <section
-          className={`flight-panel ${activeTab === "passport" ? "passport-panel" : "has-sheet-handle"} ${mainSheet.dragging ? "is-dragging" : ""}`}
-          style={
-            activeTab === "passport"
-              ? undefined
-              : ({
-                  "--sheet-height": `${mainSheet.fraction * 100}%`,
-                } as CSSProperties)
-          }
+          className={`flight-panel has-sheet-handle ${mainSheet.dragging ? "is-dragging" : ""}`}
+          style={{ "--sheet-height": `${mainSheet.fraction * 100}%` } as CSSProperties}
         >
-          {activeTab !== "passport" && (
-            <button
-              className="sheet-drag-handle"
-              aria-label="拖动调整行程面板高度"
-              {...mainSheet.handleProps}
-            >
-              <span />
-            </button>
-          )}
+          <button
+            className="sheet-drag-handle"
+            aria-label="拖动调整行程面板高度"
+            {...mainSheet.handleProps}
+          >
+            <span />
+          </button>
           <header className="panel-titlebar">
-            <h1>{title}</h1>
+            <div className="panel-title-copy">
+              <h1>{title}</h1>
+              {activeTab === "flights" && <button aria-label="编辑我的行程名称" onClick={() => openJourneyNames()}><SFPencil size="xs" /></button>}
+            </div>
             <div>
               {activeTab === "friends" && (
                 <button
@@ -357,6 +358,13 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 setOverlay("journey-detail");
               }}
               onAdd={openAddJourney}
+              onEditNames={() => openJourneyNames()}
+              savedToPassport={Boolean(currentTrip?.savedToPassportAt)}
+              onSaveToPassport={() => {
+                journeyStore.saveCurrentTripToPassport();
+                setActiveTab("passport");
+                notify("已保存到旅迹");
+              }}
             />
           )}
           {activeTab === "friends" && (
@@ -369,7 +377,15 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             />
           )}
           {activeTab === "passport" && (
-            <MobileJourneyPassport segments={journeyStore.state.segments} />
+            <MobileJourneyPassport
+              trips={journeyStore.state.trips}
+              activeTripId={journeyStore.state.activeTripId}
+              onSelect={(id) => {
+                journeyStore.selectTrip(id);
+                setSelectedJourneyId(null);
+              }}
+              onEdit={(trip) => openJourneyNames(trip)}
+            />
           )}
 
           <BottomBar
@@ -407,12 +423,38 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         {overlay === "add-journey" && (
           <JourneyComposer
             variant="mobile"
+            tripName={journeyStore.state.tripName}
+            initialOrigin={journeyStore.state.segments.at(-1)?.destination}
             onClose={() => setOverlay(null)}
-            onAdd={(segment) => {
-              journeyStore.addSegment(segment);
-              notify(`${segment.title} 已加入行程`);
+            onAddMany={(segments, tripName) => {
+              journeyStore.renameTrip(tripName);
+              journeyStore.addSegments(segments);
+              notify(`已加入 ${segments.length} 段行程`);
             }}
             onFlightTools={() => setOverlay("add-flight")}
+          />
+        )}
+        {overlay === "journey-names" && (
+          <JourneyNamesSheet
+            collectionName={draftCollectionName}
+            tripName={draftTripName}
+            setCollectionName={setDraftCollectionName}
+            setTripName={setDraftTripName}
+            onClose={() => setOverlay(null)}
+            onSave={() => {
+              journeyStore.renameCollection(draftCollectionName);
+              if (editingTripId) journeyStore.renameTripById(editingTripId, draftTripName);
+              setOverlay(null);
+              notify("行程名称已更新");
+            }}
+            onSaveToPassport={editingTripId === journeyStore.state.activeTripId ? () => {
+              journeyStore.renameCollection(draftCollectionName);
+              journeyStore.renameTrip(draftTripName);
+              journeyStore.saveCurrentTripToPassport();
+              setOverlay(null);
+              setActiveTab("passport");
+              notify("已保存到旅迹");
+            } : undefined}
           />
         )}
         <input
@@ -577,6 +619,47 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         )}
       </section>
     </main>
+  );
+}
+
+function JourneyNamesSheet({
+  collectionName,
+  tripName,
+  setCollectionName,
+  setTripName,
+  onClose,
+  onSave,
+  onSaveToPassport,
+}: {
+  collectionName: string;
+  tripName: string;
+  setCollectionName: (value: string) => void;
+  setTripName: (value: string) => void;
+  onClose: () => void;
+  onSave: () => void;
+  onSaveToPassport?: () => void;
+}) {
+  const sheet = useSheetDetents({
+    detents: [0.31, 0.5, 0.72],
+    initial: 0.5,
+    dismissible: true,
+    onDismiss: onClose,
+  });
+  return (
+    <section
+      className={`map-sheet journey-names-sheet ${sheet.dragging ? "is-dragging" : ""}`}
+      style={{ "--sheet-height": `${sheet.fraction * 100}%` } as CSSProperties}
+      role="dialog"
+      aria-modal="true"
+      aria-label="编辑行程名称"
+    >
+      <button className="sheet-drag-handle" aria-label="拖动调整名称面板高度" {...sheet.handleProps}><span /></button>
+      <header><div><small>TRIP NAMES</small><h2>编辑行程名称</h2><p>上方是行程主页名称，下方是这一次旅行的名称。</p></div><button aria-label="关闭" onClick={onClose}><SFXmark size="sm" /></button></header>
+      <label><span>我的行程名称</span><input value={collectionName} maxLength={32} onChange={(event) => setCollectionName(event.target.value)} /></label>
+      <label><span>当前行程名称</span><input value={tripName} maxLength={48} onChange={(event) => setTripName(event.target.value)} /></label>
+      <button className="journey-name-save" disabled={!collectionName.trim() || !tripName.trim()} onClick={onSave}>保存名称</button>
+      {onSaveToPassport && <button className="journey-name-passport" disabled={!tripName.trim()} onClick={onSaveToPassport}><SFBookClosedFill size="xs" />保存到旅迹</button>}
+    </section>
   );
 }
 

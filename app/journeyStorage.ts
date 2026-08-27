@@ -13,11 +13,13 @@ export type JourneyTrip = {
   motif: JourneyMotif;
   segments: JourneySegment[];
   createdAt: string;
+  savedToPassportAt: string | null;
 };
 
 export type JourneyState = {
   trips: JourneyTrip[];
   activeTripId: string;
+  collectionName: string;
   tripName: string;
   segments: JourneySegment[];
   selectedSegmentId: string;
@@ -36,6 +38,7 @@ const primaryTrip: JourneyTrip = {
   motif: "torii",
   segments: INITIAL_JOURNEY_SEGMENTS,
   createdAt: "2026-08-24T00:00:00.000Z",
+  savedToPassportAt: "2026-08-24T00:00:00.000Z",
 };
 
 const weekendTrip: JourneyTrip = {
@@ -45,11 +48,13 @@ const weekendTrip: JourneyTrip = {
   motif: "skyline",
   segments: [],
   createdAt: "2026-08-25T00:00:00.000Z",
+  savedToPassportAt: "2026-08-25T00:00:00.000Z",
 };
 
 export const INITIAL_JOURNEY_STATE: JourneyState = {
   trips: [primaryTrip, weekendTrip],
   activeTripId: primaryTrip.id,
+  collectionName: "我的行程",
   tripName: primaryTrip.name,
   segments: primaryTrip.segments,
   selectedSegmentId: primaryTrip.segments[0].id,
@@ -82,7 +87,12 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
   if (Array.isArray(stored.trips) && stored.trips.length) {
     const trips = stored.trips.filter((trip): trip is JourneyTrip =>
       Boolean(trip?.id && trip?.name && Array.isArray(trip?.segments)),
-    );
+    ).map((trip) => ({
+      ...trip,
+      savedToPassportAt: trip.savedToPassportAt === null
+        ? null
+        : (trip.savedToPassportAt ?? trip.createdAt ?? new Date().toISOString()),
+    }));
     const active = trips.find((trip) => trip.id === stored.activeTripId) ?? trips[0];
     const selectedSegmentId = active.segments.some((segment) => segment.id === stored.selectedSegmentId)
       ? (stored.selectedSegmentId as string)
@@ -90,6 +100,7 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
     return {
       trips,
       activeTripId: active.id,
+      collectionName: stored.collectionName?.trim() || "我的行程",
       tripName: active.name,
       segments: active.segments,
       selectedSegmentId,
@@ -103,10 +114,12 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
     ...primaryTrip,
     name: stored.tripName?.trim() || primaryTrip.name,
     segments,
+    savedToPassportAt: stored.trips?.[0]?.savedToPassportAt ?? primaryTrip.savedToPassportAt,
   };
   return {
     trips: [migrated, weekendTrip],
     activeTripId: migrated.id,
+    collectionName: stored.collectionName?.trim() || "我的行程",
     tripName: migrated.name,
     segments,
     selectedSegmentId: segments.some((segment) => segment.id === stored.selectedSegmentId)
@@ -167,6 +180,7 @@ export function useJourneyStore() {
         motif: TRIP_MOTIFS[index % TRIP_MOTIFS.length],
         segments: [],
         createdAt: new Date().toISOString(),
+        savedToPassportAt: null,
       };
       return {
         ...current,
@@ -215,6 +229,33 @@ export function useJourneyStore() {
     setState((current) => activePatch(current, {
       tripName: tripName.trim() || current.tripName,
     })), []);
+
+  const renameCollection = useCallback((collectionName: string) =>
+    setState((current) => ({
+      ...current,
+      collectionName: collectionName.trim() || current.collectionName,
+    })), []);
+
+  const renameTripById = useCallback((id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    setState((current) => {
+      if (id === current.activeTripId) return activePatch(current, { tripName: trimmed });
+      return {
+        ...current,
+        trips: current.trips.map((trip) => trip.id === id ? { ...trip, name: trimmed } : trip),
+      };
+    });
+  }, []);
+
+  const saveCurrentTripToPassport = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      trips: current.trips.map((trip) => trip.id === current.activeTripId
+        ? { ...trip, name: current.tripName, segments: current.segments, savedToPassportAt: new Date().toISOString() }
+        : trip),
+    }));
+  }, []);
 
   const addSegments = useCallback((incoming: JourneySegment[]) => {
     if (!incoming.length) return;
@@ -316,7 +357,10 @@ export function useJourneyStore() {
     updateTripAppearance,
     selectSegment,
     setWeatherMode,
+    renameCollection,
     renameTrip,
+    renameTripById,
+    saveCurrentTripToPassport,
     addSegment,
     addSegments,
     updateSegment,

@@ -59,9 +59,9 @@ export function vehicleStageMotion(kind: JourneyMode, progress: number): Vehicle
     return {
       stage,
       lift: 0,
-      pitch: stage === "departing" ? -(1 - departure) * 0.018 : stage === "arriving" ? arrival * 0.024 : 0,
-      velocity: 0.18 + cruiseEnvelope * 0.82,
-      trail: cruiseEnvelope * 0.52,
+      pitch: 0,
+      velocity: 1,
+      trail: 0.52,
     };
   }
 

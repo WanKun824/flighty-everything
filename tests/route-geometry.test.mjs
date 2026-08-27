@@ -128,3 +128,11 @@ test("真实路网线形比大圆长，但不会长得离谱", () => {
   assert.equal(roadLeg.cumulativeKm.length, road.length);
   assert.equal(roadLeg.cumulativeKm[0], 0);
 });
+
+test("car advances by measured road distance at a constant rate", () => {
+  const ragged = [[139.7, 35.6], [139.7001, 35.6], [139.7002, 35.6], [139.72, 35.6], [139.9, 35.6]];
+  const leg = measure("car", ragged, "road");
+  const samples = Array.from({ length: 13 }, (_, index) => pointAt(leg, index / 12).coordinate);
+  const hops = samples.slice(1).map((point, index) => haversineKm(samples[index], point));
+  assert.ok(Math.max(...hops) / Math.min(...hops) < 1.04);
+});

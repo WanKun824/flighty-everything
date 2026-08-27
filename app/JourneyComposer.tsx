@@ -24,6 +24,13 @@ import {
   searchJourneyPlaces,
   type JourneyPlaceSuggestion,
 } from "./journeyPlaceSearch";
+import { minQueryLength } from "./placeSearch";
+import { useSheetDetents } from "./useSheetDetents";
+
+const hasSearchText = (value: string) => {
+  const query = value.trim();
+  return query.length >= minQueryLength(query);
+};
 
 const ICONS: Record<JourneyMode, ElementType> = {
   flight: SFAirplane,
@@ -52,6 +59,9 @@ export default function JourneyComposer({
   const [mode, setMode] = useState<JourneyMode>("flight");
   const [name, setName] = useState(tripName);
   const [origin, setOrigin] = useState<JourneyPlace>(initialOrigin ?? JOURNEY_PLACES[0]);
+  const [originQuery, setOriginQuery] = useState((initialOrigin ?? JOURNEY_PLACES[0]).name);
+  const [originSuggestions, setOriginSuggestions] = useState<JourneyPlaceSuggestion[]>([]);
+  const [originSearching, setOriginSearching] = useState(false);
   const [destination, setDestination] = useState<JourneyPlace | null>(null);
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<JourneyPlaceSuggestion[]>([]);
@@ -67,9 +77,38 @@ export default function JourneyComposer({
       ? crypto.randomUUID()
       : `flighty-${Date.now()}`,
   );
+  const mobileSheet = useSheetDetents({
+    detents: [0.31, 0.58, 0.86],
+    initial: 0.86,
+    dismissible: true,
+    onDismiss: onClose,
+  });
 
   useEffect(() => {
-    if (destination || query.trim().length < 2) {
+    const query = originQuery.trim();
+    if (query === origin.name || !hasSearchText(query)) {
+      const timer = window.setTimeout(() => {
+        setOriginSuggestions([]);
+        setOriginSearching(false);
+      }, 0);
+      return () => window.clearTimeout(timer);
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      void searchJourneyPlaces(query, sessionToken, controller.signal)
+        .then(setOriginSuggestions)
+        .finally(() => {
+          if (!controller.signal.aborted) setOriginSearching(false);
+        });
+    }, 240);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [origin.name, originQuery, sessionToken]);
+
+  useEffect(() => {
+    if (destination || !hasSearchText(query)) {
       return;
     }
     const controller = new AbortController();
@@ -85,6 +124,22 @@ export default function JourneyComposer({
       window.clearTimeout(timer);
     };
   }, [destination, query, sessionToken]);
+
+  const chooseOriginSuggestion = async (suggestion: JourneyPlaceSuggestion) => {
+    setOriginSearching(true);
+    setError(null);
+    try {
+      const place = await retrieveJourneyPlace(suggestion, sessionToken);
+      if (!place) throw new Error("没有取得这个地址的位置");
+      setOrigin(place);
+      setOriginQuery(place.name);
+      setOriginSuggestions([]);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "当前地址载入失败");
+    } finally {
+      setOriginSearching(false);
+    }
+  };
 
   const chooseSuggestion = async (suggestion: JourneyPlaceSuggestion) => {
     setSearching(true);
@@ -120,6 +175,7 @@ export default function JourneyComposer({
     if (!segment) return;
     setDrafts((current) => [...current, segment]);
     setOrigin(segment.destination);
+    setOriginQuery(segment.destination.name);
     setDestination(null);
     setQuery("");
     setTitle("");
@@ -130,7 +186,9 @@ export default function JourneyComposer({
   const removeLastLeg = () => {
     setDrafts((current) => {
       const next = current.slice(0, -1);
-      setOrigin(next.at(-1)?.destination ?? initialOrigin ?? JOURNEY_PLACES[0]);
+      const nextOrigin = next.at(-1)?.destination ?? initialOrigin ?? JOURNEY_PLACES[0];
+      setOrigin(nextOrigin);
+      setOriginQuery(nextOrigin.name);
       return next;
     });
   };
@@ -148,7 +206,14 @@ export default function JourneyComposer({
   };
 
   return (
-    <section className={`journey-composer ${variant} journey-route-builder`} role="dialog" aria-modal="true" aria-label="编辑连续行程">
+    <section
+      className={`journey-composer ${variant} journey-route-builder ${variant === "mobile" && mobileSheet.dragging ? "is-dragging" : ""}`}
+      style={variant === "mobile" ? ({ "--sheet-height": `${mobileSheet.fraction * 100}%` } as CSSProperties) : undefined}
+      role="dialog"
+      aria-modal="true"
+      aria-label="编辑连续行程"
+    >
+      {variant === "mobile" && <button className="sheet-drag-handle composer-sheet-handle" aria-label="拖动调整搜索面板高度" {...mobileSheet.handleProps}><span /></button>}
       <header>
         <div>
           <small>TRIP BUILDER</small>
@@ -163,6 +228,22 @@ export default function JourneyComposer({
         <input value={name} maxLength={48} onChange={(event) => setName(event.target.value)} placeholder="例如：东京与濑户内 · 八日" />
       </label>
 
+      <label className="journey-place-search journey-origin-search">
+        <span>当前地址（可以修改）</span>
+        <div><SFLocationFill size="sm" /><input value={originQuery} onFocus={() => { if (originQuery === origin.name) setOriginQuery(""); }} onChange={(event) => { const value = event.target.value; setOriginQuery(value); setOriginSearching(hasSearchText(value)); if (!hasSearchText(value)) setOriginSuggestions([]); }} placeholder="输入当前所在的地址、景点或车站" /><i>{originSearching ? "搜索中" : originQuery === origin.name ? "已选择" : ""}</i></div>
+      </label>
+      {originSuggestions.length > 0 && (
+        <div className="journey-search-results origin-results" role="listbox" aria-label="当前地址搜索结果">
+          {originSuggestions.map((suggestion) => (
+            <button key={suggestion.id} role="option" aria-selected="false" onClick={() => void chooseOriginSuggestion(suggestion)}>
+              <span className={`place-kind ${suggestion.kind}`}><SFLocationFill size="xs" /></span>
+              <span><strong>{suggestion.name}</strong><small>{suggestion.subtitle}</small></span>
+              <SFChevronRight size="xs" />
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="journey-continuity" aria-label="当前连续路线">
         <span><SFLocationFill size="xs" /><small>当前起点</small><strong>{origin.name}</strong></span>
         {drafts.map((segment, index) => (
@@ -175,7 +256,7 @@ export default function JourneyComposer({
 
       <label className="journey-place-search">
         <span>搜索下一个地点</span>
-        <div><SFMagnifyingglass size="sm" /><input value={query} onChange={(event) => { const value = event.target.value; setQuery(value); setDestination(null); setSearching(value.trim().length >= 2); if (value.trim().length < 2) setSuggestions([]); }} placeholder="景点、车站、机场、港口或城市" /><i>{searching ? "搜索中" : destination ? "已选择" : ""}</i></div>
+        <div><SFMagnifyingglass size="sm" /><input value={query} onChange={(event) => { const value = event.target.value; setQuery(value); setDestination(null); setSearching(hasSearchText(value)); if (!hasSearchText(value)) setSuggestions([]); }} placeholder="景点、车站、机场、港口或城市" /><i>{searching ? "搜索中" : destination ? "已选择" : ""}</i></div>
       </label>
       {suggestions.length > 0 && (
         <div className="journey-search-results" role="listbox" aria-label="地点搜索结果">

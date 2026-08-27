@@ -173,7 +173,7 @@ const MOTION: Record<VehicleKind, Motion> = {
   // 汽车：贴地，悬挂在 1Hz 出头的低频上起伏，四个轮子跟着转，转向最灵活。
   // 频率原来是 2.4 / 1.7 / 3.1Hz 且 follow 为 1 —— 三条快频叠在一起再整倍跟倍速，
   // 地球仪视角下 pitch 就落到 3~5Hz，读出来是「在抖」，不是「在过坎」。
-  car: { hover: 0, rise: [.016, 1.05], roll: [.012, .72], pitch: [.018, 1.3], bank: 1.2, turn: 9, wheel: 9, follow: .45, shadow: [.2, .02, 1] },
+  car: { hover: 0, rise: [0, 1], roll: [0, 1], pitch: [0, 1], bank: 0, turn: 9, wheel: 9, follow: .45, shadow: [.2, 0, 1] },
   // 火车：受轨道约束，几乎不起伏也不侧倾，只有极轻的低频晃动。
   train: { hover: .015, rise: [.006, 1.1], roll: [.01, .55], pitch: [.004, .8], bank: 0, turn: 13, wheel: 0, follow: 1, shadow: [.18, .01, 1] },
   // 轮船：随浪，长周期大幅纵摇加横摇，转向最慢，投影当作水线光晕。
@@ -522,9 +522,13 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
 
       // 「载具」页（hero 机位）是静态展台：不起伏、不侧倾、不转轮。reduceMotion 同样全停。
       // 地图上的 rider 走 view="map"，继续按 MOTION 的动作性格动。
-      if (reduceMotion.matches || view === "hero") {
+      if (reduceMotion.matches || view === "hero" || kind === "car") {
         presentation.position.z = 0;
         presentation.rotation.set(0, 0, 0);
+        if (!reduceMotion.matches && view === "map" && kind === "car" && motion.wheel) {
+          const spin = motion.wheel * playRate * delta;
+          for (const wheel of wheels) wheel.rotation.x += spin;
+        }
       } else {
         // progress 只当相位种子：同一种载具在不同航段的姿态不会撞在同一帧上。
         const phase = elapsed * beat + progressRef.current * .05;
@@ -557,7 +561,6 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
       shadowMaterial.dispose();
       environment?.dispose();
       renderer.dispose();
-      renderer.forceContextLoss();
       renderer.domElement.remove();
     };
   }, [kind, view]);
