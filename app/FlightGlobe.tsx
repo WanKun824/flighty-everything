@@ -10,6 +10,7 @@ import { fetchRoadTraffic, type RoadTrafficRoute } from "./roadTraffic";
 import { measure, pointAt, unwrap, type LegPath } from "./routeGeometry";
 import Vehicle3D from "./Vehicle3D";
 import { vehicleStageMotion } from "./vehicleMotion";
+import { createVehicleFollower } from "./vehicleFollow";
 
 export type BasemapMode = "standard" | "satellite" | "terrain" | "navigation" | "traffic";
 
@@ -320,13 +321,30 @@ export default function FlightGlobe({
       .addTo(map);
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const followVehicleAt = createVehicleFollower(map, {
+      pin() {
+        // A followed vehicle is always at the viewport center. Detach the
+        // geographic marker so map moves do not reproject/round it repeatedly.
+        marker.remove();
+        element.classList.add("is-following");
+        element.style.removeProperty("transform");
+        element.style.removeProperty("opacity");
+        element.style.removeProperty("pointer-events");
+        map.getContainer().appendChild(element);
+      },
+      unpin(coordinate) {
+        element.classList.remove("is-following");
+        marker.setLngLat(coordinate).addTo(map);
+      },
+      move(coordinate) {
+        marker.setLngLat(coordinate);
+      },
+    });
     const startedAt = performance.now() - playback[0].duration * Math.max(0, Math.min(1, preferredSegment.progress));
     let frame = 0;
     let publishedProgressAt = 0;
-    let wasFollowing = false;
-    let followedCoordinate: [number, number] | null = null;
-    let lastFollowCameraAt = 0;
     let publishedStage = "";
+    let publishedTrail = "";
     const animate = (now: number) => {
       let moving = Math.max(0, Math.min(1, preferredSegment.progress));
       if (!reduceMotion.matches && motionEnabled) {
@@ -343,41 +361,26 @@ export default function FlightGlobe({
         moving = (elapsed - cursor) / playback[nextIndex].duration;
         if (nextIndex !== playbackIndex) {
           playbackIndex = nextIndex;
+          element.classList.replace(segment.mode, playback[nextIndex].segment.mode);
           segment = playback[nextIndex].segment;
           path = playback[nextIndex].path;
           publishedHeading = Number.NaN;
           publishedStage = "";
-          element.className = `journey-vehicle-3d-marker ${segment.mode}`;
           setRiderPortal((current) => current?.host === modelHost
             ? { ...current, segment, progress: moving }
             : current);
         }
       }
       const point = pointAt(path, moving);
-      if (followVehicleRef.current) {
-        if (!wasFollowing) {
-          wasFollowing = true;
-          element.classList.add("is-following");
-        }
-        if (
-          !followedCoordinate ||
-          now - lastFollowCameraAt >= 1000 / 30
-        ) {
-          followedCoordinate = point.coordinate;
-          lastFollowCameraAt = now;
-          marker.setLngLat(point.coordinate);
-          map.jumpTo({
-            center: point.coordinate,
-          });
-        }
-      } else {
-        if (wasFollowing) element.classList.remove("is-following");
-        wasFollowing = false;
-        followedCoordinate = null;
-        marker.setLngLat(point.coordinate);
-      }
+      // jumpTo cancels camera easing; let an active wheel/pinch zoom finish
+      // before resuming follow, preserving the zoom the user actually chose.
+      followVehicleAt(point.coordinate, followVehicleRef.current && !map.isZooming());
       const stageMotion = vehicleStageMotion(segment.mode, moving);
-      element.style.setProperty("--journey-motion-trail", stageMotion.trail.toFixed(3));
+      const trail = stageMotion.trail.toFixed(3);
+      if (trail !== publishedTrail) {
+        publishedTrail = trail;
+        element.style.setProperty("--journey-motion-trail", trail);
+      }
       if (stageMotion.stage !== publishedStage) {
         publishedStage = stageMotion.stage;
         element.dataset.motionStage = stageMotion.stage;

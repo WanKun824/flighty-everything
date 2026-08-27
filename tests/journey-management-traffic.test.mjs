@@ -58,7 +58,7 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.match(globe, /followVehicleRef\.current/);
   assert.match(globe, /pointAt\(path, moving\)/);
   assert.doesNotMatch(globe, /map\.triggerRepaint\(\)/);
-  assert.match(globe, /1000 \/ 30/);
+  assert.doesNotMatch(globe, /lastFollowCameraAt|1000 \/ 30/);
   assert.doesNotMatch(globe, /zoom: map\.getZoom\(\)/);
   assert.doesNotMatch(globe, /pitch: map\.getPitch\(\)/);
   assert.doesNotMatch(globe, /bearing: followCamera/);
@@ -68,7 +68,7 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.match(mobileApp, /aria-pressed=\{followVehicle\}/);
   assert.match(mobileApp, /onClick=\{\(\) => setFollowVehicle\(\(value\) => !value\)\}/);
   assert.match(mobileApp, /<SFMapFill size="md"\s*\/>[\s\S]*?<SFLocationFill size="md"\s*\/>/);
-  assert.match(globe, /map\.jumpTo\(\{\s*center: point\.coordinate,?\s*\}\)/);
+  assert.match(globe, /followVehicleAt\(point\.coordinate, followVehicleRef\.current && !map\.isZooming\(\)\)/);
   assert.doesNotMatch(mobileApp, /aria-label="重新居中地图"/);
   assert.match(cards, /运营方 GTFS-RT/);
   assert.equal(roadTrafficLabel({ delayMinutes: 12, incidentCount: 0 }), "拥堵 · 预计多 12 分钟");

@@ -3,6 +3,11 @@ name: Package iOS Client
 on:
   workflow_dispatch:
     inputs:
+      unsigned_only:
+        description: Only export unsigned packages without using signing credentials
+        required: true
+        default: true
+        type: boolean
       export_method:
         description: Signed export method
         required: true
@@ -121,7 +126,10 @@ jobs:
         id: signing
         shell: bash
         run: |
-          if [[ -n "$P12_BASE64" && -n "$PROFILE_BASE64" && -n "$TEAM_ID" ]]; then
+          if [[ "${{ inputs.unsigned_only }}" == "true" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Unsigned-only export requested; signing is disabled."
+          elif [[ -n "$P12_BASE64" && -n "$PROFILE_BASE64" && -n "$TEAM_ID" ]]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
