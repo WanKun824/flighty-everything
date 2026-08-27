@@ -24,6 +24,7 @@ import SFEllipsis from "sf-symbols-lib/monochrome/SFEllipsis";
 import SFGlobe from "sf-symbols-lib/monochrome/SFGlobe";
 import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
 import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
+import SFLocationFill from "sf-symbols-lib/monochrome/SFLocationFill";
 import SFMapFill from "sf-symbols-lib/monochrome/SFMapFill";
 import SFMagnifyingglass from "sf-symbols-lib/monochrome/SFMagnifyingglass";
 import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
@@ -117,7 +118,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     null,
   );
   const [resetToken, setResetToken] = useState(0);
-  const followVehicle = true;
+  const [followVehicle, setFollowVehicle] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [addMode, setAddMode] = useState<AddMode>("suggested");
@@ -189,6 +190,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   };
 
   const resetMap = () => {
+    setFollowVehicle(false);
     setSelectedAirport(null);
     setResetToken((value) => value + 1);
   };
@@ -281,6 +283,14 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 }}
               >
                 <SFMapFill size="md" />
+              </button>
+              <button
+                className={followVehicle ? "active" : ""}
+                aria-label="跟随载具视角"
+                aria-pressed={followVehicle}
+                onClick={() => setFollowVehicle((value) => !value)}
+              >
+                <SFLocationFill size="md" />
               </button>
             </div>
           )}
