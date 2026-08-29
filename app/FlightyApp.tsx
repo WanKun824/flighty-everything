@@ -45,9 +45,9 @@ import {
 import JourneyComposer from "./JourneyComposer";
 import {
   MobileJourneyDetail,
-  MobileJourneyPassport,
   MobileJourneysPanel,
 } from "./MobileJourney";
+import JourneyPassportTarget, { JourneyPassportStatsTarget } from "./JourneyPassportTarget";
 import {
   AIRLINES,
   AIRPORTS,
@@ -90,6 +90,7 @@ type Overlay =
   | "friends-ready"
   | "add-friend"
   | "profile"
+  | "journey-passport-stats"
   | "flight-stats"
   | "delay-stats"
   | "aircraft-stats";
@@ -224,18 +225,19 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     event.target.value = "";
   };
 
-  const title =
+  const legacyTitle =
     activeTab === "flights"
       ? journeyStore.state.collectionName
       : activeTab === "friends"
         ? "同行"
         : "旅行护照";
+  const title = activeTab === "passport" ? "旅迹" : legacyTitle;
   const initials = state.profile?.initials ?? "V";
   const profileColor = state.profile?.color ?? "#ec6f9a";
   const mapOverlayOpen = overlay === "airports" || overlay === "airport-detail";
 
   return (
-    <main className="flighty-page" data-theme={appearance.resolved}>
+    <main className={`flighty-page ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""}`} data-theme={appearance.resolved}>
       <section
         className="flighty-device"
         aria-label="flighty Everything flight tracker"
@@ -296,7 +298,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           )}
 
         <section
-          className={`flight-panel has-sheet-handle ${mainSheet.dragging ? "is-dragging" : ""}`}
+          className={`flight-panel has-sheet-handle ${activeTab === "passport" ? "passport-panel" : ""} ${mainSheet.dragging ? "is-dragging" : ""}`}
           style={{ "--sheet-height": `${mainSheet.fraction * 100}%` } as CSSProperties}
         >
           <button
@@ -321,7 +323,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                   <SFEllipsis size="md" />
                 </button>
               )}
-              <a
+              {activeTab !== "passport" && <a
                 className="round-button community-button"
                 href="/community"
                 aria-label="打开旅行社区"
@@ -333,7 +335,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 }}
               >
                 <SFGlobe size="md" />
-              </a>
+              </a>}
               <button
                 className="round-button"
                 aria-label={`Share ${title}`}
@@ -387,7 +389,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             />
           )}
           {activeTab === "passport" && (
-            <MobileJourneyPassport
+            <JourneyPassportTarget
               trips={journeyStore.state.trips}
               activeTripId={journeyStore.state.activeTripId}
               onSelect={(id) => {
@@ -395,15 +397,20 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 setSelectedJourneyId(null);
               }}
               onEdit={(trip) => openJourneyNames(trip)}
+              onOpenStats={() => setOverlay("journey-passport-stats")}
+              onShare={() => void share("flighty Everything 旅迹", "我的多载具旅行护照")}
             />
           )}
 
+        </section>
+
+        {(!overlay || overlay === "add-journey" || overlay === "add-flight") && (
           <BottomBar
             activeTab={activeTab}
             chooseTab={chooseTab}
             onSearch={openAddJourney}
           />
-        </section>
+        )}
 
         {overlay === "add-flight" && (
           <AddFlightSheet
@@ -611,6 +618,13 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
 
         {overlay === "flight-stats" && (
           <FlightStatsSheet stats={stats} onClose={() => setOverlay(null)} />
+        )}
+        {overlay === "journey-passport-stats" && (
+          <JourneyPassportStatsTarget
+            trips={journeyStore.state.trips}
+            onClose={() => setOverlay(null)}
+            onShare={() => void share("flighty Everything 旅迹统计", "我的多载具旅行统计")}
+          />
         )}
         {overlay === "delay-stats" && (
           <DelayStatsSheet stats={stats} onClose={() => setOverlay(null)} />

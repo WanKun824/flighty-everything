@@ -280,15 +280,16 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
     const elevation = THREE.MathUtils.degToRad(shot.elevation);
     let disposed = false;
     let frame = 0;
+    const localMaterials: THREE.Material[] = [];
     setState("loading");
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(30, 1, .1, 100);
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, view === "map" ? 1.35 : 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.12;
+    renderer.toneMappingExposure = view === "map" ? 0.96 : 1.08;
     // 不开 shadowMap：唯一的「地面」是下面那张贴图片，MeshBasicMaterial 收不到阴影，
     // 开了只是白白多跑一遍深度渲染 —— 同屏最多五个实例，省下来的是实打实的。
     mount.appendChild(renderer.domElement);
@@ -303,12 +304,12 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
     // environment 顶掉了原先靠环境光硬撑的那部分，所以半球光要跟着降下来，否则整体发白。
     const environment = makeEnvironment(renderer);
     scene.environment = environment?.texture ?? null;
-    scene.environmentIntensity = 1.15;
-    scene.add(new THREE.HemisphereLight(0xf8fbff, 0x486078, environment ? 1.15 : 2.45));
-    const key = new THREE.DirectionalLight(0xffffff, 4.2);
+    scene.environmentIntensity = view === "map" ? 0.38 : 0.9;
+    scene.add(new THREE.HemisphereLight(0xf8fbff, 0x486078, view === "map" ? 0.86 : environment ? 1.05 : 2.2));
+    const key = new THREE.DirectionalLight(0xffffff, view === "map" ? 2.45 : 3.8);
     key.position.set(3, -5, 8);
     scene.add(key);
-    const rim = new THREE.DirectionalLight(kind === "car" ? 0xff9caf : 0x82c7ff, 2.3);
+    const rim = new THREE.DirectionalLight(kind === "car" ? 0xff9caf : 0x82c7ff, view === "map" ? 0.72 : 1.8);
     rim.position.set(-5, 4, 2);
     scene.add(rim);
 
@@ -381,6 +382,24 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
         if (disposed) return;
         // 缓存里那份是共享的，实例拿克隆体；几何和材质仍按引用共用，只有变换是各自的。
         const model = source.clone(true);
+        if (view === "map") {
+          model.traverse((object) => {
+            if (!(object instanceof THREE.Mesh)) return;
+            const materials = Array.isArray(object.material) ? object.material : [object.material];
+            const softened = materials.map((material) => {
+              const copy = material.clone();
+              localMaterials.push(copy);
+              if (copy instanceof THREE.MeshStandardMaterial) {
+                copy.roughness = Math.max(copy.roughness, 0.72);
+                copy.metalness = Math.min(copy.metalness, 0.16);
+                copy.envMapIntensity = Math.min(copy.envMapIntensity, 0.28);
+                copy.needsUpdate = true;
+              }
+              return copy;
+            });
+            object.material = Array.isArray(object.material) ? softened : softened[0];
+          });
+        }
         model.applyMatrix4(orientationMatrix(asset));
         model.updateMatrixWorld(true);
         const raw = new THREE.Box3().setFromObject(model);
@@ -560,6 +579,7 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
       shadowTexture?.dispose();
       shadowMaterial.dispose();
       environment?.dispose();
+      localMaterials.forEach((material) => material.dispose());
       renderer.dispose();
       renderer.domElement.remove();
     };

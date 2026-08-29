@@ -2,9 +2,12 @@
 
 import { useEffect, useState, type CSSProperties, type ElementType } from "react";
 import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
+import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
+import SFCalendarBadgePlus from "sf-symbols-lib/monochrome/SFCalendarBadgePlus";
 import SFCarFill from "sf-symbols-lib/monochrome/SFCarFill";
 import SFChevronRight from "sf-symbols-lib/monochrome/SFChevronRight";
 import SFFerryFill from "sf-symbols-lib/monochrome/SFFerryFill";
+import SFDiceFill from "sf-symbols-lib/monochrome/SFDiceFill";
 import SFLocationFill from "sf-symbols-lib/monochrome/SFLocationFill";
 import SFMagnifyingglass from "sf-symbols-lib/monochrome/SFMagnifyingglass";
 import SFPlus from "sf-symbols-lib/monochrome/SFPlus";
@@ -71,6 +74,7 @@ export default function JourneyComposer({
   const [note, setNote] = useState("");
   const [title, setTitle] = useState("");
   const [drafts, setDrafts] = useState<JourneySegment[]>([]);
+  const [planning, setPlanning] = useState(variant === "desktop");
   const [error, setError] = useState<string | null>(null);
   const [sessionToken] = useState(() =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -150,6 +154,7 @@ export default function JourneyComposer({
       setDestination(place);
       setQuery(place.name);
       setSuggestions([]);
+      setPlanning(true);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "地点载入失败");
     } finally {
@@ -204,6 +209,114 @@ export default function JourneyComposer({
     else segments.forEach((segment) => onAdd?.(segment));
     onClose();
   };
+
+  const chooseLocalDestination = (place: JourneyPlace) => {
+    setDestination(place);
+    setQuery(place.name);
+    setSuggestions([]);
+    setSearching(false);
+    setPlanning(true);
+    setError(null);
+  };
+
+  const randomDestination = () => {
+    const candidates = JOURNEY_PLACES.filter((place) => place.code !== origin.code);
+    const place = candidates[(drafts.length + origin.code.length) % candidates.length];
+    if (place) chooseLocalDestination(place);
+  };
+
+  if (variant === "mobile") {
+    const frequentPlaces = JOURNEY_PLACES.slice(4, 8);
+    const placeMode = (place: JourneyPlace): JourneyMode =>
+      place.kind === "airport" ? "flight" : place.kind === "station" ? "train" : place.kind === "port" ? "ferry" : "car";
+    return (
+      <section
+        className={`journey-composer mobile journey-search-target ${mobileSheet.dragging ? "is-dragging" : ""}`}
+        style={{ "--sheet-height": `${mobileSheet.fraction * 100}%` } as CSSProperties}
+        role="dialog"
+        aria-modal="true"
+        aria-label="添加行程"
+      >
+        <button className="sheet-drag-handle composer-sheet-handle" aria-label="拖动调整搜索面板高度" {...mobileSheet.handleProps}><span /></button>
+        <header className="journey-search-header">
+          <div><h2>添加行程</h2><p>搜索城市、景点、机场或车站</p></div>
+          <button aria-label="关闭添加行程" onClick={onClose}><SFXmark size="md" /></button>
+        </header>
+
+        <label className="journey-target-search">
+          <SFMagnifyingglass size="md" />
+          <input
+            value={query}
+            onChange={(event) => {
+              const value = event.target.value;
+              setQuery(value);
+              setDestination(null);
+              setSearching(hasSearchText(value));
+              if (!hasSearchText(value)) setSuggestions([]);
+            }}
+            placeholder="东京、HND、京都站或浅草寺"
+          />
+          <i>{searching ? "搜索中" : destination ? "已选择" : ""}</i>
+        </label>
+
+        {suggestions.length > 0 && (
+          <div className="journey-search-results journey-target-results" role="listbox" aria-label="地点搜索结果">
+            {suggestions.map((suggestion) => (
+              <button key={suggestion.id} role="option" aria-selected="false" onClick={() => void chooseSuggestion(suggestion)}>
+                <span className={`place-kind ${suggestion.kind}`}><SFLocationFill size="xs" /></span>
+                <span><strong>{suggestion.name}</strong><small>{suggestion.subtitle}</small></span>
+                <SFChevronRight size="xs" />
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!planning && !hasSearchText(query) && (
+          <div className="journey-search-starter">
+            <section className="journey-frequent-places">
+              <h3>常用地点</h3>
+              {frequentPlaces.map((place) => {
+                const itemMode = placeMode(place);
+                return <button key={place.code} onClick={() => chooseLocalDestination(place)}><span style={{ color: MODE_META[itemMode].color }}><JourneyModeIcon mode={itemMode} /></span><span><strong>{place.name}</strong><small>{place.code} · {place.city}</small></span><SFChevronRight size="xs" /></button>;
+              })}
+            </section>
+            <section className="journey-more-actions">
+              <h3>更多</h3>
+              <button onClick={() => setPlanning(true)}><SFArrowLeftArrowRight size="sm" /><span><strong>按路线规划</strong><small>组合飞机、火车、汽车与轮船</small></span><SFChevronRight size="xs" /></button>
+              <button onClick={onFlightTools}><SFAirplane size="sm" /><span><strong>按航班号添加</strong><small>搜索真实航班或导入日历</small></span><SFChevronRight size="xs" /></button>
+              <button onClick={onFlightTools}><SFCalendarBadgePlus size="sm" /><span><strong>从日历导入</strong><small>识别日历中的航班</small></span><SFChevronRight size="xs" /></button>
+              <button onClick={randomDestination}><SFDiceFill size="sm" /><span><strong>随机探索</strong><small>从当前位置生成下一站</small></span><SFChevronRight size="xs" /></button>
+            </section>
+          </div>
+        )}
+
+        {(planning || destination) && (
+          <div className="journey-planner-panel">
+            <div className="journey-planner-heading"><span><small>连续路线</small><strong>{origin.city} → {destination?.city ?? "下一站"}</strong></span>{destination && <button onClick={() => { setDestination(null); setQuery(""); }}>更换目的地</button>}</div>
+            <label className="trip-name-field journey-target-trip-name"><span>旅程名称</span><input value={name} maxLength={48} onChange={(event) => setName(event.target.value)} placeholder="例如：东京到濑户内海" /></label>
+            <label className="journey-place-search journey-origin-search journey-target-origin">
+              <span>当前起点</span>
+              <div><SFLocationFill size="sm" /><input value={originQuery} onFocus={() => { if (originQuery === origin.name) setOriginQuery(""); }} onChange={(event) => { const value = event.target.value; setOriginQuery(value); setOriginSearching(hasSearchText(value)); if (!hasSearchText(value)) setOriginSuggestions([]); }} placeholder="输入当前地址、机场或车站" /><i>{originSearching ? "搜索中" : originQuery === origin.name ? "已选择" : ""}</i></div>
+            </label>
+            {originSuggestions.length > 0 && <div className="journey-search-results origin-results" role="listbox" aria-label="起点搜索结果">{originSuggestions.map((suggestion) => <button key={suggestion.id} role="option" aria-selected="false" onClick={() => void chooseOriginSuggestion(suggestion)}><span className={`place-kind ${suggestion.kind}`}><SFLocationFill size="xs" /></span><span><strong>{suggestion.name}</strong><small>{suggestion.subtitle}</small></span><SFChevronRight size="xs" /></button>)}</div>}
+            {drafts.length > 0 && <div className="journey-continuity journey-target-continuity"><span><SFLocationFill size="xs" /><small>已规划 {drafts.length} 段</small><strong>{drafts.map((segment) => segment.destination.city).join(" → ")}</strong></span><button onClick={removeLastLeg}><SFTrash size="xs" /> 撤回最后一段</button></div>}
+            <div className="journey-mode-picker journey-target-modes" role="tablist" aria-label="选择交通方式">
+              {(Object.keys(MODE_META) as JourneyMode[]).map((item) => <button role="tab" aria-selected={mode === item} className={mode === item ? "active" : ""} key={item} onClick={() => setMode(item)} style={{ "--mode-color": MODE_META[item].color } as CSSProperties}><JourneyModeIcon mode={item} /><span>{MODE_META[item].label}</span></button>)}
+            </div>
+            <div className="journey-form-grid journey-target-form">
+              <label><span>路段名称（可选）</span><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder={`${origin.city} → ${destination?.city ?? "目的地"}`} /></label>
+              <label><span>日期</span><input aria-label="日期" type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>
+              <label><span>出发时间</span><input aria-label="出发时间" type="time" value={departure} onChange={(event) => setDeparture(event.target.value)} /></label>
+              <label className="journey-note"><span>票号与备注</span><input value={note} onChange={(event) => setNote(event.target.value)} placeholder="班次、座位或取票信息" /></label>
+            </div>
+            {error && <p className="journey-form-error" role="alert">{error}</p>}
+            {mode === "flight" && onFlightTools && <button className="flight-tools-link journey-target-flight-tools" onClick={onFlightTools}>使用航班号、路线或日历添加</button>}
+            <div className="journey-builder-actions journey-target-actions"><button className="journey-add-leg" disabled={!destination} onClick={addNextLeg}><SFPlus size="xs" /> 添加下一段</button><button className="journey-submit" disabled={!destination && drafts.length === 0} onClick={save}>保存行程 · {drafts.length + (destination ? 1 : 0)} 段</button></div>
+          </div>
+        )}
+      </section>
+    );
+  }
 
   return (
     <section
