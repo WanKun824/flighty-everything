@@ -680,8 +680,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .flighty-page[data-theme="light"] .journey-composer.mobile { color: #17191f; background: rgba(247,248,251,.97); box-shadow: 0 -18px 55px rgba(37,51,69,.2); }
 
 /* Passport target: Flighty-inspired hierarchy adapted to the app's multi-modal journeys. */
-.flight-panel.passport-panel { top: 66px; padding: 24px 16px 14px; color: #111318; border-color: rgba(32,38,48,.08); background: #fff; box-shadow: 0 -10px 42px rgba(20,27,38,.12); }
-.flight-panel.passport-panel > .sheet-drag-handle { display: none; }
+.flight-panel.passport-panel { top: auto; height: var(--sheet-height,47%); min-height: 205px; padding: 27px 16px 14px; color: #111318; border-color: rgba(32,38,48,.08); background: #fff; box-shadow: 0 -10px 42px rgba(20,27,38,.12); }
+.passport-panel > .sheet-drag-handle span { background: rgba(24,28,35,.24); }
 .passport-panel .panel-titlebar { padding: 2px 4px 0; }
 .passport-panel .panel-titlebar h1 { font-size: 34px; font-weight: 760; }
 .passport-panel .round-button { color: #111318; border-color: #e1e3e8; background: rgba(255,255,255,.92); }
@@ -820,8 +820,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .passport-place-list strong { font-size: 15px; }.passport-place-list small { color: #898c92; font-size: 12px; }
 
 .flight-tabbar { z-index: 135; }
-.journey-composer.mobile.journey-search-target { padding: 49px 18px 112px; color: #111318; border: 0; background: rgba(255,255,255,.985); box-shadow: 0 -16px 55px rgba(34,40,50,.16); backdrop-filter: blur(32px) saturate(1.15); }
-.journey-search-target > .composer-sheet-handle span { background: rgba(25,28,34,.22); }
+.journey-composer.mobile.journey-search-target { height: 86%; padding: 28px 18px 112px; color: #111318; border: 0; overflow-y: auto; scrollbar-width: none; background: rgba(255,255,255,.965); box-shadow: 0 -16px 55px rgba(34,40,50,.16); backdrop-filter: blur(32px) saturate(1.15); transition: none; }
+.journey-composer.mobile.journey-search-target::-webkit-scrollbar { display: none; }
 .journey-search-header { align-items: flex-start; }
 .journey-search-target .journey-search-header h2 { margin: 0; font-size: 34px; line-height: 1; letter-spacing: -.055em; }
 .journey-search-target .journey-search-header p { margin-top: 7px; color: #7e8188; font-size: 15px; }
@@ -861,8 +861,6 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .journey-target-actions { position: relative; z-index: 2; padding-bottom: 4px; }
 .journey-search-target .journey-add-leg { color: #087ded; border-color: rgba(10,132,255,.22); background: rgba(10,132,255,.08); }
 .journey-search-target .journey-submit { color: #fff; background: #0a84ff; }
-.flighty-page.search-open .flight-globe { filter: brightness(0); }
-.flighty-page.search-open .flight-panel { opacity: 0; pointer-events: none; }
 .flighty-page[data-theme="light"] .map-sheet.mobile-journey-detail,
 .flighty-page[data-theme="light"] .mobile-journey-detail { color: #17191f; border-color: rgba(37,43,52,.09); background: linear-gradient(rgba(250,251,253,.93),rgba(241,244,248,.98) 48%); box-shadow: 0 -22px 60px rgba(36,49,66,.2),inset 0 1px rgba(255,255,255,.9); }
 .flighty-page[data-theme="light"] .mobile-detail-close { color: #1f2228; border-color: rgba(31,36,44,.1); background: rgba(238,241,246,.9); }

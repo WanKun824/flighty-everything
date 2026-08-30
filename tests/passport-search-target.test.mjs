@@ -23,11 +23,25 @@ test("mobile search keeps place lookup and all four vehicle modes usable", async
   assert.match(source, /onAddMany\(segments/);
 });
 
-test("map vehicles soften reflections without mutating shared hero materials", async () => {
+test("map vehicles keep their original material rendering and omit the card-only ground shadow", async () => {
   const source = await readFile(new URL("../app/Vehicle3D.tsx", import.meta.url), "utf8");
-  assert.match(source, /view === "map" \? 0\.38 : 0\.9/);
-  assert.match(source, /const copy = material\.clone\(\)/);
-  assert.match(source, /copy\.roughness = Math\.max\(copy\.roughness, 0\.72\)/);
-  assert.match(source, /copy\.envMapIntensity = Math\.min\(copy\.envMapIntensity, 0\.28\)/);
-  assert.match(source, /localMaterials\.forEach\(\(material\) => material\.dispose\(\)\)/);
+  assert.match(source, /renderer\.toneMappingExposure = 1\.12/);
+  assert.match(source, /scene\.environmentIntensity = 1\.15/);
+  assert.match(source, /shadow\.visible = view !== "map"/);
+  assert.doesNotMatch(source, /copy\.roughness/);
+  assert.doesNotMatch(source, /copy\.envMapIntensity/);
+});
+
+test("passport keeps the shared draggable sheet while mobile search stays fixed over the map", async () => {
+  const [page, composer, css] = await Promise.all([
+    readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/JourneyComposer.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(page, /activeTab === "passport" \? "passport-panel"/);
+  assert.match(page, /\.\.\.mainSheet\.handleProps/);
+  assert.doesNotMatch(composer, /拖动调整搜索面板高度/);
+  assert.match(css, /\.flight-panel\.passport-panel \{ top: auto; height: var\(--sheet-height,47%\)/);
+  assert.match(css, /\.journey-composer\.mobile\.journey-search-target \{ height: 86%/);
+  assert.doesNotMatch(css, /search-open \.flight-globe \{ filter: brightness\(0\)/);
 });

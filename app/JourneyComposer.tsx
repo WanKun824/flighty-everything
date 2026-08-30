@@ -28,7 +28,6 @@ import {
   type JourneyPlaceSuggestion,
 } from "./journeyPlaceSearch";
 import { minQueryLength } from "./placeSearch";
-import { useSheetDetents } from "./useSheetDetents";
 
 const hasSearchText = (value: string) => {
   const query = value.trim();
@@ -81,13 +80,6 @@ export default function JourneyComposer({
       ? crypto.randomUUID()
       : `flighty-${Date.now()}`,
   );
-  const mobileSheet = useSheetDetents({
-    detents: [0.31, 0.58, 0.86],
-    initial: 0.86,
-    dismissible: true,
-    onDismiss: onClose,
-  });
-
   useEffect(() => {
     const query = originQuery.trim();
     if (query === origin.name || !hasSearchText(query)) {
@@ -231,13 +223,11 @@ export default function JourneyComposer({
       place.kind === "airport" ? "flight" : place.kind === "station" ? "train" : place.kind === "port" ? "ferry" : "car";
     return (
       <section
-        className={`journey-composer mobile journey-search-target ${mobileSheet.dragging ? "is-dragging" : ""}`}
-        style={{ "--sheet-height": `${mobileSheet.fraction * 100}%` } as CSSProperties}
+        className="journey-composer mobile journey-search-target"
         role="dialog"
         aria-modal="true"
         aria-label="添加行程"
       >
-        <button className="sheet-drag-handle composer-sheet-handle" aria-label="拖动调整搜索面板高度" {...mobileSheet.handleProps}><span /></button>
         <header className="journey-search-header">
           <div><h2>添加行程</h2><p>搜索城市、景点、机场或车站</p></div>
           <button aria-label="关闭添加行程" onClick={onClose}><SFXmark size="md" /></button>
@@ -320,13 +310,11 @@ export default function JourneyComposer({
 
   return (
     <section
-      className={`journey-composer ${variant} journey-route-builder ${variant === "mobile" && mobileSheet.dragging ? "is-dragging" : ""}`}
-      style={variant === "mobile" ? ({ "--sheet-height": `${mobileSheet.fraction * 100}%` } as CSSProperties) : undefined}
+      className="journey-composer desktop journey-route-builder"
       role="dialog"
       aria-modal="true"
       aria-label="编辑连续行程"
     >
-      {variant === "mobile" && <button className="sheet-drag-handle composer-sheet-handle" aria-label="拖动调整搜索面板高度" {...mobileSheet.handleProps}><span /></button>}
       <header>
         <div>
           <small>TRIP BUILDER</small>
