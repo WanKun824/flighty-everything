@@ -32,6 +32,18 @@ test("map vehicles keep their original material rendering and omit the card-only
   assert.doesNotMatch(source, /copy\.envMapIntensity/);
 });
 
+test("map airplane omits the detached double motion trail", async () => {
+  const css = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  assert.match(
+    css,
+    /\.journey-vehicle-3d-marker\.flight \.journey-vehicle-3d-host::before\s*\{\s*content:\s*none;/,
+  );
+  assert.doesNotMatch(
+    css,
+    /\.journey-vehicle-3d-marker\.flight \.journey-vehicle-3d-host::before[^}]*box-shadow/,
+  );
+});
+
 test("passport keeps the shared draggable sheet while mobile search stays fixed over the map", async () => {
   const [page, composer, css] = await Promise.all([
     readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
