@@ -6,11 +6,48 @@ test("passport and statistics use real multi-modal journey data", async () => {
   const source = await readFile(new URL("../app/JourneyPassportTarget.tsx", import.meta.url), "utf8");
   assert.match(source, /journeyStats\(segments\)/);
   assert.match(source, /Object\.keys\(MODE_META\)/);
-  assert.match(source, /<Vehicle3D kind=\{topMode\}/);
+  assert.match(source, /<JourneyModeIcon mode=\{topMode\}/);
+  assert.doesNotMatch(source, /Vehicle3D/);
   assert.match(source, /行程频率/);
   assert.match(source, /旅行距离/);
   assert.match(source, /常用载具/);
   assert.match(source, /热门路线/);
+});
+
+test("vehicle models stay on the live map while every showcase uses journey icons", async () => {
+  const [globe, ...showcases] = await Promise.all([
+    readFile(new URL("../app/FlightGlobe.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/MobileJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/DesktopJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/JourneyPassportTarget.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/JourneyExperience27.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/CommunityJourneyPage.tsx", import.meta.url), "utf8"),
+  ]);
+  assert.match(globe, /<Vehicle3D/);
+  for (const source of showcases) {
+    assert.doesNotMatch(source, /<Vehicle3D/);
+    assert.match(source, /JourneyModeIcon|VehicleModeIcon/);
+  }
+});
+
+test("airports sheet and map use real airport identities, regions and status markers", async () => {
+  const [data, globe, page, css] = await Promise.all([
+    readFile(new URL("../app/flightyData.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/FlightGlobe.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+  for (const code of ["HKG", "NRT", "SIN", "ICN", "LHR", "CDG", "ORD", "JFK", "LAX"])
+    assert.match(data, new RegExp(`code: "${code}"`));
+  assert.ok((data.match(/timeZone:/g) ?? []).length >= 25);
+  assert.match(data, /airportStatusLevel/);
+  assert.match(globe, /airportRegion/);
+  assert.match(globe, /region === "All" \|\| airport\.region === region/);
+  assert.match(globe, /flighty-airport-marker/);
+  assert.match(page, /<AirportRow/);
+  assert.match(page, /real IATA \/ ICAO airport records/);
+  assert.match(css, /\.airport-signal\.warning/);
+  assert.match(css, /\.airport-signal\.severe/);
 });
 
 test("mobile search keeps place lookup and all four vehicle modes usable", async () => {

@@ -102,6 +102,7 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .journey-vehicle-3d-marker:focus-visible { outline: 2px solid rgba(10,132,255,.78); outline-offset: 4px; border-radius: 16px; }
 .journey-vehicle-3d-marker.is-following { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); }
 .journey-vehicle-3d-host, .journey-vehicle-3d-model, .journey-vehicle-3d-model canvas { width: 100%; height: 100%; display: block; pointer-events: none; }
+.vehicle-3d { position: relative; }
 .journey-vehicle-3d-host { position: relative; isolation: isolate; backface-visibility: hidden; contain: paint; }
 .journey-vehicle-3d-host::before { content:""; position:absolute; z-index:-1; left:50%; top:55%; width:58%; height:4px; border-radius:99px; opacity:var(--journey-motion-trail,0); transform:translate(-96%,-50%); transform-origin:right center; background:linear-gradient(90deg,transparent,currentColor); filter:blur(2px); transition:opacity .18s ease; }
 .journey-vehicle-3d-marker.flight .journey-vehicle-3d-host::before { content:none; }
@@ -442,8 +443,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .desktop-timeline { min-height: 190px; margin-top: 18px; padding-right: 3px; flex: 1 1 auto; overflow-y: auto; scrollbar-width: none; }.desktop-timeline::-webkit-scrollbar { display: none; }
 .desktop-segment-row { width: 100%; min-height: 73px; padding: 0; border: 0; border-radius: 13px; background: transparent; display: grid; grid-template-columns: 42px minmax(0,1fr) 13px; gap: 9px; text-align: left; cursor: pointer; }.desktop-segment-row.active { background: rgba(255,255,255,.035); }.desktop-segment-rail { position: relative; align-self: stretch; display: flex; justify-content: center; }.desktop-segment-rail > i { position: relative; z-index: 2; width: 35px; height: 35px; border-radius: 11px; display: grid; place-items: center; font-style: normal; }.desktop-segment-rail > b { position: absolute; top: 36px; bottom: -2px; width: 1px; background: rgba(255,255,255,.1); }.desktop-segment-copy { min-width: 0; padding-top: 2px; display: flex; flex-direction: column; }.desktop-segment-copy > span { display: flex; align-items: center; gap: 7px; }.desktop-segment-copy strong { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }.desktop-segment-copy em { color: #73737c; font-size: 8px; font-style: normal; }.desktop-segment-copy small { margin-top: 5px; color: #686872; font-size: 9px; }.desktop-segment-row > svg { align-self: start; margin-top: 12px; color: #5b5b63; }
 .desktop-selection-detail { padding: 15px; flex: 0 0 auto; border: 1px solid rgba(255,255,255,.08); border-radius: 18px; background: #222228; }.desktop-detail-mode { display: grid; grid-template-columns: 19px 1fr auto; align-items: center; gap: 5px; font-size: 10px; }.desktop-detail-mode b { padding: 4px 7px; color: #60d682; border-radius: 9px; background: rgba(48,209,88,.1); font-size: 8px; }.desktop-selection-detail h3 { margin: 12px 0 0; font-size: 16px; }.desktop-selection-detail p { margin: 5px 0 0; color: #85858e; font-size: 10px; }.desktop-selection-detail > div:last-of-type { margin-top: 14px; display: grid; grid-template-columns: 1fr 22px 1fr; align-items: center; }.desktop-selection-detail > div:last-of-type span { display: flex; flex-direction: column; }.desktop-selection-detail > div:last-of-type span:last-child { text-align: right; }.desktop-selection-detail > div:last-of-type small { color: #6d6d76; font-size: 8px; }.desktop-selection-detail > div:last-of-type strong { margin-top: 2px; font-size: 15px; }.desktop-selection-detail > div:last-of-type i { height: 1px; background: #484850; }.desktop-selection-detail > button { width: 100%; height: 38px; margin-top: 14px; border: 0; border-radius: 11px; color: #72bcff; background: rgba(10,132,255,.12); display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 10px; cursor: pointer; }
-.desktop-vehicle-preview { height: 112px; margin: -6px -6px 11px; overflow: hidden; border-radius: 13px; background: radial-gradient(circle at 50% 60%,rgba(30,124,255,.25),transparent 58%),#141820; }
-.desktop-vehicle-preview .vehicle-3d, .desktop-vehicle-preview canvas { width: 100%; height: 100%; display: block; }
+.desktop-vehicle-preview { width: 64px; height: 64px; margin: 2px 0 13px; border-radius: 18px; background: currentColor; display: grid; place-items: center; box-shadow: 0 10px 26px color-mix(in srgb,currentColor 24%,transparent); }
+.desktop-vehicle-preview > span { color: #fff; display: grid; place-items: center; transform: scale(1.28); }
 
 .journey-composer { z-index: 90; color: #fff; background: #1b1b21; box-shadow: 0 30px 110px rgba(0,0,0,.72); }
 .journey-composer.desktop { position: absolute; left: 50%; top: 50%; width: min(570px,calc(100vw - 80px)); padding: 24px; transform: translate(-50%,-50%); border: 1px solid rgba(255,255,255,.1); border-radius: 24px; }
@@ -523,8 +524,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 
 .mobile-journey-detail { position: absolute; z-index: 95; inset: 0; padding: 42px 16px 30px; overflow-y: auto; color: #fff; background: linear-gradient(#111217,#17171c 48%); }
 .mobile-detail-close { position: absolute; z-index: 4; top: 48px; right: 17px; width: 42px; height: 42px; padding: 0; border: 1px solid rgba(255,255,255,.11); border-radius: 50%; color: #fff; background: rgba(46,46,53,.86); display: grid; place-items: center; backdrop-filter: blur(18px); }
-.mobile-journey-model { height: 245px; margin: -42px -16px 0; overflow: hidden; background: radial-gradient(circle at 50% 62%,rgba(10,132,255,.31),transparent 43%),linear-gradient(#11151f,#0f1014); }
-.mobile-journey-model .vehicle-3d, .mobile-journey-model canvas { width: 100%; height: 100%; display: block; }
+.mobile-journey-model { width: 58px; height: 58px; margin: 2px 0 12px; border-radius: 17px; color: var(--blue); background: currentColor; display: grid; place-items: center; box-shadow: 0 9px 24px color-mix(in srgb,currentColor 24%,transparent); }
+.mobile-journey-model > span { color: #fff; transform: scale(1.25); }
 .mobile-detail-mode { margin-top: 15px; display: flex; align-items: center; gap: 7px; color: var(--mode-color); font-size: 10px; font-weight: 700; }.mobile-detail-mode b { margin-left: auto; padding: 5px 8px; color: #64d57f; border-radius: 10px; background: rgba(48,209,88,.1); font-size: 9px; }
 .mobile-journey-detail h2 { margin: 10px 0 0; font-size: 26px; line-height: 1.05; letter-spacing: -.045em; }.mobile-journey-detail > p { margin: 7px 0 0; color: #777780; font-size: 10px; }
 .mobile-detail-route { margin-top: 24px; padding: 17px; border: 1px solid rgba(255,255,255,.07); border-radius: 19px; background: #232329; display: grid; grid-template-columns: 1fr 42px 1fr; align-items: center; }
@@ -716,8 +717,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .passport-vehicle-card h2 { margin: 0; font-size: 20px; }
 .passport-vehicle-card > strong { display: block; margin-top: 1px; color: #074f72; font-size: 34px; line-height: 1; letter-spacing: -.045em; }
 .passport-vehicle-card > p { margin: 4px 0 0; color: rgba(4,67,96,.64); font-size: 13px; }
-.passport-vehicle-stage { height: 116px; margin: 0 -12px -3px; }
-.passport-vehicle-stage .vehicle-3d { width: 100%; height: 100%; }
+.passport-vehicle-stage { width: 64px; height: 64px; margin: 15px 0 18px; border-radius: 18px; color: #fff; background: var(--vehicle-color); display: grid; place-items: center; box-shadow: 0 10px 26px color-mix(in srgb,var(--vehicle-color) 28%,transparent); }
+.passport-vehicle-stage > span { transform: scale(1.42); }
 .passport-vehicle-card .passport-card-link { margin-top: 0; color: #063f5d; background: rgba(255,255,255,.28); }
 .passport-stats-cta { width: 100%; min-height: 72px; margin: 26px 0 22px; padding: 13px 14px; border: 1px solid rgba(142,54,180,.42); border-radius: 18px; color: #821da5; background: linear-gradient(145deg,rgba(190,104,221,.06),rgba(115,50,156,.025)); display: flex; align-items: center; justify-content: space-between; text-align: left; cursor: pointer; }
 .passport-stats-cta span { display: flex; flex-direction: column; gap: 4px; }
@@ -888,6 +889,52 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .desktop-map-empty { position: absolute; z-index: 5; left: 50%; top: 50%; padding: 10px 13px; transform: translate(-50%,-50%); border: 1px solid rgba(255,255,255,.1); border-radius: 13px; color: #8b8b95; background: rgba(25,25,31,.78); font-size: 10px; backdrop-filter: blur(18px); }
 .desktop-empty-day { min-height: 150px; padding: 25px 8px; color: #606069; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; }.desktop-empty-day strong { color: #85858f; font-size: 11px; }.desktop-empty-day button { padding: 7px 11px; border: 0; border-radius: 9px; color: #65afff; background: rgba(10,132,255,.1); font-size: 9px; cursor: pointer; }
 .desktop-center.nav-map .desktop-map-card { min-height: 540px; }
+
+/* Airports: map-backed, data-first sheet matching the Flighty reference hierarchy. */
+.flighty-page .map-sheet.airports-sheet { height: 60%; padding: 19px 17px 16px; overflow: hidden; color: #111318; border: 1px solid rgba(38,45,56,.08); background: rgba(249,250,252,.965); box-shadow: 0 -18px 55px rgba(37,51,69,.2); -webkit-backdrop-filter: blur(34px) saturate(1.35); backdrop-filter: blur(34px) saturate(1.35); }
+.airports-sheet .sheet-header h2 { font-size: 34px; font-weight: 720; letter-spacing: -.05em; }
+.airports-sheet .sheet-header button { color: #20232a; border-color: #d9dce2; background: rgba(241,243,247,.92); }
+.airports-sheet .region-tabs { margin: 11px -3px 0; padding: 1px 3px 3px; gap: 5px; }
+.airports-sheet .region-tabs button { height: 36px; padding: 0 13px; color: #858890; border: 1px solid transparent; border-radius: 19px; background: transparent; font-size: 11px; }
+.airports-sheet .region-tabs button:first-child { color: #34373e; border-color: #dfe2e7; background: rgba(255,255,255,.78); }
+.airports-sheet .region-tabs button.active { color: #111318; border-color: #e1e3e8; background: #fff; box-shadow: 0 4px 12px rgba(39,47,59,.08); }
+.airports-sheet .airport-intro { margin-top: 7px; padding: 0 2px; }
+.airports-sheet .airport-intro strong { font-size: 12px; }
+.airports-sheet .airport-intro span { color: #858890; font-size: 10px; }
+.airports-sheet .airport-intro small { color: #a0a3aa; font-size: 9px; }
+.airports-sheet .map-sheet-scroll { top: 166px; left: 17px; right: 7px; bottom: 8px; padding-right: 10px; scrollbar-width: none; }
+.airports-sheet .map-sheet-scroll::-webkit-scrollbar { display: none; }
+.airport-groups > section { padding-top: 9px; }
+.airport-groups > .airport-for-you-group { padding-top: 0; }
+.airport-groups > section + section { padding-top: 18px; }
+.airport-groups h3 { margin: 0 0 5px; color: #15171c; font-size: 12px; display: flex; align-items: center; justify-content: space-between; }
+.airport-groups h3 span { color: #9a9da4; font-size: 9px; font-weight: 560; }
+.airports-sheet .airport-row { position: relative; min-height: 116px; padding: 8px 0; border-bottom: 1px solid #e7e8eb; background: transparent; }
+.airports-sheet .airport-main { grid-template-columns: 58px minmax(0,1fr); padding-right: 34px; }
+.airports-sheet .airport-signal { width: 16px; height: 16px; background: #24c78a; box-shadow: 0 0 0 9px rgba(36,199,138,.13),0 0 18px rgba(36,199,138,.45); }
+.airports-sheet .airport-signal.warning { background: #ff9f0a; box-shadow: 0 0 0 9px rgba(255,159,10,.13),0 0 18px rgba(255,159,10,.4); }
+.airports-sheet .airport-signal.severe { background: #ff375f; box-shadow: 0 0 0 9px rgba(255,55,95,.13),0 0 18px rgba(255,55,95,.42); }
+.airport-detail-sheet .airport-signal.warning { background: #ff9f0a; box-shadow: 0 0 0 9px rgba(255,159,10,.13),0 0 18px rgba(255,159,10,.4); }
+.airport-detail-sheet .airport-signal.severe { background: #ff375f; box-shadow: 0 0 0 9px rgba(255,55,95,.13),0 0 18px rgba(255,55,95,.42); }
+.airports-sheet .airport-main strong { color: #111318; font-size: 13px; }
+.airports-sheet .airport-main em { margin-top: 1px; color: #16a66f; font-size: 9px; }
+.airports-sheet .airport-row.warning .airport-main em { color: #d98300; }
+.airports-sheet .airport-row.severe .airport-main em { color: #ff375f; }
+.airport-identity { margin-top: 2px; overflow: hidden; color: #92959c; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+.airports-sheet .airport-metrics { margin-top: 7px; }
+.airports-sheet .airport-metrics small { color: #9699a0; }
+.airports-sheet .airport-metrics b { color: #22252b; }
+.airports-sheet .favorite-button { color: #ffcc00; }
+.airports-sheet .airport-code { left: 16px; bottom: 8px; color: #8e9198; }
+.flighty-airport-marker { width: 15px; height: 15px; padding: 0; border: 2px solid rgba(255,255,255,.95); border-radius: 50%; outline: 0; background: #24c78a; box-shadow: 0 0 0 5px rgba(36,199,138,.14),0 3px 12px rgba(0,0,0,.28); cursor: pointer; transition: transform .18s ease; }
+.flighty-airport-marker.warning { background: #ff9f0a; box-shadow: 0 0 0 5px rgba(255,159,10,.14),0 3px 12px rgba(0,0,0,.28); }
+.flighty-airport-marker.severe { background: #ff375f; box-shadow: 0 0 0 5px rgba(255,55,95,.15),0 3px 12px rgba(0,0,0,.28); }
+.flighty-airport-marker.selected { transform: scale(1.32); box-shadow: 0 0 0 7px rgba(10,132,255,.2),0 4px 16px rgba(0,0,0,.32); }
+
+@media (max-width: 430px) {
+  .flighty-page .map-sheet.airports-sheet { left: 0; right: 0; bottom: 0; height: 60%; border-radius: 30px 30px 0 0; }
+  .airports-sheet .airport-main { grid-template-columns: 52px minmax(0,1fr); }
+}
 
 .desktop-feature-view { min-height: 0; height: 100%; display: flex; flex-direction: column; }
 .desktop-feature-view > header { min-height: 75px; display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }.desktop-feature-view > header small { color: #6f6f79; font-size: 9px; }.desktop-feature-view > header h1 { margin: 4px 0 0; font-size: clamp(27px,2.6vw,38px); letter-spacing: -.045em; }.desktop-feature-view > header p { margin: 6px 0 0; color: #777782; font-size: 10px; }.desktop-feature-view .desktop-add-button { height: 42px; padding: 0 14px; border: 1px solid #1687f7; border-radius: 13px; color: #fff; background: #0a84ff; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; cursor: pointer; }

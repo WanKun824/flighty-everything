@@ -20,7 +20,6 @@ import SFTrainSideFrontCar from "sf-symbols-lib/monochrome/SFTrainSideFrontCar";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import FlightGlobe from "./FlightGlobe";
 import JourneyComposer from "./JourneyComposer";
-import Vehicle3D from "./Vehicle3D";
 import {
   MODE_META,
   formatJourneyDuration,
@@ -630,12 +629,8 @@ function SelectedDetail({
 }) {
   return (
     <section className="desktop-selection-detail">
-      <div className="desktop-vehicle-preview">
-        <Vehicle3D
-          kind={segment.mode}
-          view="hero"
-          progress={segment.progress}
-        />
+      <div className="desktop-vehicle-preview" style={{ color: MODE_META[segment.mode].color }}>
+        <span><VehicleModeIcon mode={segment.mode} /></span>
       </div>
       <div
         className="desktop-detail-mode"

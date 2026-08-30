@@ -18,7 +18,6 @@ import {
 } from "./journeyData";
 import { JourneyWeatherIcon, useJourneyWeather } from "./journeyWeather";
 import type { JourneyTrip } from "./journeyStorage";
-import Vehicle3D from "./Vehicle3D";
 import { useSheetDetents } from "./useSheetDetents";
 
 export function MobileJourneysPanel({
@@ -286,12 +285,8 @@ export function MobileJourneyDetail({
       >
         <SFXmark size="sm" />
       </button>
-      <div className="mobile-journey-model">
-        <Vehicle3D
-          kind={segment.mode}
-          view="hero"
-          progress={segment.progress}
-        />
+      <div className="mobile-journey-model" style={{ color: meta.color }}>
+        <span><JourneyModeIcon mode={segment.mode} /></span>
       </div>
       <div className="mobile-detail-mode" style={{ color: meta.color }}>
         <JourneyModeIcon mode={segment.mode} />

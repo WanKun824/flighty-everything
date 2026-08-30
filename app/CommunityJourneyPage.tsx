@@ -10,9 +10,9 @@ import SFSunMaxFill from "sf-symbols-lib/monochrome/SFSunMaxFill";
 import { useAppearance } from "./appearance";
 import { cloneCommunityJourney, type CommunityJourney } from "./communityData";
 import FlightGlobe from "./FlightGlobe";
+import { JourneyModeIcon } from "./JourneyComposer";
 import { formatJourneyDuration, MODE_META } from "./journeyData";
 import { useJourneyStore } from "./journeyStorage";
-import Vehicle3D from "./Vehicle3D";
 
 export default function CommunityJourneyPage({ journey, onBack }: { journey: CommunityJourney; onBack?: () => void }) {
   const appearance = useAppearance();
@@ -59,7 +59,7 @@ export default function CommunityJourneyPage({ journey, onBack }: { journey: Com
         </span>
       </header>
       <article className="community-detail-sheet">
-        <div className="community-detail-model"><Vehicle3D kind={journey.mode} view="hero" progress={journey.progress} /></div>
+        <div className="community-detail-model"><span><JourneyModeIcon mode={journey.mode} /></span></div>
         <div className="community-detail-copy">
           <span className="community-mode-pill">{meta.label} · {journey.service}</span>
           <p className="community-creator">{journey.creatorName} 分享 · {journey.likes} 人喜欢</p>

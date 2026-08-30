@@ -53,6 +53,7 @@ import {
   AIRPORTS,
   SAMPLE_FLIGHTS,
   airportByCode,
+  airportStatusLevel,
   calendarFlightNumbers,
   flightFromNumber,
   flightFromRoute,
@@ -244,10 +245,11 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
       >
         <FlightGlobe
           airportsVisible={mapOverlayOpen}
+          airportRegion={airportRegion}
           selectedAirport={selectedAirport}
           weatherMode="none"
           resetToken={resetToken}
-          journeySegments={journeyStore.state.segments}
+          journeySegments={mapOverlayOpen ? [] : journeyStore.state.segments}
           selectedJourneySegmentId={selectedJourneyId}
           onJourneySegmentSelect={(id) => {
             journeyStore.selectSegment(id);
@@ -1258,6 +1260,13 @@ function AirportsSheet({
   const filtered = AIRPORTS.filter(
     (airport) => region === "All" || airport.region === region,
   );
+  const preferredCodes = favorites.length ? favorites : ["HKG", "NRT"];
+  const preferred = preferredCodes
+    .map((code) => airportByCode(code))
+    .filter((airport): airport is Airport => Boolean(airport) && (region === "All" || airport.region === region));
+  const forYou = preferred.length ? preferred : filtered.slice(0, 2);
+  const issues = filtered.filter((airport) => airportStatusLevel(airport) !== "normal");
+  const normal = filtered.filter((airport) => airportStatusLevel(airport) === "normal");
   return (
     <section
       className="map-sheet airports-sheet"
@@ -1281,62 +1290,58 @@ function AirportsSheet({
       </div>
       <div className="airport-intro">
         <strong>For You</strong>
-        <span>Favorites and airports from your active flights</span>
-        <small>
-          {favorites.length
-            ? `${favorites.length} favorite airport${favorites.length === 1 ? "" : "s"}`
-            : "No Favorites — Tap ★ in an airport to favorite"}
-        </small>
+        <span>Favorites and airports from your active journeys</span>
+        <small>{AIRPORTS.length} real IATA / ICAO airport records</small>
       </div>
-      <h3>Major Issues</h3>
-      <div className="map-sheet-scroll">
-        {filtered.map((airport) => (
-          <article className="airport-row" key={airport.code}>
-            <button
-              className="airport-main"
-              onClick={() => onAirport(airport.code)}
-            >
-              <span
-                className={`airport-signal ${airport.issue ? "issue" : ""}`}
-              />
-              <div>
-                <strong>{airport.name}</strong>
-                <em>{airport.issue ?? "Operations Normal"}</em>
-                <div className="airport-metrics">
-                  <span>
-                    <small>ON TIME</small>
-                    <b>↗ {airport.departureOnTime}%</b>
-                    <b>↘ {airport.arrivalOnTime}%</b>
-                  </span>
-                  <span>
-                    <small>AVG. DELAY</small>
-                    <b>{airport.departureDelay}m</b>
-                    <b>{airport.arrivalDelay}m</b>
-                  </span>
-                  <span>
-                    <small>CANCELLED</small>
-                    <b>{airport.cancelled}%</b>
-                    <b>{airport.cancelled}%</b>
-                  </span>
-                </div>
-              </div>
-            </button>
-            <button
-              className="favorite-button"
-              aria-label={`Favorite ${airport.name}`}
-              onClick={() => onFavorite(airport.code)}
-            >
-              {favorites.includes(airport.code) ? (
-                <SFStarFill size="sm" />
-              ) : (
-                <SFStar size="sm" />
-              )}
-            </button>
-            <small className="airport-code">{airport.code}</small>
-          </article>
-        ))}
+      <div className="map-sheet-scroll airport-groups">
+        <section className="airport-for-you-group">
+          {forYou.map((airport) => <AirportRow key={`for-you-${airport.code}`} airport={airport} favorite={favorites.includes(airport.code)} onFavorite={onFavorite} onAirport={onAirport} />)}
+        </section>
+        {issues.length > 0 && <section>
+          <h3>Major Issues <span>{issues.length}</span></h3>
+          {issues.map((airport) => <AirportRow key={`issue-${airport.code}`} airport={airport} favorite={favorites.includes(airport.code)} onFavorite={onFavorite} onAirport={onAirport} />)}
+        </section>}
+        {normal.length > 0 && <section>
+          <h3>Operating Normally <span>{normal.length}</span></h3>
+          {normal.map((airport) => <AirportRow key={`normal-${airport.code}`} airport={airport} favorite={favorites.includes(airport.code)} onFavorite={onFavorite} onAirport={onAirport} />)}
+        </section>}
       </div>
     </section>
+  );
+}
+
+function AirportRow({
+  airport,
+  favorite,
+  onFavorite,
+  onAirport,
+}: {
+  airport: Airport;
+  favorite: boolean;
+  onFavorite: (code: string) => void;
+  onAirport: (code: string) => void;
+}) {
+  const level = airportStatusLevel(airport);
+  return (
+    <article className={`airport-row ${level}`}>
+      <button className="airport-main" onClick={() => onAirport(airport.code)}>
+        <span className={`airport-signal ${level}`} />
+        <div>
+          <strong>{airport.name}</strong>
+          <em>{airport.issue ?? "Operations Normal"}</em>
+          <span className="airport-identity">{airport.icao} · {airport.city}, {airport.country}</span>
+          <div className="airport-metrics">
+            <span><small>ON TIME</small><b>↗ {airport.departureOnTime}%</b><b>↘ {airport.arrivalOnTime}%</b></span>
+            <span><small>AVG. DELAY</small><b>{airport.departureDelay}m</b><b>{airport.arrivalDelay}m</b></span>
+            <span><small>CANCELLED</small><b>{airport.cancelled}%</b><b>{airport.cancelled}%</b></span>
+          </div>
+        </div>
+      </button>
+      <button className="favorite-button" aria-label={`${favorite ? "Remove" : "Add"} ${airport.name} favorite`} onClick={() => onFavorite(airport.code)}>
+        {favorite ? <SFStarFill size="sm" /> : <SFStar size="sm" />}
+      </button>
+      <small className="airport-code">{airport.code}</small>
+    </article>
   );
 }
 
@@ -1360,7 +1365,7 @@ function AirportDetailSheet({
       <div className="airport-tags">
         <span>{airport.code}</span>
         <span>{airport.icao}</span>
-        <span>10:57 PM GMT+8</span>
+        <span>{airport.timeZone.replaceAll("_", " ")}</span>
       </div>
       <SheetHeader
         title={airport.name}
@@ -1376,7 +1381,7 @@ function AirportDetailSheet({
       </button>
       <section className={`issue-card ${airport.issue ? "" : "normal"}`}>
         <header>
-          <span className="airport-signal issue" />
+          <span className={`airport-signal ${airportStatusLevel(airport)}`} />
           <h3>{airport.issue ? "Major Issues" : "Operations Normal"}</h3>
         </header>
         <div>

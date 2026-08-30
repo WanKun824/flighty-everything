@@ -8,7 +8,6 @@ import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
 import SFSquareAndArrowUp from "sf-symbols-lib/monochrome/SFSquareAndArrowUp";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import { JourneyModeIcon } from "./JourneyComposer";
-import Vehicle3D from "./Vehicle3D";
 import { MODE_META, journeyStats, type JourneyMode } from "./journeyData";
 import type { JourneyTrip } from "./journeyStorage";
 
@@ -90,7 +89,7 @@ export default function JourneyPassportTarget({
         <h2>最常用载具</h2>
         <strong>{MODE_META[topMode].label}</strong>
         <p>{topModeCount} 段 · {MODE_META[topMode].shortLabel}</p>
-        <div className="passport-vehicle-stage" aria-hidden="true"><Vehicle3D kind={topMode} view="hero" progress={1} /></div>
+        <div className="passport-vehicle-stage" aria-hidden="true"><span><JourneyModeIcon mode={topMode} /></span></div>
         <button className="passport-card-link" onClick={onOpenStats}><span>全部载具统计</span><SFChevronRight size="sm" /></button>
       </section>
 

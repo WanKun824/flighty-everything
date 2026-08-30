@@ -23,11 +23,10 @@ import {
   type CommunityJourney,
 } from "./communityData";
 import FlightGlobe from "./FlightGlobe";
-import JourneyComposer from "./JourneyComposer";
+import JourneyComposer, { JourneyModeIcon } from "./JourneyComposer";
 import { MODE_META, type JourneySegment } from "./journeyData";
 import { useJourneyPreferences } from "./journeyPreferences";
 import { useJourneyStore } from "./journeyStorage";
-import Vehicle3D from "./Vehicle3D";
 
 type Surface = "mine" | "discover";
 
@@ -221,7 +220,7 @@ export default function JourneyExperience() {
 
       {selected && !immersive && (
         <aside className="journey-live-preview" style={{ "--journey-accent": MODE_META[selected.mode].color } as CSSProperties}>
-          <div className="journey-live-model"><Vehicle3D kind={selected.mode} view="hero" progress={selected.progress} rate={preferences.animationSpeed} /></div>
+          <div className="journey-live-model"><span><JourneyModeIcon mode={selected.mode} /></span></div>
           <div>
             <small>{surface === "mine" ? "LIVE JOURNEY" : `${selectedCommunity?.creatorName ?? "社区"} 分享`}</small>
             <strong>{selected.title}</strong>

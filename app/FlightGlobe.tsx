@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AIRPORTS, airportByCode } from "./flightyData";
+import { AIRPORTS, airportByCode, airportStatusLevel, type Region } from "./flightyData";
 import type { WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
@@ -16,6 +16,7 @@ export type BasemapMode = "standard" | "satellite" | "terrain" | "navigation" | 
 
 type Props = {
   airportsVisible: boolean;
+  airportRegion?: "All" | Region;
   selectedAirport: string | null;
   weatherMode: WeatherMode;
   resetToken: number;
@@ -40,6 +41,7 @@ type RadarResponse = {
 
 type LiveData = {
   airportsVisible: boolean;
+  airportRegion: "All" | Region;
   selectedAirport: string | null;
   journeySegments: JourneySegment[];
   selectedJourneySegmentId: string | null;
@@ -62,6 +64,7 @@ export const BASEMAP_OPTIONS: Array<{ id: BasemapMode; label: string }> = [
 
 export default function FlightGlobe({
   airportsVisible,
+  airportRegion = "All",
   selectedAirport,
   weatherMode,
   resetToken,
@@ -81,11 +84,13 @@ export default function FlightGlobe({
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const mapboxRef = useRef<typeof import("mapbox-gl").default | null>(null);
+  const airportMarkersRef = useRef<Array<import("mapbox-gl").Marker>>([]);
   const basemapRef = useRef<BasemapMode>("standard");
   const basemapThemeRef = useRef<"light" | "dark">(theme);
   const followVehicleRef = useRef(followVehicle);
   const liveDataRef = useRef<LiveData>({
     airportsVisible,
+    airportRegion,
     selectedAirport,
     journeySegments,
     selectedJourneySegmentId,
@@ -112,12 +117,14 @@ export default function FlightGlobe({
   useEffect(() => {
     liveDataRef.current = {
       airportsVisible,
+      airportRegion,
       selectedAirport,
       journeySegments,
       selectedJourneySegmentId,
     };
   }, [
     airportsVisible,
+    airportRegion,
     selectedAirport,
     journeySegments,
     selectedJourneySegmentId,
@@ -215,8 +222,45 @@ export default function FlightGlobe({
       map.getSource("flighty-airports") as
         | import("mapbox-gl").GeoJSONSource
         | undefined
-    )?.setData(airportFeatures(selectedAirport));
-  }, [airportsVisible, selectedAirport, loaded, styleRevision]);
+    )?.setData(airportFeatures(selectedAirport, airportRegion));
+  }, [airportsVisible, airportRegion, selectedAirport, loaded, styleRevision]);
+
+  useEffect(() => {
+    for (const marker of airportMarkersRef.current) marker.remove();
+    airportMarkersRef.current = [];
+    const map = mapRef.current;
+    const mapboxgl = mapboxRef.current;
+    if (!map || !mapboxgl || !loaded || !airportsVisible) return;
+    const airports = AIRPORTS.filter((airport) => airportRegion === "All" || airport.region === airportRegion);
+    airportMarkersRef.current = airports.map((airport) => {
+      const element = document.createElement("button");
+      element.type = "button";
+      element.className = `flighty-airport-marker ${airportStatusLevel(airport)} ${airport.code === selectedAirport ? "selected" : ""}`;
+      element.setAttribute("aria-label", `${airport.code} ${airport.name}`);
+      element.addEventListener("click", (event) => {
+        event.stopPropagation();
+        callbacksRef.current.onAirportSelect(airport.code);
+      });
+      return new mapboxgl.Marker({ element, anchor: "center" }).setLngLat(airport.coordinate).addTo(map);
+    });
+    return () => {
+      for (const marker of airportMarkersRef.current) marker.remove();
+      airportMarkersRef.current = [];
+    };
+  }, [airportsVisible, airportRegion, selectedAirport, loaded]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !loaded || !airportsVisible || selectedAirport) return;
+    const view = airportRegion === "Asia"
+      ? { center: [108, 28] as [number, number], zoom: 1.85 }
+      : airportRegion === "Europe"
+        ? { center: [10, 49] as [number, number], zoom: 2.3 }
+        : airportRegion === "North America"
+          ? { center: [-100, 39] as [number, number], zoom: 1.95 }
+          : { center: [64, 30] as [number, number], zoom: 1.3 };
+    map.easeTo({ ...view, offset: [0, -72], duration: 520, essential: true });
+  }, [airportsVisible, airportRegion, selectedAirport, loaded]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -619,7 +663,7 @@ function installProductLayers(
   if (!map.getSource("flighty-airports")) {
     map.addSource("flighty-airports", {
       type: "geojson",
-      data: airportFeatures(data.selectedAirport),
+      data: airportFeatures(data.selectedAirport, data.airportRegion),
     });
   }
   if (!map.getSource("flighty-journey-lines")) {
@@ -705,10 +749,10 @@ function installProductLayers(
       slot: "top",
       layout: { visibility: data.airportsVisible ? "visible" : "none" },
       paint: {
-        "circle-radius": ["case", ["get", "selected"], 15, 10],
+        "circle-radius": ["case", ["get", "selected"], 19, 13],
         "circle-color": ["get", "color"],
-        "circle-opacity": 0.2,
-        "circle-blur": 0.5,
+        "circle-opacity": 0.34,
+        "circle-blur": 0.38,
       },
     });
   }
@@ -720,10 +764,10 @@ function installProductLayers(
       slot: "top",
       layout: { visibility: data.airportsVisible ? "visible" : "none" },
       paint: {
-        "circle-radius": ["case", ["get", "selected"], 7, 5],
+        "circle-radius": ["case", ["get", "selected"], 9, 7],
         "circle-color": ["get", "color"],
         "circle-stroke-color": "#ffffff",
-        "circle-stroke-width": 1.6,
+        "circle-stroke-width": 2,
       },
     });
   }
@@ -803,15 +847,19 @@ function styleUrl(mode: BasemapMode) {
   return "mapbox://styles/mapbox/standard";
 }
 
-function airportFeatures(selectedAirport: string | null) {
+function airportFeatures(selectedAirport: string | null, region: "All" | Region = "All") {
   return {
     type: "FeatureCollection" as const,
-    features: AIRPORTS.map((airport) => ({
+    features: AIRPORTS.filter((airport) => region === "All" || airport.region === region).map((airport) => ({
       type: "Feature" as const,
       properties: {
         code: airport.code,
         selected: airport.code === selectedAirport,
-        color: airport.issue ? "#ff334b" : "#36d688",
+        color: airportStatusLevel(airport) === "severe"
+          ? "#ff375f"
+          : airportStatusLevel(airport) === "warning"
+            ? "#ff9f0a"
+            : "#24c78a",
       },
       geometry: { type: "Point" as const, coordinates: airport.coordinate },
     })),

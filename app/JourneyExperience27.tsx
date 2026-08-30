@@ -23,13 +23,12 @@ import {
 } from "./communityData";
 import FlightGlobe, { BASEMAP_OPTIONS, type BasemapMode } from "./FlightGlobe";
 import { AnimationControls, JourneyCard, PublishDialog } from "./JourneyCommunityUI";
-import JourneyComposer from "./JourneyComposer";
+import JourneyComposer, { JourneyModeIcon } from "./JourneyComposer";
 import { TripManagerDialog, TripPassportStrip } from "./JourneyPassportUI";
 import { MODE_META, type JourneySegment } from "./journeyData";
 import { useJourneyPreferences } from "./journeyPreferences";
 import { useJourneyStore } from "./journeyStorage";
 import type { RoadTrafficRoute } from "./roadTraffic";
-import Vehicle3D from "./Vehicle3D";
 
 type Surface = "mine" | "discover";
 
@@ -216,7 +215,7 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
 
       {selected && !immersive && (
         <aside className={`journey-live-preview ${surface}`} style={{ "--journey-accent": MODE_META[selected.mode].color } as CSSProperties}>
-          <div className="journey-live-model"><Vehicle3D kind={selected.mode} view="hero" progress={selected.progress} rate={preferences.animationSpeed} /></div>
+          <div className="journey-live-model"><span><JourneyModeIcon mode={selected.mode} /></span></div>
           <div><small>{surface === "mine" ? "LIVE 3D JOURNEY" : `${selectedCommunity?.creatorName ?? "旅行者"} 分享`}</small><strong>{selected.title}</strong><span>{selected.origin.code}<i />{selected.destination.code}</span></div>
         </aside>
       )}
