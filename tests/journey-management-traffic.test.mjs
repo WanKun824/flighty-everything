@@ -54,7 +54,7 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.match(traffic, /mapbox\/driving-traffic/);
   assert.match(traffic, /congestion,duration,distance,closure/);
   assert.match(traffic, /depart_at: "now"/);
-  assert.match(globe, /roadTraffic\[item\.id\]\?\.coordinates/);
+  assert.match(globe, /roadTraffic\[segment\.id\]\?\.coordinates/);
   assert.match(globe, /followVehicleRef\.current/);
   assert.match(globe, /pointAt\(path, moving\)/);
   assert.doesNotMatch(globe, /map\.triggerRepaint\(\)/);
@@ -64,7 +64,7 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.doesNotMatch(globe, /bearing: followCamera/);
   assert.match(globe, /bearing: 0/);
   assert.match(mobileApp, /const \[followVehicle, setFollowVehicle\] = useState\(false\)/);
-  assert.equal((mobileApp.match(/aria-label="跟随载具视角"/g) ?? []).length, 1);
+  assert.equal((mobileApp.match(/aria-label="跟随当前选中路段"/g) ?? []).length, 1);
   assert.match(mobileApp, /aria-pressed=\{followVehicle\}/);
   assert.match(mobileApp, /onClick=\{\(\) => setFollowVehicle\(\(value\) => !value\)\}/);
   assert.match(mobileApp, /<SFMapFill size="md"\s*\/>[\s\S]*?<SFLocationFill size="md"\s*\/>/);

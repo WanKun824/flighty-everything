@@ -24,6 +24,7 @@ type Props = {
   onWeatherError: (message: string) => void;
   journeySegments?: JourneySegment[];
   selectedJourneySegmentId?: string | null;
+  journeySelectionToken?: number;
   onJourneySegmentSelect?: (id: string) => void;
   vehicleScale?: number;
   animationSpeed?: number;
@@ -31,6 +32,7 @@ type Props = {
   theme?: "light" | "dark";
   basemap?: BasemapMode;
   followVehicle?: boolean;
+  onFollowInterrupted?: () => void;
   onRoadTrafficChange?: (routes: Record<string, RoadTrafficRoute>) => void;
 };
 
@@ -72,6 +74,7 @@ export default function FlightGlobe({
   onWeatherError,
   journeySegments = [],
   selectedJourneySegmentId = null,
+  journeySelectionToken = 0,
   onJourneySegmentSelect,
   vehicleScale = 1,
   animationSpeed = 1,
@@ -79,6 +82,7 @@ export default function FlightGlobe({
   theme = "dark",
   basemap: controlledBasemap,
   followVehicle = false,
+  onFollowInterrupted,
   onRoadTrafficChange,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
@@ -99,6 +103,7 @@ export default function FlightGlobe({
     onAirportSelect,
     onWeatherError,
     onJourneySegmentSelect,
+    onFollowInterrupted,
   });
   const [loaded, setLoaded] = useState(false);
   const [styleRevision, setStyleRevision] = useState(0);
@@ -135,8 +140,9 @@ export default function FlightGlobe({
       onAirportSelect,
       onWeatherError,
       onJourneySegmentSelect,
+      onFollowInterrupted,
     };
-  }, [onAirportSelect, onWeatherError, onJourneySegmentSelect]);
+  }, [onAirportSelect, onWeatherError, onJourneySegmentSelect, onFollowInterrupted]);
 
   useEffect(() => {
     let disposed = false;
@@ -159,6 +165,13 @@ export default function FlightGlobe({
       });
       instance = map;
       mapRef.current = map;
+      map.dragRotate.disable();
+      map.touchZoomRotate.disableRotation();
+
+      map.on("dragstart", (event) => {
+        if (event.originalEvent && followVehicleRef.current)
+          callbacksRef.current.onFollowInterrupted?.();
+      });
 
       map.on("style.load", () => {
         if (disposed) return;
@@ -316,28 +329,19 @@ export default function FlightGlobe({
       journeySegments.find((item) => item.status === "active") ??
       journeySegments[0];
     if (!preferredSegment) return;
-    const preferredIndex = Math.max(0, journeySegments.findIndex((item) => item.id === preferredSegment.id));
-    const playbackSegments = [
-      ...journeySegments.slice(preferredIndex),
-      ...journeySegments.slice(0, preferredIndex),
-    ];
-    const playback = playbackSegments.map((item) => {
-      const road = roadTraffic[item.id]?.coordinates;
-      const coordinates = road ?? greatCircleCoordinates(
-        item.origin.coordinate,
-        item.destination.coordinate,
-        128,
-      );
-      return {
-        segment: item,
-        path: measure(item.mode, unwrap(coordinates), road ? "road" : "geodesic"),
-        duration: animationDuration(item.mode) / Math.max(0.25, animationSpeed),
-      };
-    });
-    const totalDuration = playback.reduce((sum, item) => sum + item.duration, 0);
-    let playbackIndex = 0;
-    let segment = playback[0].segment;
-    let path: LegPath = playback[0].path;
+    const segment = preferredSegment;
+    const road = roadTraffic[segment.id]?.coordinates;
+    const coordinates = road ?? greatCircleCoordinates(
+      segment.origin.coordinate,
+      segment.destination.coordinate,
+      128,
+    );
+    const path: LegPath = measure(
+      segment.mode,
+      unwrap(coordinates),
+      road ? "road" : "geodesic",
+    );
+    const duration = animationDuration(segment.mode) / Math.max(0.25, animationSpeed);
 
     const element = document.createElement("button");
     element.type = "button";
@@ -384,7 +388,7 @@ export default function FlightGlobe({
         marker.setLngLat(coordinate);
       },
     });
-    const startedAt = performance.now() - playback[0].duration * Math.max(0, Math.min(1, preferredSegment.progress));
+    const startedAt = performance.now() - duration * Math.max(0, Math.min(1, preferredSegment.progress));
     let frame = 0;
     let publishedProgressAt = 0;
     let publishedStage = "";
@@ -392,28 +396,8 @@ export default function FlightGlobe({
     const animate = (now: number) => {
       let moving = Math.max(0, Math.min(1, preferredSegment.progress));
       if (!reduceMotion.matches && motionEnabled) {
-        const elapsed = (now - startedAt) % totalDuration;
-        let cursor = 0;
-        let nextIndex = playback.length - 1;
-        for (let index = 0; index < playback.length; index += 1) {
-          if (elapsed < cursor + playback[index].duration) {
-            nextIndex = index;
-            break;
-          }
-          cursor += playback[index].duration;
-        }
-        moving = (elapsed - cursor) / playback[nextIndex].duration;
-        if (nextIndex !== playbackIndex) {
-          playbackIndex = nextIndex;
-          element.classList.replace(segment.mode, playback[nextIndex].segment.mode);
-          segment = playback[nextIndex].segment;
-          path = playback[nextIndex].path;
-          publishedHeading = Number.NaN;
-          publishedStage = "";
-          setRiderPortal((current) => current?.host === modelHost
-            ? { ...current, segment, progress: moving }
-            : current);
-        }
+        const elapsed = (now - startedAt) % duration;
+        moving = elapsed / duration;
       }
       const point = pointAt(path, moving);
       // jumpTo cancels camera easing; let an active wheel/pinch zoom finish
@@ -485,7 +469,7 @@ export default function FlightGlobe({
       ],
       { padding: 110, maxZoom: 7, duration: 850, essential: true },
     );
-  }, [selectedJourneySegmentId, journeySegments, loaded, styleRevision]);
+  }, [selectedJourneySegmentId, journeySelectionToken, journeySegments, loaded, styleRevision]);
 
   useEffect(() => {
     const map = mapRef.current;

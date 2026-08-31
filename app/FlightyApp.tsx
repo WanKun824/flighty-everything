@@ -65,7 +65,7 @@ import {
   type Flight,
   type Region,
 } from "./flightyData";
-import { segmentFromFlight } from "./journeyData";
+import { segmentFromFlight, type JourneySegment } from "./journeyData";
 import { useJourneyStore, type JourneyTrip } from "./journeyStorage";
 import { useSheetDetents } from "./useSheetDetents";
 import {
@@ -96,6 +96,11 @@ type Overlay =
   | "delay-stats"
   | "aircraft-stats";
 type AddMode = "suggested" | "route" | "number";
+type AppToast = {
+  message: string;
+  actionLabel?: string;
+  action?: () => void;
+};
 
 const tabs: Array<{ id: Tab; label: string; icon: ElementType }> = [
   { id: "flights", label: "行程", icon: SFAirplaneCircleFill },
@@ -116,12 +121,12 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [selectedAirport, setSelectedAirport] = useState<string | null>(null);
   const [selectedFlight] = useState<Flight | null>(null);
-  const [selectedJourneyId, setSelectedJourneyId] = useState<string | null>(
-    null,
-  );
+  const [journeyFocusToken, setJourneyFocusToken] = useState(0);
   const [resetToken, setResetToken] = useState(0);
   const [followVehicle, setFollowVehicle] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<AppToast | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+  const [composerImportedSegments, setComposerImportedSegments] = useState<JourneySegment[]>([]);
   const [query, setQuery] = useState("");
   const [addMode, setAddMode] = useState<AddMode>("suggested");
   const [routeFrom, setRouteFrom] = useState("HKG");
@@ -144,6 +149,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   });
   const calendarRef = useRef<HTMLInputElement>(null);
   const stats = useMemo(() => statsForFlights(state.flights), [state.flights]);
+  const selectedJourneyId = journeyStore.state.selectedSegmentId || null;
   const selectedJourney =
     journeyStore.state.segments.find(
       (segment) => segment.id === selectedJourneyId,
@@ -152,9 +158,23 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     (trip) => trip.id === journeyStore.state.activeTripId,
   );
 
-  const notify = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 2400);
+  const notify = (message: string, actionLabel?: string, action?: () => void) => {
+    if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+    setToast({ message, actionLabel, action });
+    toastTimerRef.current = window.setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, action ? 5200 : 2400);
+  };
+
+  const selectJourneySegment = (id: string) => {
+    journeyStore.selectSegment(id);
+    setJourneyFocusToken((value) => value + 1);
+  };
+
+  const openJourneyDetails = (id: string) => {
+    selectJourneySegment(id);
+    setOverlay("journey-detail");
   };
 
   const chooseTab = (tab: Tab) => {
@@ -167,13 +187,15 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     setActiveTab(tab);
   };
 
-  const addFlight = (flight: Flight) => {
-    store.addFlight(flight);
-    journeyStore.addSegment(segmentFromFlight(flight));
-    setActiveTab("flights");
-    setOverlay(null);
+  const stageFlightsForComposer = (flights: Flight[]) => {
+    if (!flights.length) return;
+    setComposerImportedSegments((current) => [
+      ...current,
+      ...flights.map(segmentFromFlight),
+    ]);
+    setOverlay("add-journey");
     setQuery("");
-    notify(`${flight.number} 已加入我的行程`);
+    notify(`已加入规划草稿 · ${flights.length} 段`);
   };
 
   const openAddJourney = () => setOverlay("add-journey");
@@ -211,16 +233,10 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     const file = event.target.files?.[0];
     if (!file) return;
     const numbers = calendarFlightNumbers(await file.text());
-    numbers.forEach((number) => {
-      const flight = flightFromNumber(number);
-      store.addFlight(flight);
-      journeyStore.addSegment(segmentFromFlight(flight));
-    });
-    setOverlay(null);
-    setActiveTab("flights");
+    stageFlightsForComposer(numbers.map(flightFromNumber));
     notify(
       numbers.length
-        ? `已从日历导入 ${numbers.length} 个航班`
+        ? `已从日历加入规划草稿 · ${numbers.length} 段`
         : "日历中没有找到航班号",
     );
     event.target.value = "";
@@ -251,15 +267,18 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           resetToken={resetToken}
           journeySegments={mapOverlayOpen ? [] : journeyStore.state.segments}
           selectedJourneySegmentId={selectedJourneyId}
+          journeySelectionToken={journeyFocusToken}
           onJourneySegmentSelect={(id) => {
-            journeyStore.selectSegment(id);
-            setSelectedJourneyId(id);
-            setOverlay("journey-detail");
+            selectJourneySegment(id);
           }}
           onAirportSelect={openAirport}
           onWeatherError={(message) => notify(`${message}，已切换为卫星地图。`)}
           theme={appearance.resolved}
           followVehicle={followVehicle}
+          onFollowInterrupted={() => {
+            setFollowVehicle(false);
+            notify("已暂停跟随，可自由查看地图");
+          }}
         />
         <StatusBar />
 
@@ -290,8 +309,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               </button>
               <button
                 className={followVehicle ? "active" : ""}
-                aria-label="跟随载具视角"
+                aria-label="跟随当前选中路段"
                 aria-pressed={followVehicle}
+                disabled={!selectedJourneyId}
                 onClick={() => setFollowVehicle((value) => !value)}
               >
                 <SFLocationFill size="md" />
@@ -366,11 +386,11 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             <MobileJourneysPanel
               tripName={journeyStore.state.tripName}
               segments={journeyStore.state.segments}
-              onOpen={(segment) => {
-                journeyStore.selectSegment(segment.id);
-                setSelectedJourneyId(segment.id);
-                setOverlay("journey-detail");
-              }}
+              selectedSegmentId={selectedJourneyId}
+              onSelect={(segment) => selectJourneySegment(segment.id)}
+              onOpenDetails={(segment) => openJourneyDetails(segment.id)}
+              onToggleOverview={mainSheet.toggleExpanded}
+              overviewExpanded={mainSheet.fraction > 0.5}
               onAdd={openAddJourney}
               onEditNames={() => openJourneyNames()}
               savedToPassport={Boolean(currentTrip?.savedToPassportAt)}
@@ -396,7 +416,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               activeTripId={journeyStore.state.activeTripId}
               onSelect={(id) => {
                 journeyStore.selectTrip(id);
-                setSelectedJourneyId(null);
+                setJourneyFocusToken((value) => value + 1);
               }}
               onEdit={(trip) => openJourneyNames(trip)}
               onOpenStats={() => setOverlay("journey-passport-stats")}
@@ -426,8 +446,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             setRouteFrom={setRouteFrom}
             setRouteTo={setRouteTo}
             setRouteDate={setRouteDate}
-            onClose={() => setOverlay(null)}
-            onAdd={addFlight}
+            onClose={() => setOverlay("add-journey")}
+            onAdd={(flight) => stageFlightsForComposer([flight])}
             onCalendar={() => calendarRef.current?.click()}
             onRandom={() => {
               const flight = {
@@ -435,7 +455,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 id: `random-${Date.now()}`,
               };
               setRandomIndex((value) => value + 1);
-              addFlight(flight);
+              stageFlightsForComposer([flight]);
             }}
           />
         )}
@@ -451,6 +471,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               notify(`已加入 ${segments.length} 段行程`);
             }}
             onFlightTools={() => setOverlay("add-flight")}
+            importedSegments={composerImportedSegments}
+            onImportedSegmentsConsumed={() => setComposerImportedSegments([])}
           />
         )}
         {overlay === "journey-names" && (
@@ -539,14 +561,24 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           <MobileJourneyDetail
             segment={selectedJourney}
             onClose={() => setOverlay(null)}
-            onToggleComplete={() =>
-              journeyStore.toggleComplete(selectedJourney.id)
-            }
+            onToggleComplete={() => {
+              const wasComplete = selectedJourney.status === "complete";
+              journeyStore.toggleComplete(selectedJourney.id);
+              notify(
+                wasComplete ? "已恢复为待出发" : "已标记为完成",
+                "撤销",
+                () => journeyStore.toggleComplete(selectedJourney.id),
+              );
+            }}
             onDelete={() => {
+              const snapshot = [...journeyStore.state.segments];
+              const deletedId = selectedJourney.id;
               journeyStore.removeSegment(selectedJourney.id);
-              setSelectedJourneyId(null);
               setOverlay(null);
-              notify("已删除这段行程");
+              notify("已删除这段行程", "撤销", () => {
+                journeyStore.restoreSegments(snapshot, deletedId);
+                setJourneyFocusToken((value) => value + 1);
+              });
             }}
           />
         )}
@@ -640,7 +672,19 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         )}
         {toast && (
           <div className="flighty-toast" role="status">
-            {toast}
+            <span>{toast.message}</span>
+            {toast.action && toast.actionLabel && (
+              <button
+                onClick={() => {
+                  toast.action?.();
+                  setToast(null);
+                  if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+                  toastTimerRef.current = null;
+                }}
+              >
+                {toast.actionLabel}
+              </button>
+            )}
           </div>
         )}
       </section>

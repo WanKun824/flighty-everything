@@ -23,7 +23,11 @@ import { useSheetDetents } from "./useSheetDetents";
 export function MobileJourneysPanel({
   tripName,
   segments,
-  onOpen,
+  selectedSegmentId,
+  onSelect,
+  onOpenDetails,
+  onToggleOverview,
+  overviewExpanded,
   onAdd,
   onEditNames,
   onSaveToPassport,
@@ -31,7 +35,11 @@ export function MobileJourneysPanel({
 }: {
   tripName: string;
   segments: JourneySegment[];
-  onOpen: (segment: JourneySegment) => void;
+  selectedSegmentId: string | null;
+  onSelect: (segment: JourneySegment) => void;
+  onOpenDetails: (segment: JourneySegment) => void;
+  onToggleOverview: () => void;
+  overviewExpanded: boolean;
   onAdd: () => void;
   onEditNames: () => void;
   onSaveToPassport: () => void;
@@ -45,7 +53,9 @@ export function MobileJourneysPanel({
       <div className="mobile-plan-card-wrap">
         <button
           className="mobile-plan-card"
-          onClick={() => active && onOpen(active)}
+          onClick={onToggleOverview}
+          aria-expanded={overviewExpanded}
+          aria-label={overviewExpanded ? "收起当前行程" : "展开当前行程"}
         >
           <span>
             <small>正在规划</small>
@@ -61,7 +71,7 @@ export function MobileJourneysPanel({
           <footer>
             <span>{stats.segments} 段行程</span>
             <span>{stats.distanceKm.toLocaleString("zh-CN")} km</span>
-            <SFChevronRight size="xs" />
+            <span className={`mobile-plan-expand ${overviewExpanded ? "expanded" : ""}`}><SFChevronRight size="xs" /></span>
           </footer>
         </button>
         <button className="mobile-plan-edit" aria-label="编辑行程名称" onClick={onEditNames}><SFPencil size="xs" /></button>
@@ -78,50 +88,65 @@ export function MobileJourneysPanel({
         </button>
       </div>
       <div className="mobile-segment-list">
-        {segments.map((segment, index) => (
-          <button
+        {segments.map((segment, index) => {
+          const selected = segment.id === selectedSegmentId;
+          return (
+          <article
             key={segment.id}
-            className={`mobile-segment-card ${segment.status}`}
-            onClick={() => onOpen(segment)}
+            className={`mobile-segment-card ${segment.status} ${selected ? "selected" : ""}`}
+            style={{ "--mode-color": MODE_META[segment.mode].color } as CSSProperties}
           >
-            <span
-              className="mobile-mode-node"
-              style={{
-                color: MODE_META[segment.mode].color,
-                background: MODE_META[segment.mode].surface,
-              }}
+            <button
+              className="mobile-segment-select"
+              onClick={() => onSelect(segment)}
+              aria-pressed={selected}
+              aria-label={`在地图上定位 ${segment.title}`}
             >
-              <JourneyModeIcon mode={segment.mode} />
-            </span>
-            <span className="mobile-segment-main">
-              <span>
-                <strong>{segment.title}</strong>
-                <em>{segment.service}</em>
+              <span
+                className="mobile-mode-node"
+                style={{
+                  color: MODE_META[segment.mode].color,
+                  background: MODE_META[segment.mode].surface,
+                }}
+              >
+                <JourneyModeIcon mode={segment.mode} />
               </span>
-              <small>{segment.origin.name}</small>
-              <div>
-                <b>{segment.departure}</b>
-                <i />
-                <b>{segment.arrival}</b>
-              </div>
-              <small>
-                {segment.destination.name} ·{" "}
-                {formatJourneyDuration(segment.durationMinutes)}
-              </small>
-            </span>
-            <span className="mobile-segment-side">
-              <em>{segment.date.split(" · ")[0]}</em>
-              <MobileSegmentWeather
-                segment={segment}
-                active={segment.id === active?.id}
-              />
+              <span className="mobile-segment-main">
+                <span>
+                  <strong>{segment.title}</strong>
+                  <em>{segment.service}</em>
+                </span>
+                <small>{segment.origin.name}</small>
+                <span className="mobile-segment-times">
+                  <b>{segment.departure}</b>
+                  <i />
+                  <b>{segment.arrival}</b>
+                </span>
+                <small>
+                  {segment.destination.name} ·{" "}
+                  {formatJourneyDuration(segment.durationMinutes)}
+                </small>
+              </span>
+              <span className="mobile-segment-side">
+                <em>{segment.date.split(" · ")[0]}</em>
+                <MobileSegmentWeather
+                  segment={segment}
+                  active={segment.id === active?.id}
+                />
+              </span>
+            </button>
+            <button
+              className="mobile-segment-detail-button"
+              aria-label={`打开 ${segment.title} 详情`}
+              onClick={() => onOpenDetails(segment)}
+            >
               <SFChevronRight size="xs" />
-            </span>
+            </button>
             {index < segments.length - 1 && (
               <i className="mobile-timeline-line" />
             )}
-          </button>
-        ))}
+          </article>
+        )})}
       </div>
     </div>
   );
@@ -256,8 +281,7 @@ export function MobileJourneyDetail({
   const detailSheet = useSheetDetents({
     detents: [0.32, 0.58, 0.84],
     initial: 0.84,
-    dismissible: true,
-    onDismiss: onClose,
+    dismissible: false,
   });
   return (
     <section
@@ -273,7 +297,7 @@ export function MobileJourneyDetail({
     >
       <button
         className="sheet-drag-handle detail-sheet-handle"
-        aria-label="拖动调整详情面板高度，继续下拉可关闭"
+        aria-label="拖动调整行程详情高度，最小状态会保持固定"
         {...detailSheet.handleProps}
       >
         <span />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties, type ElementType } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ElementType } from "react";
 import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
 import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
 import SFCalendarBadgePlus from "sf-symbols-lib/monochrome/SFCalendarBadgePlus";
@@ -34,6 +34,32 @@ const hasSearchText = (value: string) => {
   return query.length >= minQueryLength(query);
 };
 
+const MOBILE_DRAFT_KEY = "flighty-everything:journey-composer-draft:v1";
+
+type ComposerDraft = {
+  mode: JourneyMode;
+  name: string;
+  origin: JourneyPlace;
+  originQuery: string;
+  destination: JourneyPlace | null;
+  query: string;
+  date: string;
+  departure: string;
+  note: string;
+  title: string;
+  drafts: JourneySegment[];
+  planning: boolean;
+};
+
+function readComposerDraft() {
+  if (typeof window === "undefined") return null;
+  try {
+    return JSON.parse(window.sessionStorage.getItem(MOBILE_DRAFT_KEY) ?? "null") as ComposerDraft | null;
+  } catch {
+    return null;
+  }
+}
+
 const ICONS: Record<JourneyMode, ElementType> = {
   flight: SFAirplane,
   train: SFTrainSideFrontCar,
@@ -47,6 +73,8 @@ export default function JourneyComposer({
   onAdd,
   onAddMany,
   onFlightTools,
+  importedSegments = [],
+  onImportedSegmentsConsumed,
   tripName = "我的行程",
   initialOrigin,
 }: {
@@ -55,31 +83,113 @@ export default function JourneyComposer({
   onAdd?: (segment: JourneySegment) => void;
   onAddMany?: (segments: JourneySegment[], tripName: string) => void;
   onFlightTools?: () => void;
+  importedSegments?: JourneySegment[];
+  onImportedSegmentsConsumed?: () => void;
   tripName?: string;
   initialOrigin?: JourneyPlace;
 }) {
-  const [mode, setMode] = useState<JourneyMode>("flight");
-  const [name, setName] = useState(tripName);
-  const [origin, setOrigin] = useState<JourneyPlace>(initialOrigin ?? JOURNEY_PLACES[0]);
-  const [originQuery, setOriginQuery] = useState((initialOrigin ?? JOURNEY_PLACES[0]).name);
+  const [restoredDraft] = useState(() => variant === "mobile" ? readComposerDraft() : null);
+  const [initialImportedSegments] = useState(importedSegments);
+  const importedConsumedRef = useRef(false);
+  const importedLast = initialImportedSegments.at(-1);
+  const fallbackOrigin = importedLast?.destination ?? initialOrigin ?? JOURNEY_PLACES[0];
+  const restoredSegments = restoredDraft?.drafts ?? [];
+  const restoredIds = new Set(restoredSegments.map((segment) => segment.id));
+  const initialDrafts = [
+    ...restoredSegments,
+    ...initialImportedSegments.filter((segment) => !restoredIds.has(segment.id)),
+  ];
+  const [mode, setMode] = useState<JourneyMode>(restoredDraft?.mode ?? "flight");
+  const [name, setName] = useState(restoredDraft?.name ?? tripName);
+  const [origin, setOrigin] = useState<JourneyPlace>(importedLast?.destination ?? restoredDraft?.origin ?? fallbackOrigin);
+  const [originQuery, setOriginQuery] = useState(importedLast?.destination.name ?? restoredDraft?.originQuery ?? fallbackOrigin.name);
   const [originSuggestions, setOriginSuggestions] = useState<JourneyPlaceSuggestion[]>([]);
   const [originSearching, setOriginSearching] = useState(false);
-  const [destination, setDestination] = useState<JourneyPlace | null>(null);
-  const [query, setQuery] = useState("");
+  const [destination, setDestination] = useState<JourneyPlace | null>(importedLast ? null : (restoredDraft?.destination ?? null));
+  const [query, setQuery] = useState(importedLast ? "" : (restoredDraft?.query ?? ""));
   const [suggestions, setSuggestions] = useState<JourneyPlaceSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
-  const [date, setDate] = useState("2026-09-18");
-  const [departure, setDeparture] = useState("09:00");
-  const [note, setNote] = useState("");
-  const [title, setTitle] = useState("");
-  const [drafts, setDrafts] = useState<JourneySegment[]>([]);
-  const [planning, setPlanning] = useState(variant === "desktop");
+  const [date, setDate] = useState(restoredDraft?.date ?? "2026-09-18");
+  const [departure, setDeparture] = useState(restoredDraft?.departure ?? "09:00");
+  const [note, setNote] = useState(restoredDraft?.note ?? "");
+  const [title, setTitle] = useState(restoredDraft?.title ?? "");
+  const [drafts, setDrafts] = useState<JourneySegment[]>(initialDrafts);
+  const [planning, setPlanning] = useState(Boolean(importedLast) || restoredDraft?.planning || variant === "desktop");
   const [error, setError] = useState<string | null>(null);
+  const [discardPrompt, setDiscardPrompt] = useState(false);
   const [sessionToken] = useState(() =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
       ? crypto.randomUUID()
       : `flighty-${Date.now()}`,
   );
+
+  const snapshot = (): ComposerDraft => ({
+    mode,
+    name,
+    origin,
+    originQuery,
+    destination,
+    query,
+    date,
+    departure,
+    note,
+    title,
+    drafts,
+    planning,
+  });
+
+  const clearComposerDraft = () => {
+    if (typeof window !== "undefined") window.sessionStorage.removeItem(MOBILE_DRAFT_KEY);
+  };
+
+  const persistComposerDraft = () => {
+    if (variant !== "mobile" || typeof window === "undefined") return;
+    window.sessionStorage.setItem(MOBILE_DRAFT_KEY, JSON.stringify(snapshot()));
+  };
+
+  const isDirty = drafts.length > 0 || Boolean(destination) || Boolean(query.trim()) ||
+    name !== tripName || origin.code !== fallbackOrigin.code || Boolean(title.trim()) || Boolean(note.trim());
+
+  const requestClose = () => {
+    if (variant === "mobile" && isDirty) {
+      persistComposerDraft();
+      setDiscardPrompt(true);
+      return;
+    }
+    clearComposerDraft();
+    onClose();
+  };
+
+  const openFlightTools = () => {
+    persistComposerDraft();
+    onFlightTools?.();
+  };
+
+  useEffect(() => {
+    if (variant !== "mobile") return;
+    const draft: ComposerDraft = {
+      mode,
+      name,
+      origin,
+      originQuery,
+      destination,
+      query,
+      date,
+      departure,
+      note,
+      title,
+      drafts,
+      planning,
+    };
+    window.sessionStorage.setItem(MOBILE_DRAFT_KEY, JSON.stringify(draft));
+  }, [mode, name, origin, originQuery, destination, query, date, departure, note, title, drafts, planning, variant]);
+
+  useEffect(() => {
+    if (!initialImportedSegments.length || importedConsumedRef.current) return;
+    importedConsumedRef.current = true;
+    onImportedSegmentsConsumed?.();
+  }, [initialImportedSegments, onImportedSegmentsConsumed]);
+
   useEffect(() => {
     const query = originQuery.trim();
     if (query === origin.name || !hasSearchText(query)) {
@@ -199,6 +309,7 @@ export default function JourneyComposer({
     }
     if (onAddMany) onAddMany(segments, name.trim() || tripName);
     else segments.forEach((segment) => onAdd?.(segment));
+    clearComposerDraft();
     onClose();
   };
 
@@ -230,7 +341,7 @@ export default function JourneyComposer({
       >
         <header className="journey-search-header">
           <div><h2>添加行程</h2><p>搜索城市、景点、机场或车站</p></div>
-          <button aria-label="关闭添加行程" onClick={onClose}><SFXmark size="md" /></button>
+          <button aria-label="关闭添加行程" onClick={requestClose}><SFXmark size="md" /></button>
         </header>
 
         <label className="journey-target-search">
@@ -273,8 +384,8 @@ export default function JourneyComposer({
             <section className="journey-more-actions">
               <h3>更多</h3>
               <button onClick={() => setPlanning(true)}><SFArrowLeftArrowRight size="sm" /><span><strong>按路线规划</strong><small>组合飞机、火车、汽车与轮船</small></span><SFChevronRight size="xs" /></button>
-              <button onClick={onFlightTools}><SFAirplane size="sm" /><span><strong>按航班号添加</strong><small>搜索真实航班或导入日历</small></span><SFChevronRight size="xs" /></button>
-              <button onClick={onFlightTools}><SFCalendarBadgePlus size="sm" /><span><strong>从日历导入</strong><small>识别日历中的航班</small></span><SFChevronRight size="xs" /></button>
+              <button onClick={openFlightTools}><SFAirplane size="sm" /><span><strong>按航班号添加</strong><small>搜索真实航班或导入日历</small></span><SFChevronRight size="xs" /></button>
+              <button onClick={openFlightTools}><SFCalendarBadgePlus size="sm" /><span><strong>从日历导入</strong><small>识别日历中的航班</small></span><SFChevronRight size="xs" /></button>
               <button onClick={randomDestination}><SFDiceFill size="sm" /><span><strong>随机探索</strong><small>从当前位置生成下一站</small></span><SFChevronRight size="xs" /></button>
             </section>
           </div>
@@ -300,8 +411,20 @@ export default function JourneyComposer({
               <label className="journey-note"><span>票号与备注</span><input value={note} onChange={(event) => setNote(event.target.value)} placeholder="班次、座位或取票信息" /></label>
             </div>
             {error && <p className="journey-form-error" role="alert">{error}</p>}
-            {mode === "flight" && onFlightTools && <button className="flight-tools-link journey-target-flight-tools" onClick={onFlightTools}>使用航班号、路线或日历添加</button>}
+            {mode === "flight" && onFlightTools && <button className="flight-tools-link journey-target-flight-tools" onClick={openFlightTools}>使用航班号、路线或日历添加</button>}
             <div className="journey-builder-actions journey-target-actions"><button className="journey-add-leg" disabled={!destination} onClick={addNextLeg}><SFPlus size="xs" /> 添加下一段</button><button className="journey-submit" disabled={!destination && drafts.length === 0} onClick={save}>保存行程 · {drafts.length + (destination ? 1 : 0)} 段</button></div>
+          </div>
+        )}
+        {discardPrompt && (
+          <div className="journey-discard-backdrop">
+            <section className="journey-discard-prompt" role="alertdialog" aria-modal="true" aria-labelledby="discard-draft-title">
+              <strong id="discard-draft-title">保留这次规划吗？</strong>
+              <p>当前路线还没有保存。你可以继续编辑，或放弃这份草稿。</p>
+              <div>
+                <button onClick={() => setDiscardPrompt(false)}>继续编辑</button>
+                <button className="destructive" onClick={() => { clearComposerDraft(); onClose(); }}>放弃草稿</button>
+              </div>
+            </section>
           </div>
         )}
       </section>

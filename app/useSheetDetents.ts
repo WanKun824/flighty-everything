@@ -50,6 +50,11 @@ export function useSheetDetents({
     void sheetSnapHaptic();
   };
 
+  const toggleExpanded = () => {
+    const next = fractionRef.current < maximum - 0.02 ? maximum : initial;
+    snapTo(next);
+  };
+
   const moveByKeyboard = (direction: -1 | 1) => {
     const ordered = [...detents].sort((a, b) => a - b);
     const current = ordered.indexOf(nearestDetent(fractionRef.current, ordered));
@@ -111,14 +116,18 @@ export function useSheetDetents({
       snapTo(maximum);
     } else if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      const target = fractionRef.current < maximum - 0.02 ? maximum : initial;
-      snapTo(target);
+      toggleExpanded();
     }
   };
 
   return {
     fraction,
     dragging,
+    minimum,
+    maximum,
+    atMinimum: fraction <= minimum + 0.005,
+    snapTo,
+    toggleExpanded,
     handleProps: {
       onPointerDown,
       onPointerMove,

@@ -399,7 +399,9 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .class-row b { text-align: right; }
 .class-row small { color: #7e7e86; }
 
-.flighty-toast { position: absolute; z-index: 80; left: 50%; bottom: 92px; max-width: calc(100% - 40px); padding: 10px 14px; transform: translateX(-50%); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: rgba(43,43,48,.92); box-shadow: 0 10px 35px rgba(0,0,0,.36); backdrop-filter: blur(20px); font-size: 11px; white-space: nowrap; }
+.flighty-toast { position: absolute; z-index: 110; left: 50%; bottom: 92px; max-width: calc(100% - 40px); padding: 10px 12px 10px 14px; transform: translateX(-50%); border: 1px solid rgba(255,255,255,.14); border-radius: 18px; background: rgba(43,43,48,.94); box-shadow: 0 10px 35px rgba(0,0,0,.36); backdrop-filter: blur(20px); display: flex; align-items: center; gap: 14px; font-size: 11px; white-space: nowrap; }
+.flighty-toast button { padding: 5px 8px; border: 0; border-radius: 9px; color: #65b3ff; background: rgba(10,132,255,.12); font: inherit; font-weight: 750; cursor: pointer; }
+.map-tools button:disabled { opacity: .38; cursor: default; }
 
 @media (max-height: 720px) {
   .flight-panel.passport-panel { top: 66px; }
@@ -509,6 +511,13 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .journey-composer.mobile > header { align-items: flex-start; }.journey-composer.mobile h2 { font-size: 30px; }.journey-composer.mobile .journey-mode-picker { margin-top: 27px; }
 .journey-composer.mobile .journey-form-grid { grid-template-columns: 1fr 14px 1fr; gap: 8px; }.journey-composer.mobile .journey-form-grid label { min-height: 64px; }
 .journey-composer.mobile .journey-submit { height: 50px; margin-top: 15px; border-radius: 15px; font-size: 13px; }
+.journey-discard-backdrop { position: absolute; z-index: 40; inset: 0; padding: 24px; background: rgba(0,0,0,.42); display: grid; place-items: center; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+.journey-discard-prompt { width: 100%; max-width: 330px; padding: 20px; border: 1px solid rgba(255,255,255,.11); border-radius: 22px; background: rgba(37,37,44,.98); box-shadow: 0 24px 70px rgba(0,0,0,.5); }
+.journey-discard-prompt strong { font-size: 18px; letter-spacing: -.025em; }
+.journey-discard-prompt p { margin: 8px 0 18px; color: #9999a2; font-size: 11px; line-height: 1.5; }
+.journey-discard-prompt > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.journey-discard-prompt button { min-height: 42px; border: 0; border-radius: 13px; color: #fff; background: #0a84ff; font-weight: 700; cursor: pointer; }
+.journey-discard-prompt button.destructive { color: #ff746d; background: rgba(255,69,58,.12); }
 
 /* Route-builder class ownership lives in journey-theme.css; keep these base hooks here for shared render guards. */
 .journey-route-builder { overscroll-behavior: contain; }
@@ -556,14 +565,20 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .mobile-plan-card > div i { height: 100%; border-radius: inherit; background: #0a84ff; display: block; }
 .mobile-plan-card > footer { position: absolute; z-index: 1; left: 18px; right: 18px; bottom: 14px; display: flex; align-items: center; gap: 8px; }
 .mobile-plan-card > footer span { padding: 0; color: #797983; background: transparent; font-size: 8px; backdrop-filter: none; }
-.mobile-plan-card > footer svg { margin-left: auto; color: #777781; }
+.mobile-plan-expand { margin-left: auto; padding: 0 !important; background: transparent !important; display: grid; place-items: center; transition: transform .28s ease; }
+.mobile-plan-expand.expanded { transform: rotate(90deg); }
+.mobile-plan-card > footer svg { color: #777781; }
 .mobile-section-heading > span { color: #f5f5f8; font-size: 17px; font-weight: 730; letter-spacing: -.025em; }
-.mobile-segment-card { color: #fff; cursor: pointer; }
+.mobile-segment-card { padding: 0; color: #fff; display: block; cursor: default; }
+.mobile-segment-select { width: 100%; min-height: 86px; padding: 11px 39px 11px 0; border: 0; border-radius: inherit; color: inherit; background: transparent; display: grid; grid-template-columns: 51px minmax(0,1fr) auto; gap: 8px; text-align: left; cursor: pointer; }
+.mobile-segment-select:focus-visible { outline: 2px solid color-mix(in srgb,var(--mode-color) 72%,white); outline-offset: -3px; }
+.mobile-segment-detail-button { position: absolute; z-index: 3; right: 7px; bottom: 8px; width: 31px; height: 31px; padding: 0; border: 0; border-radius: 50%; color: #777781; background: rgba(255,255,255,.055); display: grid; place-items: center; cursor: pointer; }
+.mobile-segment-detail-button:focus-visible { outline: 2px solid color-mix(in srgb,var(--mode-color) 72%,white); outline-offset: 1px; }
 .mobile-segment-card.active { border-color: rgba(10,132,255,.32); }
 .mobile-mode-node { width: 36px; height: 36px; margin-left: 8px; border-radius: 12px; align-items: center; }
-.mobile-segment-main > div { margin-top: 7px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 7px; }
-.mobile-segment-main > div b { margin: 0; color: #fff; font-size: 11px; }
-.mobile-segment-main > div i { height: 1px; background: #494950; }
+.mobile-segment-times { margin-top: 7px; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 7px; }
+.mobile-segment-times b { margin: 0; color: #fff; font-size: 11px; }
+.mobile-segment-times i { height: 1px; background: #494950; }
 .mobile-segment-side em { color: #d9d9df; font-size: 9px; font-style: normal; font-weight: 680; white-space: nowrap; }
 .mobile-segment-weather { min-height: 19px; margin-top: 7px; display: grid; place-items: center; color: #8fbff6; }
 .mobile-segment-weather .journey-weather-symbol { width: 19px; height: 19px; display: grid; place-items: center; }

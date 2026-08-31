@@ -332,6 +332,15 @@ export function useJourneyStore() {
     });
   }, []);
 
+  const restoreSegments = useCallback((segments: JourneySegment[], selectedSegmentId = "") => {
+    setState((current) => activePatch(current, {
+      segments,
+      selectedSegmentId: segments.some((segment) => segment.id === selectedSegmentId)
+        ? selectedSegmentId
+        : (segments[0]?.id ?? ""),
+    }));
+  }, []);
+
   const toggleComplete = useCallback((id: string) => {
     setState((current) => activePatch(current, {
       segments: current.segments.map((segment) =>
@@ -365,6 +374,7 @@ export function useJourneyStore() {
     addSegments,
     updateSegment,
     removeSegment,
+    restoreSegments,
     toggleComplete,
     reset,
   };
