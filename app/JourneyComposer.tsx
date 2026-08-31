@@ -19,6 +19,7 @@ import {
   JOURNEY_PLACES,
   MODE_META,
   createJourneySegmentBetween,
+  formatJourneyDuration as formatRailDuration,
   type JourneyMode,
   type JourneyPlace,
   type JourneySegment,
@@ -29,6 +30,7 @@ import {
   type JourneyPlaceSuggestion,
 } from "./journeyPlaceSearch";
 import { minQueryLength } from "./placeSearch";
+import { localDateTimeIso, searchVerifiedRail } from "./transportData";
 
 const hasSearchText = (value: string) => {
   const query = value.trim();
@@ -121,6 +123,9 @@ export default function JourneyComposer({
   const [drafts, setDrafts] = useState<JourneySegment[]>(initialDrafts);
   const [planning, setPlanning] = useState(Boolean(importedLast) || restoredDraft?.planning || variant === "desktop");
   const [error, setError] = useState<string | null>(null);
+  const [railResults, setRailResults] = useState<JourneySegment[]>([]);
+  const [selectedRailSegment, setSelectedRailSegment] = useState<JourneySegment | null>(null);
+  const [railSearching, setRailSearching] = useState(false);
   const [discardPrompt, setDiscardPrompt] = useState(false);
   const [sessionToken] = useState(() =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -248,6 +253,11 @@ export default function JourneyComposer({
     };
   }, [destination, query, sessionToken]);
 
+  useEffect(() => {
+    setRailResults([]);
+    setSelectedRailSegment(null);
+  }, [mode, origin.code, destination?.code, date, departure]);
+
   const chooseOriginSuggestion = async (suggestion: JourneyPlaceSuggestion) => {
     setOriginSearching(true);
     setError(null);
@@ -281,8 +291,39 @@ export default function JourneyComposer({
     }
   };
 
+  const lookupRail = async () => {
+    if (!destination) {
+      setError("请先选择列车目的地");
+      return;
+    }
+    setRailSearching(true);
+    setError(null);
+    setSelectedRailSegment(null);
+    try {
+      const result = await searchVerifiedRail({
+        from: origin.coordinate,
+        to: destination.coordinate,
+        departAt: localDateTimeIso(date, departure),
+      });
+      setRailResults(result.segments);
+    } catch (reason) {
+      setRailResults([]);
+      setError(reason instanceof Error ? reason.message : "列车时刻查询失败");
+    } finally {
+      setRailSearching(false);
+    }
+  };
+
+  const chooseRail = (segment: JourneySegment) => {
+    setSelectedRailSegment({ ...segment, id: `${segment.id}-${Date.now()}` });
+    setTitle(segment.title);
+    setNote(segment.note);
+    setError(null);
+  };
+
   const buildLeg = () => {
     if (!destination) return null;
+    if (mode === "train" && selectedRailSegment) return selectedRailSegment;
     return createJourneySegmentBetween({
       mode,
       origin,
@@ -304,6 +345,8 @@ export default function JourneyComposer({
     setQuery("");
     setTitle("");
     setNote("");
+    setRailResults([]);
+    setSelectedRailSegment(null);
     setError(null);
   };
 
@@ -435,6 +478,31 @@ export default function JourneyComposer({
             </div>
             {error && <p className="journey-form-error" role="alert">{error}</p>}
             {mode === "flight" && onFlightTools && <button className="flight-tools-link journey-target-flight-tools" onClick={openFlightTools}>使用航班号、路线或日历添加</button>}
+            {mode === "train" && (
+              <>
+                <button className="flight-tools-link journey-target-rail-tools" disabled={!destination || railSearching} onClick={() => void lookupRail()}>
+                  <SFTrainSideFrontCar size="xs" />{railSearching ? "正在查询公开时刻表…" : "查询真实列车班次"}
+                </button>
+                {railResults.length > 0 && (
+                  <div className="verified-rail-results" role="listbox" aria-label="真实列车班次">
+                    {railResults.map((segment) => (
+                      <button
+                        key={segment.id}
+                        className={selectedRailSegment?.service === segment.service && selectedRailSegment.departure === segment.departure ? "selected" : ""}
+                        role="option"
+                        aria-selected={selectedRailSegment?.service === segment.service && selectedRailSegment.departure === segment.departure}
+                        onClick={() => chooseRail(segment)}
+                      >
+                        <span><strong>{segment.departure}</strong><small>{segment.arrival}</small></span>
+                        <span><b>{segment.service}</b><small>{segment.operational?.provider} · {formatRailDuration(segment.durationMinutes)}</small></span>
+                        <SFChevronRight size="xs" />
+                      </button>
+                    ))}
+                    <p>时刻表由 Transitous 及其公开数据源提供；“无实时标注”不等于准点。</p>
+                  </div>
+                )}
+              </>
+            )}
             <div className="journey-builder-actions journey-target-actions"><button className="journey-add-leg" disabled={!destination} onClick={addNextLeg}><SFPlus size="xs" /> 添加下一段</button><button className="journey-submit" disabled={!destination && drafts.length === 0} onClick={save}>保存行程 · {drafts.length + (destination ? 1 : 0)} 段</button></div>
           </div>
         )}

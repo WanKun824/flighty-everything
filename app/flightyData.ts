@@ -19,7 +19,7 @@ export type Airport = {
   cancelled: number;
 };
 
-export type FlightStatus = "On Time" | "Delayed" | "Landed" | "Scheduled";
+export type FlightStatus = "On Time" | "Delayed" | "Landed" | "Scheduled" | "En Route";
 
 export type Flight = {
   id: string;

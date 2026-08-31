@@ -82,6 +82,18 @@ function activePatch(
   };
 }
 
+function normalizeSegments(segments: JourneySegment[]) {
+  const seeded = new Map(INITIAL_JOURNEY_SEGMENTS.map((segment) => [segment.id, segment]));
+  return segments.map((segment) => {
+    const baseline = seeded.get(segment.id);
+    if (!baseline?.operational || segment.operational) return segment;
+    return {
+      ...segment,
+      operational: baseline.operational,
+    };
+  });
+}
+
 function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
   if (!stored) return INITIAL_JOURNEY_STATE;
   if (Array.isArray(stored.trips) && stored.trips.length) {
@@ -89,6 +101,7 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
       Boolean(trip?.id && trip?.name && Array.isArray(trip?.segments)),
     ).map((trip) => ({
       ...trip,
+      segments: normalizeSegments(trip.segments),
       savedToPassportAt: trip.savedToPassportAt === null
         ? null
         : (trip.savedToPassportAt ?? trip.createdAt ?? new Date().toISOString()),
@@ -107,9 +120,9 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
       weatherMode: stored.weatherMode ?? "none",
     };
   }
-  const segments = Array.isArray(stored.segments) && stored.segments.length
+  const segments = normalizeSegments(Array.isArray(stored.segments) && stored.segments.length
     ? stored.segments
-    : INITIAL_JOURNEY_SEGMENTS;
+    : INITIAL_JOURNEY_SEGMENTS);
   const migrated: JourneyTrip = {
     ...primaryTrip,
     name: stored.tripName?.trim() || primaryTrip.name,

@@ -4,6 +4,45 @@ import type { RouteTransport } from "./routeRules";
 export type JourneyMode = RouteTransport;
 export type JourneyStatus = "upcoming" | "active" | "complete";
 
+export type JourneyDataQuality =
+  | "realtime"
+  | "verified-schedule"
+  | "verified-route"
+  | "planned"
+  | "manual";
+
+export type JourneyOperationalData = {
+  source: "adsbdb" | "adsb.lol" | "transitous" | "calendar" | "manual";
+  sourceLabel: string;
+  quality: JourneyDataQuality;
+  fetchedAt?: string;
+  realtime: boolean;
+  statusText?: string;
+  provider?: string;
+  equipment?: string;
+  scheduledDepartureAt?: string;
+  scheduledArrivalAt?: string;
+  estimatedDepartureAt?: string;
+  estimatedArrivalAt?: string;
+  actualDepartureAt?: string;
+  actualArrivalAt?: string;
+  delayMinutes?: number;
+  originTerminal?: string;
+  destinationTerminal?: string;
+  originGate?: string;
+  destinationGate?: string;
+  originPlatform?: string;
+  destinationPlatform?: string;
+  position?: {
+    longitude: number;
+    latitude: number;
+    altitudeMeters?: number;
+    speedKmh?: number;
+    heading?: number;
+    observedAt: string;
+  };
+};
+
 export type JourneyPlace = {
   code: string;
   name: string;
@@ -27,6 +66,7 @@ export type JourneySegment = {
   status: JourneyStatus;
   note: string;
   progress: number;
+  operational?: JourneyOperationalData;
 };
 
 export const MODE_META: Record<
@@ -161,9 +201,23 @@ export const INITIAL_JOURNEY_SEGMENTS: JourneySegment[] = [
     arrival: "14:00",
     durationMinutes: 255,
     distanceKm: 2888,
-    status: "active",
+    status: "upcoming",
     note: "登机口 24 · 经济舱 32A",
-    progress: 0.68,
+    progress: 0,
+    operational: {
+      source: "calendar",
+      sourceLabel: "已保存的行程计划",
+      quality: "planned",
+      realtime: false,
+      statusText: "计划中",
+      provider: "Cathay Pacific",
+      equipment: "Airbus A350",
+      scheduledDepartureAt: "2026-09-18T08:45:00+08:00",
+      scheduledArrivalAt: "2026-09-18T14:00:00+09:00",
+      originTerminal: "T1",
+      originGate: "24",
+      destinationTerminal: "T3",
+    },
   },
   {
     id: "journey-hnd-tyo",
@@ -196,6 +250,18 @@ export const INITIAL_JOURNEY_SEGMENTS: JourneySegment[] = [
     status: "upcoming",
     note: "14号站台 · 7号车厢 12A",
     progress: 0,
+    operational: {
+      source: "transitous",
+      sourceLabel: "Transitous / JR 时刻表",
+      quality: "verified-schedule",
+      realtime: false,
+      statusText: "计划时刻",
+      provider: "JR",
+      scheduledDepartureAt: "2026-09-20T09:10:00+09:00",
+      scheduledArrivalAt: "2026-09-20T11:22:00+09:00",
+      originPlatform: "14",
+      destinationPlatform: "12",
+    },
   },
   {
     id: "journey-kyo-uno",
@@ -318,6 +384,15 @@ export function createJourneySegmentBetween(input: {
     note:
       input.note?.trim() || `${MODE_META[input.mode].label}行程 · 已加入计划`,
     progress: 0,
+    operational: {
+      source: "manual",
+      sourceLabel: "手动计划",
+      quality: "manual",
+      realtime: false,
+      statusText: "计划时刻",
+      scheduledDepartureAt: toLocalIso(input.date, departure),
+      scheduledArrivalAt: toLocalIso(input.date, addMinutes(departure, durationMinutes)),
+    },
   } satisfies JourneySegment;
 }
 
@@ -337,13 +412,29 @@ export function segmentFromFlight(flight: Flight): JourneySegment {
     status:
       flight.status === "Landed"
         ? "complete"
-        : flight.status === "On Time"
+        : flight.status === "On Time" || flight.status === "En Route"
           ? "active"
           : "upcoming",
     note: `${flight.airline} · ${flight.aircraftFamily} · 座位 ${flight.seat}`,
     progress:
-      flight.status === "Landed" ? 1 : flight.status === "On Time" ? 0.52 : 0,
+      flight.status === "Landed" ? 1 : flight.status === "On Time" || flight.status === "En Route" ? 0.52 : 0,
+    operational: {
+      source: "manual",
+      sourceLabel: "已保存的航班计划",
+      quality: "planned",
+      realtime: false,
+      statusText: flight.status,
+      provider: flight.airline,
+      equipment: flight.aircraftFamily,
+      delayMinutes: flight.delayMinutes,
+    },
   };
+}
+
+function toLocalIso(date: string, time: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return undefined;
+  const parsed = new Date(`${date}T${time}:00`);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
 function defaultService(mode: JourneyMode, distance: number) {

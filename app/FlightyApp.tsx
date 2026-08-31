@@ -13,9 +13,11 @@ import {
 import SFAirplaneArrival from "sf-symbols-lib/monochrome/SFAirplaneArrival";
 import SFAirplaneCircleFill from "sf-symbols-lib/monochrome/SFAirplaneCircleFill";
 import SFAirplaneDeparture from "sf-symbols-lib/monochrome/SFAirplaneDeparture";
+import SFBattery100percent from "sf-symbols-lib/monochrome/SFBattery100percent";
 import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
 import SFBookClosedFill from "sf-symbols-lib/monochrome/SFBookClosedFill";
 import SFCalendarBadgePlus from "sf-symbols-lib/monochrome/SFCalendarBadgePlus";
+import SFCellularbars from "sf-symbols-lib/monochrome/SFCellularbars";
 import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
 import SFChevronDown from "sf-symbols-lib/monochrome/SFChevronDown";
 import SFChevronRight from "sf-symbols-lib/monochrome/SFChevronRight";
@@ -38,13 +40,14 @@ import SFStar from "sf-symbols-lib/monochrome/SFStar";
 import SFStarFill from "sf-symbols-lib/monochrome/SFStarFill";
 import SFTrash from "sf-symbols-lib/monochrome/SFTrash";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
+import SFWifi from "sf-symbols-lib/monochrome/SFWifi";
 import FlightGlobe from "./FlightGlobe";
 import {
   appearanceLabel,
   useAppearance,
   type AppearanceMode,
 } from "./appearance";
-import JourneyComposer from "./JourneyComposer";
+import JourneyComposer, { JourneyModeIcon } from "./JourneyComposer";
 import {
   MobileJourneyDetail,
   MobileJourneysPanel,
@@ -57,7 +60,6 @@ import {
   airportByCode,
   airportStatusLevel,
   calendarFlightNumbers,
-  flightFromNumber,
   flightFromRoute,
   formatDuration,
   makeFriend,
@@ -68,6 +70,7 @@ import {
   type Region,
 } from "./flightyData";
 import { segmentFromFlight, type JourneySegment } from "./journeyData";
+import { lookupVerifiedFlight } from "./transportData";
 import { useJourneyStore, type JourneyTrip } from "./journeyStorage";
 import { useSheetDetents } from "./useSheetDetents";
 import {
@@ -148,8 +151,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [avatarColor, setAvatarColor] = useState("#ec6f9a");
   const [randomIndex, setRandomIndex] = useState(0);
   const mainSheet = useSheetDetents({
-    detents: [0.31, 0.47, 0.82],
-    initial: 0.47,
+    detents: [0.36, 0.58, 0.84],
+    initial: 0.58,
   });
   const calendarRef = useRef<HTMLInputElement>(null);
   const stats = useMemo(() => statsForFlights(state.flights), [state.flights]);
@@ -219,16 +222,19 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     return () => window.cancelAnimationFrame(frame);
   }, [overlay, pendingComposerTab]);
 
-  const stageFlightsForComposer = (flights: Flight[]) => {
-    if (!flights.length) return;
+  const stageSegmentsForComposer = (segments: JourneySegment[]) => {
+    if (!segments.length) return;
     setComposerImportedSegments((current) => [
       ...current,
-      ...flights.map(segmentFromFlight),
+      ...segments,
     ]);
     setOverlay("add-journey");
     setQuery("");
-    notify(`已加入规划草稿 · ${flights.length} 段`);
+    notify(`已加入规划草稿 · ${segments.length} 段`);
   };
+
+  const stageFlightsForComposer = (flights: Flight[]) =>
+    stageSegmentsForComposer(flights.map(segmentFromFlight));
 
   const openAddJourney = () => setOverlay("add-journey");
 
@@ -265,11 +271,25 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     const file = event.target.files?.[0];
     if (!file) return;
     const numbers = calendarFlightNumbers(await file.text());
-    stageFlightsForComposer(numbers.map(flightFromNumber));
+    if (!numbers.length) {
+      notify("日历中没有找到航班号");
+      event.target.value = "";
+      return;
+    }
+    notify(`正在核验日历中的 ${numbers.length} 个航班…`);
+    const verified = await Promise.all(numbers.map(async (number) => {
+      try {
+        return await lookupVerifiedFlight({ number, date: routeDate, departure: "09:00" });
+      } catch {
+        return null;
+      }
+    }));
+    const segments = verified.flatMap((result) => result ? [result.segment] : []);
+    stageSegmentsForComposer(segments);
     notify(
-      numbers.length
-        ? `已从日历加入规划草稿 · ${numbers.length} 段`
-        : "日历中没有找到航班号",
+      segments.length
+        ? `已核验并加入 ${segments.length}/${numbers.length} 段；时刻可在草稿中调整`
+        : "日历航班号未通过真实航线核验，没有生成虚构行程",
     );
     event.target.value = "";
   };
@@ -312,7 +332,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             notify("已暂停跟随，可自由查看地图");
           }}
         />
-        <StatusBar />
+        <StatusBar segment={selectedJourney} />
 
         {activeTab !== "passport" &&
           ![
@@ -352,7 +372,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           )}
 
         <section
-          className={`flight-panel has-sheet-handle ${activeTab === "passport" ? "passport-panel" : ""} ${mainSheet.dragging ? "is-dragging" : ""}`}
+          className={`flight-panel has-sheet-handle ${activeTab === "flights" ? "journey-panel" : ""} ${activeTab === "passport" ? "passport-panel" : ""} ${mainSheet.dragging ? "is-dragging" : ""}`}
           style={{ "--sheet-height": `${mainSheet.fraction * 100}%` } as CSSProperties}
         >
           <button
@@ -428,6 +448,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               onAdd={openAddJourney}
               onEditNames={() => openJourneyNames()}
               savedToPassport={Boolean(currentTrip?.savedToPassportAt)}
+              compact={mainSheet.atMinimum}
               onSaveToPassport={() => {
                 journeyStore.saveCurrentTripToPassport();
                 setActiveTab("passport");
@@ -481,7 +502,15 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             setRouteTo={setRouteTo}
             setRouteDate={setRouteDate}
             onClose={() => setOverlay("add-journey")}
-            onAdd={(flight) => stageFlightsForComposer([flight])}
+            onAdd={(flight, verifiedSegment) => {
+              if (verifiedSegment) {
+                setComposerImportedSegments((current) => [...current, verifiedSegment]);
+                setOverlay("add-journey");
+                notify(`${flight.number} 已按真实航线加入规划草稿`);
+                return;
+              }
+              stageFlightsForComposer([flight]);
+            }}
             onCalendar={() => calendarRef.current?.click()}
             onRandom={() => {
               const flight = {
@@ -769,16 +798,54 @@ function JourneyNamesSheet({
   );
 }
 
-function StatusBar() {
+function StatusBar({ segment }: { segment: JourneySegment | null }) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const activity = dynamicActivity(segment, now.getTime());
   return (
-    <header className="ios-status" aria-hidden="true">
-      <strong>10:57</strong>
-      <span className="dynamic-island">
-        <i />
+    <header className="ios-status" aria-label="应用内行程状态">
+      <time dateTime={now.toISOString()}>{now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}</time>
+      <span className={`dynamic-island ${activity.active ? "has-activity" : ""}`} aria-live="polite">
+        {segment ? <JourneyModeIcon mode={segment.mode} /> : <i />}
+        {activity.active && <b>{activity.label}</b>}
       </span>
-      <span className="status-signals">▮▮▮ ◓ ▰</span>
+      <span className="status-signals" aria-hidden="true">
+        <SFCellularbars size="xs" />
+        <SFWifi size="xs" />
+        <SFBattery100percent size="sm" />
+      </span>
     </header>
   );
+}
+
+function dynamicActivity(segment: JourneySegment | null, now: number) {
+  if (!segment) return { active: false, label: "" };
+  const operational = segment.operational;
+  const departure = operational?.actualDepartureAt
+    || operational?.estimatedDepartureAt
+    || operational?.scheduledDepartureAt;
+  const arrival = operational?.actualArrivalAt
+    || operational?.estimatedArrivalAt
+    || operational?.scheduledArrivalAt;
+  const start = departure ? new Date(departure).getTime() : Number.NaN;
+  const end = arrival ? new Date(arrival).getTime() : Number.NaN;
+  if (Number.isFinite(start) && Number.isFinite(end)) {
+    if (now >= end) return { active: true, label: `${segment.destination.code} 已到达` };
+    if (now >= start) {
+      const minutes = Math.max(0, Math.round((end - now) / 60_000));
+      return { active: true, label: `${segment.destination.code} · ${minutes < 60 ? `${minutes} 分` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`}` };
+    }
+    const minutes = Math.max(0, Math.round((start - now) / 60_000));
+    if (minutes <= 24 * 60) {
+      return { active: true, label: `${segment.service} · ${minutes < 60 ? `${minutes} 分` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`}` };
+    }
+    return { active: false, label: "" };
+  }
+  if (segment.status === "active") return { active: true, label: `${segment.service} · ${Math.round(segment.progress * 100)}%` };
+  return { active: false, label: "" };
 }
 
 function BottomBar({
@@ -1093,11 +1160,37 @@ function AddFlightSheet(props: {
   setRouteTo: (value: string) => void;
   setRouteDate: (value: string) => void;
   onClose: () => void;
-  onAdd: (flight: Flight) => void;
+  onAdd: (flight: Flight, verifiedSegment?: JourneySegment) => void;
   onCalendar: () => void;
   onRandom: () => void;
 }) {
   const results = searchCatalog(props.query);
+  const [flightDeparture, setFlightDeparture] = useState("09:00");
+  const [verifiedFlight, setVerifiedFlight] = useState<Awaited<ReturnType<typeof lookupVerifiedFlight>> | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+
+  const verifyFlight = async () => {
+    const number = props.query.replace(/\s+/g, "").toUpperCase();
+    if (!number) {
+      setLookupError("请输入航班号，例如 CX548");
+      return;
+    }
+    setLookingUp(true);
+    setLookupError(null);
+    setVerifiedFlight(null);
+    try {
+      setVerifiedFlight(await lookupVerifiedFlight({
+        number,
+        date: props.routeDate,
+        departure: flightDeparture,
+      }));
+    } catch (reason) {
+      setLookupError(reason instanceof Error ? reason.message : "航班核验失败");
+    } finally {
+      setLookingUp(false);
+    }
+  };
   return (
     <section
       className="full-sheet"
@@ -1114,7 +1207,11 @@ function AddFlightSheet(props: {
         <SFMagnifyingglass size="sm" />
         <input
           value={props.query}
-          onChange={(event) => props.setQuery(event.target.value)}
+          onChange={(event) => {
+            props.setQuery(event.target.value);
+            setVerifiedFlight(null);
+            setLookupError(null);
+          }}
           placeholder="Cathay Pacific, HKG, or CX123"
         />
       </label>
@@ -1203,8 +1300,14 @@ function AddFlightSheet(props: {
           </button>
           {props.mode === "number" && !props.query && (
             <p className="input-hint">
-              Type a flight number above, such as CX520.
+              输入航班号，例如 CX548。系统会先核验真实航线，再尝试连接 ADS-B 实时位置。
             </p>
+          )}
+          {props.mode === "number" && (
+            <div className="verified-flight-fields">
+              <label><span>出发日期</span><input type="date" value={props.routeDate} onChange={(event) => props.setRouteDate(event.target.value)} /></label>
+              <label><span>计划时间</span><input type="time" value={flightDeparture} onChange={(event) => setFlightDeparture(event.target.value)} /></label>
+            </div>
           )}
           {props.query && (
             <>
@@ -1215,8 +1318,12 @@ function AddFlightSheet(props: {
                     className="add-row"
                     key={`${result.type}-${result.id}`}
                     onClick={() => {
-                      if (result.type === "flight")
-                        props.onAdd(flightFromNumber(result.id));
+                      if (result.type === "flight") {
+                        props.setMode("number");
+                        props.setQuery(result.id);
+                        setVerifiedFlight(null);
+                        setLookupError(null);
+                      }
                       else if (result.type === "airport") {
                         props.setRouteFrom(result.id);
                         props.setMode("route");
@@ -1225,9 +1332,9 @@ function AddFlightSheet(props: {
                   >
                     <span className={`catalog-logo ${result.type}`}>
                       {result.type === "flight"
-                        ? "✈"
+                        ? <SFAirplaneCircleFill size="sm" />
                         : result.type === "airport"
-                          ? "●"
+                          ? <SFLocationFill size="sm" />
                           : result.id.slice(0, 1)}
                     </span>
                     <span>
@@ -1239,17 +1346,27 @@ function AddFlightSheet(props: {
                 ))
               ) : (
                 <p className="input-hint">
-                  No exact match. Press “Add {props.query.toUpperCase()}” to
-                  create a tracked flight.
+                  本地目录没有记录。仍可通过公开航线数据库核验 {props.query.toUpperCase()}。
                 </p>
               )}
               {props.mode === "number" && (
-                <button
-                  className="blue-button number-add"
-                  onClick={() => props.onAdd(flightFromNumber(props.query))}
-                >
-                  Add {props.query.toUpperCase()}
-                </button>
+                <div className="verified-flight-action">
+                  <button className="blue-button number-add" disabled={lookingUp} onClick={() => void verifyFlight()}>
+                    {lookingUp ? "正在核验…" : `核验 ${props.query.toUpperCase()}`}
+                  </button>
+                  {lookupError && <p className="transport-lookup-error" role="alert">{lookupError}</p>}
+                  {verifiedFlight && (
+                    <section className="verified-transport-result">
+                      <span className="verified-transport-icon"><SFAirplaneCircleFill size="md" /></span>
+                      <span>
+                        <small>{verifiedFlight.live ? "实时位置已连接" : "真实航线已核验"}</small>
+                        <strong>{verifiedFlight.segment.origin.code} → {verifiedFlight.segment.destination.code}</strong>
+                        <em>{verifiedFlight.flight.airline} · {verifiedFlight.flight.number}</em>
+                      </span>
+                      <button onClick={() => props.onAdd(verifiedFlight.flight, verifiedFlight.segment)}>添加</button>
+                    </section>
+                  )}
+                </div>
               )}
             </>
           )}

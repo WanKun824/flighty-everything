@@ -79,7 +79,7 @@ test("keeps the live globe, radar, Apple icons and multi-transport persistence w
 });
 
 test("every product class used in active JSX has a CSS rule", async () => {
-  const [page, flightyApp, desktop, mobile, composer, passportTarget, globe, vehicle, css] =
+  const [page, flightyApp, desktop, mobile, composer, passportTarget, globe, vehicle, globalsCss, themeCss, refinementCss] =
     await Promise.all([
       readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
@@ -90,7 +90,10 @@ test("every product class used in active JSX has a CSS rule", async () => {
       readFile(new URL("../app/FlightGlobe.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/Vehicle3D.tsx", import.meta.url), "utf8"),
       readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+      readFile(new URL("../app/journey-theme.css", import.meta.url), "utf8"),
+      readFile(new URL("../app/journey-refinement.css", import.meta.url), "utf8"),
     ]);
+  const css = `${globalsCss}\n${themeCss}\n${refinementCss}`;
 
   const used = new Set();
   for (const source of [page, flightyApp, desktop, mobile, composer, passportTarget, globe, vehicle]) {

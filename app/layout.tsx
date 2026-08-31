@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./journey-theme.css";
+import "./journey-refinement.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(
