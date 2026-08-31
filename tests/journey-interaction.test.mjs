@@ -61,4 +61,8 @@ test("mobile planning preserves drafts across flight tools and guards discarding
   assert.match(app, /stageFlightsForComposer/);
   assert.match(app, /onClose=\{\(\) => setOverlay\("add-journey"\)\}/);
   assert.match(app, /onImportedSegmentsConsumed/);
+  assert.match(app, /overlay === "add-journey" \|\| overlay === "add-flight"/);
+  assert.match(app, /chooseTab=\{chooseBottomTab\}/);
+  assert.match(app, /onCloseRequestReady=\{registerComposerCloseRequest\}/);
+  assert.match(composer, /onCloseCancelled\?\.\(\)/);
 });

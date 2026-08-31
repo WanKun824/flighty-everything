@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -127,6 +129,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [toast, setToast] = useState<AppToast | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [composerImportedSegments, setComposerImportedSegments] = useState<JourneySegment[]>([]);
+  const composerCloseRequestRef = useRef<(() => void) | null>(null);
+  const [pendingComposerTab, setPendingComposerTab] = useState<Tab | null>(null);
   const [query, setQuery] = useState("");
   const [addMode, setAddMode] = useState<AddMode>("suggested");
   const [routeFrom, setRouteFrom] = useState("HKG");
@@ -186,6 +190,34 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     setSelectedAirport(null);
     setActiveTab(tab);
   };
+
+  const registerComposerCloseRequest = useCallback((request: (() => void) | null) => {
+    composerCloseRequestRef.current = request;
+  }, []);
+
+  const chooseBottomTab = (tab: Tab) => {
+    if (overlay === "add-journey" || overlay === "add-flight") {
+      setPendingComposerTab(tab);
+      if (overlay === "add-flight") setOverlay("add-journey");
+      return;
+    }
+    chooseTab(tab);
+  };
+
+  const closeComposer = () => {
+    const nextTab = pendingComposerTab;
+    setPendingComposerTab(null);
+    setOverlay(null);
+    if (nextTab) chooseTab(nextTab);
+  };
+
+  useEffect(() => {
+    if (overlay !== "add-journey" || !pendingComposerTab) return;
+    const frame = window.requestAnimationFrame(() => {
+      composerCloseRequestRef.current?.();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [overlay, pendingComposerTab]);
 
   const stageFlightsForComposer = (flights: Flight[]) => {
     if (!flights.length) return;
@@ -431,7 +463,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         {(!overlay || overlay === "add-journey" || overlay === "add-flight") && (
           <BottomBar
             activeTab={activeTab}
-            chooseTab={chooseTab}
+            chooseTab={chooseBottomTab}
             onSearch={openAddJourney}
           />
         )}
@@ -466,7 +498,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             variant="mobile"
             tripName={journeyStore.state.tripName}
             initialOrigin={journeyStore.state.segments.at(-1)?.destination}
-            onClose={() => setOverlay(null)}
+            onClose={closeComposer}
+            onCloseRequestReady={registerComposerCloseRequest}
+            onCloseCancelled={() => setPendingComposerTab(null)}
             onAddMany={(segments, tripName) => {
               journeyStore.renameTrip(tripName);
               journeyStore.addSegments(segments);

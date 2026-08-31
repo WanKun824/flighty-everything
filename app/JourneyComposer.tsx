@@ -76,6 +76,8 @@ export default function JourneyComposer({
   onFlightTools,
   importedSegments = [],
   onImportedSegmentsConsumed,
+  onCloseRequestReady,
+  onCloseCancelled,
   tripName = "我的行程",
   initialOrigin,
 }: {
@@ -86,6 +88,8 @@ export default function JourneyComposer({
   onFlightTools?: () => void;
   importedSegments?: JourneySegment[];
   onImportedSegmentsConsumed?: () => void;
+  onCloseRequestReady?: (request: (() => void) | null) => void;
+  onCloseCancelled?: () => void;
   tripName?: string;
   initialOrigin?: JourneyPlace;
 }) {
@@ -161,6 +165,17 @@ export default function JourneyComposer({
     clearComposerDraft();
     onClose();
   };
+  const requestCloseRef = useRef(requestClose);
+
+  useEffect(() => {
+    requestCloseRef.current = requestClose;
+  });
+
+  useEffect(() => {
+    if (variant !== "mobile") return;
+    onCloseRequestReady?.(() => requestCloseRef.current());
+    return () => onCloseRequestReady?.(null);
+  }, [onCloseRequestReady, variant]);
 
   const openFlightTools = () => {
     persistComposerDraft();
@@ -431,7 +446,7 @@ export default function JourneyComposer({
                 ? `当前已暂存 ${stagedCount} 段。保存后，下次打开可以继续编辑。`
                 : "当前编辑还没有形成完整路段，仍可保存后继续。"}</p>
               <div>
-                <button className="secondary" onClick={() => setDiscardPrompt(false)}>继续编辑</button>
+                <button className="secondary" onClick={() => { setDiscardPrompt(false); onCloseCancelled?.(); }}>继续编辑</button>
                 <button onClick={() => { persistComposerDraft(); onClose(); }}>保存草稿并退出</button>
                 <button className="destructive" onClick={() => { clearComposerDraft(); onClose(); }}>放弃草稿</button>
               </div>
