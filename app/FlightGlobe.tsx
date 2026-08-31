@@ -324,12 +324,10 @@ export default function FlightGlobe({
     const map = mapRef.current;
     const mapboxgl = mapboxRef.current;
     if (!map || !mapboxgl || !loaded) return;
-    const preferredSegment =
-      journeySegments.find((item) => item.id === selectedJourneySegmentId) ??
-      journeySegments.find((item) => item.status === "active") ??
-      journeySegments[0];
-    if (!preferredSegment) return;
-    const segment = preferredSegment;
+    const segment = journeySegments.find(
+      (item) => item.id === selectedJourneySegmentId,
+    );
+    if (!segment) return;
     const road = roadTraffic[segment.id]?.coordinates;
     const coordinates = road ?? greatCircleCoordinates(
       segment.origin.coordinate,
@@ -388,13 +386,13 @@ export default function FlightGlobe({
         marker.setLngLat(coordinate);
       },
     });
-    const startedAt = performance.now() - duration * Math.max(0, Math.min(1, preferredSegment.progress));
+    const startedAt = performance.now() - duration * Math.max(0, Math.min(1, segment.progress));
     let frame = 0;
     let publishedProgressAt = 0;
     let publishedStage = "";
     let publishedTrail = "";
     const animate = (now: number) => {
-      let moving = Math.max(0, Math.min(1, preferredSegment.progress));
+      let moving = Math.max(0, Math.min(1, segment.progress));
       if (!reduceMotion.matches && motionEnabled) {
         const elapsed = (now - startedAt) % duration;
         moving = elapsed / duration;

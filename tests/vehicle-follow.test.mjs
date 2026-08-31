@@ -65,8 +65,8 @@ test("paused coordinates do not request redundant camera or marker work", () => 
 
 test("the selected segment alone retains the pinned anchor and follow behavior", async () => {
   const globe = await readFile(new URL("../app/FlightGlobe.tsx", import.meta.url), "utf8");
-  assert.match(globe, /const segment = preferredSegment/);
-  assert.doesNotMatch(globe, /playbackSegments|element\.classList\.replace\(segment\.mode/);
+  assert.match(globe, /const segment = journeySegments\.find\([\s\S]*?item\.id === selectedJourneySegmentId/);
+  assert.doesNotMatch(globe, /preferredSegment|playbackSegments|element\.classList\.replace\(segment\.mode/);
   assert.match(globe, /marker\.remove\(\);[\s\S]*?element\.classList\.add\("is-following"\)/);
   assert.match(globe, /marker\.setLngLat\(coordinate\)\.addTo\(map\)/);
   assert.match(globe, /if \(trail !== publishedTrail\)/);

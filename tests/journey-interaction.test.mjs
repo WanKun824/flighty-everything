@@ -14,9 +14,10 @@ test("journey selection has one source of truth and separates map focus from det
   assert.doesNotMatch(app, /setSelectedJourneyId/);
   assert.match(app, /onSelect=\{\(segment\) => selectJourneySegment\(segment\.id\)\}/);
   assert.match(app, /onOpenDetails=\{\(segment\) => openJourneyDetails\(segment\.id\)\}/);
-  assert.match(mobile, /className="mobile-segment-select"[\s\S]*?onClick=\{\(\) => onSelect\(segment\)\}/);
+  assert.match(mobile, /className="mobile-segment-select"[\s\S]*?onClick=\{\(\) => selected \? onOpenDetails\(segment\) : onSelect\(segment\)\}/);
   assert.match(mobile, /className="mobile-segment-detail-button"[\s\S]*?onClick=\{\(\) => onOpenDetails\(segment\)\}/);
   assert.match(mobile, /onClick=\{onToggleOverview\}[\s\S]*?aria-expanded=\{overviewExpanded\}/);
+  assert.match(app, /mainSheet\.fraction > 0\.5 \? mainSheet\.minimum : mainSheet\.maximum/);
 });
 
 test("journey details stop at their minimum height and destructive actions can be undone", async () => {
@@ -36,8 +37,8 @@ test("journey details stop at their minimum height and destructive actions can b
 test("map playback and follow stay scoped to the selected segment", async () => {
   const globe = await read("../app/FlightGlobe.tsx");
 
-  assert.match(globe, /const segment = preferredSegment/);
-  assert.doesNotMatch(globe, /playbackSegments|playbackIndex/);
+  assert.match(globe, /const segment = journeySegments\.find\([\s\S]*?item\.id === selectedJourneySegmentId/);
+  assert.doesNotMatch(globe, /preferredSegment|playbackSegments|playbackIndex/);
   assert.match(globe, /journeySelectionToken/);
   assert.match(globe, /map\.dragRotate\.disable\(\)/);
   assert.match(globe, /map\.touchZoomRotate\.disableRotation\(\)/);
@@ -53,6 +54,9 @@ test("mobile planning preserves drafts across flight tools and guards discarding
   assert.match(composer, /MOBILE_DRAFT_KEY/);
   assert.match(composer, /window\.sessionStorage\.setItem/);
   assert.match(composer, /role="alertdialog"/);
+  assert.match(composer, /已暂存 \{stagedCount\} 段/);
+  assert.match(composer, /保存这次规划草稿？/);
+  assert.match(composer, /保存草稿并退出/);
   assert.match(composer, /importedSegments/);
   assert.match(app, /stageFlightsForComposer/);
   assert.match(app, /onClose=\{\(\) => setOverlay\("add-journey"\)\}/);

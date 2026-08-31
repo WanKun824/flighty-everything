@@ -98,9 +98,11 @@ export function MobileJourneysPanel({
           >
             <button
               className="mobile-segment-select"
-              onClick={() => onSelect(segment)}
+              onClick={() => selected ? onOpenDetails(segment) : onSelect(segment)}
               aria-pressed={selected}
-              aria-label={`在地图上定位 ${segment.title}`}
+              aria-label={selected
+                ? `再次点击打开 ${segment.title} 详情`
+                : `在地图上定位 ${segment.title}`}
             >
               <span
                 className="mobile-mode-node"

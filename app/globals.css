@@ -511,13 +511,17 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .journey-composer.mobile > header { align-items: flex-start; }.journey-composer.mobile h2 { font-size: 30px; }.journey-composer.mobile .journey-mode-picker { margin-top: 27px; }
 .journey-composer.mobile .journey-form-grid { grid-template-columns: 1fr 14px 1fr; gap: 8px; }.journey-composer.mobile .journey-form-grid label { min-height: 64px; }
 .journey-composer.mobile .journey-submit { height: 50px; margin-top: 15px; border-radius: 15px; font-size: 13px; }
+.journey-draft-status { min-height: 34px; margin-top: 12px; padding: 0 11px; display: flex; align-items: center; gap: 7px; color: #7b7e85; border: 1px solid #e5e6e9; border-radius: 12px; background: rgba(246,247,249,.9); font-size: 11px; }
+.journey-draft-status svg { color: #8b8e95; }.journey-draft-status strong { font-size: 11px; }.journey-draft-status small { margin-left: auto; color: #999ca2; font-size: 9px; }
+.journey-draft-status.has-items { color: #087ded; border-color: rgba(10,132,255,.18); background: rgba(10,132,255,.07); }.journey-draft-status.has-items svg { color: #0a84ff; }
 .journey-discard-backdrop { position: absolute; z-index: 40; inset: 0; padding: 24px; background: rgba(0,0,0,.42); display: grid; place-items: center; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .journey-discard-prompt { width: 100%; max-width: 330px; padding: 20px; border: 1px solid rgba(255,255,255,.11); border-radius: 22px; background: rgba(37,37,44,.98); box-shadow: 0 24px 70px rgba(0,0,0,.5); }
 .journey-discard-prompt strong { font-size: 18px; letter-spacing: -.025em; }
 .journey-discard-prompt p { margin: 8px 0 18px; color: #9999a2; font-size: 11px; line-height: 1.5; }
 .journey-discard-prompt > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .journey-discard-prompt button { min-height: 42px; border: 0; border-radius: 13px; color: #fff; background: #0a84ff; font-weight: 700; cursor: pointer; }
-.journey-discard-prompt button.destructive { color: #ff746d; background: rgba(255,69,58,.12); }
+.journey-discard-prompt button.secondary { color: #d6d7dc; background: rgba(255,255,255,.08); }
+.journey-discard-prompt button.destructive { grid-column: 1 / -1; color: #ff746d; background: rgba(255,69,58,.12); }
 
 /* Route-builder class ownership lives in journey-theme.css; keep these base hooks here for shared render guards. */
 .journey-route-builder { overscroll-behavior: contain; }

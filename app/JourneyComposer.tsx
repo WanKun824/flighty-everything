@@ -5,6 +5,7 @@ import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
 import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
 import SFCalendarBadgePlus from "sf-symbols-lib/monochrome/SFCalendarBadgePlus";
 import SFCarFill from "sf-symbols-lib/monochrome/SFCarFill";
+import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
 import SFChevronRight from "sf-symbols-lib/monochrome/SFChevronRight";
 import SFFerryFill from "sf-symbols-lib/monochrome/SFFerryFill";
 import SFDiceFill from "sf-symbols-lib/monochrome/SFDiceFill";
@@ -149,6 +150,7 @@ export default function JourneyComposer({
 
   const isDirty = drafts.length > 0 || Boolean(destination) || Boolean(query.trim()) ||
     name !== tripName || origin.code !== fallbackOrigin.code || Boolean(title.trim()) || Boolean(note.trim());
+  const stagedCount = drafts.length + (destination ? 1 : 0);
 
   const requestClose = () => {
     if (variant === "mobile" && isDirty) {
@@ -344,6 +346,12 @@ export default function JourneyComposer({
           <button aria-label="关闭添加行程" onClick={requestClose}><SFXmark size="md" /></button>
         </header>
 
+        <div className={`journey-draft-status ${stagedCount > 0 ? "has-items" : ""}`} role="status" aria-live="polite">
+          <SFCheckmarkCircleFill size="xs" />
+          <strong>已暂存 {stagedCount} 段</strong>
+          <small>仅保存在这台设备</small>
+        </div>
+
         <label className="journey-target-search">
           <SFMagnifyingglass size="md" />
           <input
@@ -418,10 +426,13 @@ export default function JourneyComposer({
         {discardPrompt && (
           <div className="journey-discard-backdrop">
             <section className="journey-discard-prompt" role="alertdialog" aria-modal="true" aria-labelledby="discard-draft-title">
-              <strong id="discard-draft-title">保留这次规划吗？</strong>
-              <p>当前路线还没有保存。你可以继续编辑，或放弃这份草稿。</p>
+              <strong id="discard-draft-title">保存这次规划草稿？</strong>
+              <p>{stagedCount > 0
+                ? `当前已暂存 ${stagedCount} 段。保存后，下次打开可以继续编辑。`
+                : "当前编辑还没有形成完整路段，仍可保存后继续。"}</p>
               <div>
-                <button onClick={() => setDiscardPrompt(false)}>继续编辑</button>
+                <button className="secondary" onClick={() => setDiscardPrompt(false)}>继续编辑</button>
+                <button onClick={() => { persistComposerDraft(); onClose(); }}>保存草稿并退出</button>
                 <button className="destructive" onClick={() => { clearComposerDraft(); onClose(); }}>放弃草稿</button>
               </div>
             </section>

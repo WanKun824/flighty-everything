@@ -389,7 +389,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               selectedSegmentId={selectedJourneyId}
               onSelect={(segment) => selectJourneySegment(segment.id)}
               onOpenDetails={(segment) => openJourneyDetails(segment.id)}
-              onToggleOverview={mainSheet.toggleExpanded}
+              onToggleOverview={() => mainSheet.snapTo(
+                mainSheet.fraction > 0.5 ? mainSheet.minimum : mainSheet.maximum,
+              )}
               overviewExpanded={mainSheet.fraction > 0.5}
               onAdd={openAddJourney}
               onEditNames={() => openJourneyNames()}
