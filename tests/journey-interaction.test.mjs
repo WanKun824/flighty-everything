@@ -45,6 +45,21 @@ test("map playback and follow stay scoped to the selected segment", async () => 
   assert.match(globe, /callbacksRef\.current\.onFollowInterrupted\?\.\(\)/);
 });
 
+test("selected routes stay solid across the date line and stored journeys remain continuous", async () => {
+  const [globe, storage] = await Promise.all([
+    read("../app/FlightGlobe.tsx"),
+    read("../app/journeyStorage.ts"),
+  ]);
+
+  assert.match(globe, /segments\.filter\(\(segment\) => segment\.id === selectedId\)/);
+  assert.match(globe, /coordinates: unwrap\(traffic\?\.coordinates \?\? greatCircleCoordinates/);
+  assert.doesNotMatch(globe, /line-dasharray/);
+  assert.doesNotMatch(globe, /flighty-journey-stop-dots/);
+  assert.match(storage, /export function splitContinuousSegments/);
+  assert.match(storage, /samePlace\(last\.destination, chain\[0\]\.origin\)/);
+  assert.match(storage, /sourceTrips\.flatMap\(splitTrip\)/);
+});
+
 test("mobile planning preserves drafts across flight tools and guards discarding", async () => {
   const [app, composer] = await Promise.all([
     read("../app/FlightyApp.tsx"),

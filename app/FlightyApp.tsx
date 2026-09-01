@@ -49,8 +49,8 @@ import {
 } from "./appearance";
 import JourneyComposer, { JourneyModeIcon } from "./JourneyComposer";
 import {
+  FlightyJourneyPanel,
   MobileJourneyDetail,
-  MobileJourneysPanel,
 } from "./MobileJourney";
 import JourneyPassportTarget, { JourneyPassportStatsTarget } from "./JourneyPassportTarget";
 import {
@@ -151,8 +151,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [avatarColor, setAvatarColor] = useState("#ec6f9a");
   const [randomIndex, setRandomIndex] = useState(0);
   const mainSheet = useSheetDetents({
-    detents: [0.36, 0.58, 0.84],
-    initial: 0.58,
+    detents: [0.33, 0.5, 0.82],
+    initial: 0.33,
   });
   const calendarRef = useRef<HTMLInputElement>(null);
   const stats = useMemo(() => statsForFlights(state.flights), [state.flights]);
@@ -296,7 +296,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
 
   const legacyTitle =
     activeTab === "flights"
-      ? journeyStore.state.collectionName
+      ? "My Flights"
       : activeTab === "friends"
         ? "同行"
         : "旅行护照";
@@ -306,7 +306,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const mapOverlayOpen = overlay === "airports" || overlay === "airport-detail";
 
   return (
-    <main className={`flighty-page ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""}`} data-theme={appearance.resolved}>
+    <main className={`flighty-page ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
       <section
         className="flighty-device"
         aria-label="flighty Everything flight tracker"
@@ -315,7 +315,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           airportsVisible={mapOverlayOpen}
           airportRegion={airportRegion}
           selectedAirport={selectedAirport}
-          weatherMode="none"
+          weatherMode={state.weatherMode}
           resetToken={resetToken}
           journeySegments={mapOverlayOpen ? [] : journeyStore.state.segments}
           selectedJourneySegmentId={selectedJourneyId}
@@ -360,16 +360,26 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 <SFMapFill size="md" />
               </button>
               <button
-                className={followVehicle ? "active" : ""}
-                aria-label="跟随当前选中路段"
-                aria-pressed={followVehicle}
-                disabled={!selectedJourneyId}
-                onClick={() => setFollowVehicle((value) => !value)}
+                className={overlay === "weather" ? "active" : ""}
+                aria-label="打开天气图层"
+                onClick={() => setOverlay(overlay === "weather" ? null : "weather")}
               >
-                <SFLocationFill size="md" />
+                <SFCloudFill size="md" />
               </button>
             </div>
           )}
+
+        {activeTab === "flights" && !mapOverlayOpen && (!overlay || overlay === "journey-detail") && (
+          <button
+            className={`map-follow-button ${followVehicle ? "active" : ""}`}
+            aria-label="跟随当前选中路段"
+            aria-pressed={followVehicle}
+            disabled={!selectedJourneyId}
+            onClick={() => setFollowVehicle((value) => !value)}
+          >
+            <SFLocationFill size="md" />
+          </button>
+        )}
 
         <section
           className={`flight-panel has-sheet-handle ${activeTab === "flights" ? "journey-panel" : ""} ${activeTab === "passport" ? "passport-panel" : ""} ${mainSheet.dragging ? "is-dragging" : ""}`}
@@ -435,7 +445,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           </header>
 
           {activeTab === "flights" && (
-            <MobileJourneysPanel
+            <FlightyJourneyPanel
               tripName={journeyStore.state.tripName}
               segments={journeyStore.state.segments}
               selectedSegmentId={selectedJourneyId}

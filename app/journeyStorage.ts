@@ -94,10 +94,63 @@ function normalizeSegments(segments: JourneySegment[]) {
   });
 }
 
+function samePlace(
+  left: JourneySegment["destination"],
+  right: JourneySegment["origin"],
+) {
+  if (left.code.trim().toUpperCase() === right.code.trim().toUpperCase()) return true;
+  const [leftLongitude, leftLatitude] = left.coordinate;
+  const [rightLongitude, rightLatitude] = right.coordinate;
+  return Math.hypot(leftLongitude - rightLongitude, leftLatitude - rightLatitude) < 0.025;
+}
+
+function segmentIdentity(segment: JourneySegment) {
+  return [
+    segment.mode,
+    segment.service.trim().toUpperCase(),
+    segment.origin.code.trim().toUpperCase(),
+    segment.destination.code.trim().toUpperCase(),
+    segment.date,
+    segment.departure,
+    segment.arrival,
+  ].join("|");
+}
+
+export function splitContinuousSegments(segments: JourneySegment[]) {
+  const identities = new Set<string>();
+  const unique = segments.filter((segment) => {
+    const identity = segmentIdentity(segment);
+    if (identities.has(identity)) return false;
+    identities.add(identity);
+    return true;
+  });
+  const chains: JourneySegment[][] = [];
+  for (const segment of unique) {
+    const current = chains.at(-1);
+    if (!current?.length || !samePlace(current.at(-1)!.destination, segment.origin)) {
+      chains.push([segment]);
+    } else {
+      current.push(segment);
+    }
+  }
+  return chains;
+}
+
+function splitTrip(trip: JourneyTrip) {
+  const chains = splitContinuousSegments(trip.segments);
+  if (!chains.length) return [{ ...trip, segments: [] }];
+  return chains.map((segments, index) => ({
+    ...trip,
+    id: index === 0 ? trip.id : `${trip.id}-continued-${index + 1}`,
+    name: index === 0 ? trip.name : `${trip.name} · ${index + 1}`,
+    segments,
+  }));
+}
+
 function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
   if (!stored) return INITIAL_JOURNEY_STATE;
   if (Array.isArray(stored.trips) && stored.trips.length) {
-    const trips = stored.trips.filter((trip): trip is JourneyTrip =>
+    const sourceTrips = stored.trips.filter((trip): trip is JourneyTrip =>
       Boolean(trip?.id && trip?.name && Array.isArray(trip?.segments)),
     ).map((trip) => ({
       ...trip,
@@ -106,7 +159,11 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
         ? null
         : (trip.savedToPassportAt ?? trip.createdAt ?? new Date().toISOString()),
     }));
-    const active = trips.find((trip) => trip.id === stored.activeTripId) ?? trips[0];
+    const trips = sourceTrips.flatMap(splitTrip);
+    if (!trips.length) return INITIAL_JOURNEY_STATE;
+    const active = trips.find((trip) =>
+      trip.segments.some((segment) => segment.id === stored.selectedSegmentId),
+    ) ?? trips.find((trip) => trip.id === stored.activeTripId) ?? trips[0];
     const selectedSegmentId = active.segments.some((segment) => segment.id === stored.selectedSegmentId)
       ? (stored.selectedSegmentId as string)
       : (active.segments[0]?.id ?? "");
@@ -129,15 +186,19 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
     segments,
     savedToPassportAt: stored.trips?.[0]?.savedToPassportAt ?? primaryTrip.savedToPassportAt,
   };
+  const migratedTrips = splitTrip(migrated);
+  const active = migratedTrips.find((trip) =>
+    trip.segments.some((segment) => segment.id === stored.selectedSegmentId),
+  ) ?? migratedTrips[0];
   return {
-    trips: [migrated, weekendTrip],
-    activeTripId: migrated.id,
+    trips: [...migratedTrips, weekendTrip],
+    activeTripId: active.id,
     collectionName: stored.collectionName?.trim() || "我的行程",
-    tripName: migrated.name,
-    segments,
-    selectedSegmentId: segments.some((segment) => segment.id === stored.selectedSegmentId)
+    tripName: active.name,
+    segments: active.segments,
+    selectedSegmentId: active.segments.some((segment) => segment.id === stored.selectedSegmentId)
       ? (stored.selectedSegmentId as string)
-      : segments[0].id,
+      : (active.segments[0]?.id ?? ""),
     weatherMode: stored.weatherMode ?? "none",
   };
 }
@@ -274,11 +335,50 @@ export function useJourneyStore() {
     if (!incoming.length) return;
     setState((current) => {
       const ids = new Set(incoming.map((segment) => segment.id));
-      const segments = [...current.segments.filter((segment) => !ids.has(segment.id)), ...incoming];
-      return activePatch(current, {
+      let activeTripId = current.activeTripId;
+      let tripName = current.tripName;
+      let segments = current.segments.filter((segment) => !ids.has(segment.id));
+      let trips = current.trips.map((trip) => trip.id === current.activeTripId
+        ? { ...trip, segments }
+        : trip);
+      let selectedSegmentId = current.selectedSegmentId;
+
+      for (const chain of splitContinuousSegments(incoming)) {
+        const last = segments.at(-1);
+        if (!segments.length || (last && samePlace(last.destination, chain[0].origin))) {
+          segments = [...segments, ...chain];
+          selectedSegmentId = chain.at(-1)?.id ?? selectedSegmentId;
+          trips = trips.map((trip) => trip.id === activeTripId ? { ...trip, segments } : trip);
+          continue;
+        }
+
+        const index = trips.length;
+        const first = chain[0];
+        const final = chain.at(-1)!;
+        const trip: JourneyTrip = {
+          id: `trip-${Date.now()}-${index}`,
+          name: `${first.origin.city} → ${final.destination.city}`,
+          color: TRIP_COLORS[index % TRIP_COLORS.length],
+          motif: TRIP_MOTIFS[index % TRIP_MOTIFS.length],
+          segments: chain,
+          createdAt: new Date().toISOString(),
+          savedToPassportAt: null,
+        };
+        trips = [...trips, trip];
+        activeTripId = trip.id;
+        tripName = trip.name;
+        segments = chain;
+        selectedSegmentId = final.id;
+      }
+
+      return {
+        ...current,
+        trips,
+        activeTripId,
+        tripName,
         segments,
-        selectedSegmentId: incoming.at(-1)?.id ?? current.selectedSegmentId,
-      });
+        selectedSegmentId,
+      };
     });
   }, []);
 
@@ -313,27 +413,26 @@ export function useJourneyStore() {
 
   const removeSegment = useCallback((id: string) => {
     setState((current) => {
-      const removedIndex = current.segments.findIndex((segment) => segment.id === id);
       const segments = current.segments.filter((segment) => segment.id !== id);
-      if (removedIndex > 0 && removedIndex < segments.length) {
-        const previous = segments[removedIndex - 1];
-        const next = segments[removedIndex];
-        const relinked = createJourneySegmentBetween({
-          mode: next.mode,
-          origin: previous.destination,
-          destination: next.destination,
-          date: next.date,
-          departure: next.departure,
-          note: next.note,
-          title: next.title,
-        });
-        segments[removedIndex] = {
-          ...relinked,
-          id: next.id,
-          service: next.service,
-          date: next.date,
-          status: next.status,
-          progress: next.progress,
+      const chains = splitContinuousSegments(segments);
+      if (chains.length > 1) {
+        const activeTrip = current.trips.find((trip) => trip.id === current.activeTripId);
+        const replacement = chains.map((chain, index) => ({
+          ...(activeTrip ?? primaryTrip),
+          id: index === 0 ? current.activeTripId : `${current.activeTripId}-continued-${Date.now()}-${index + 1}`,
+          name: index === 0 ? current.tripName : `${current.tripName} · ${index + 1}`,
+          segments: chain,
+          savedToPassportAt: index === 0 ? (activeTrip?.savedToPassportAt ?? null) : null,
+        }));
+        const trips = current.trips.flatMap((trip) => trip.id === current.activeTripId ? replacement : [trip]);
+        const next = replacement[0];
+        return {
+          ...current,
+          trips,
+          activeTripId: next.id,
+          tripName: next.name,
+          segments: next.segments,
+          selectedSegmentId: next.segments[0]?.id ?? "",
         };
       }
       return activePatch(current, {

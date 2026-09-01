@@ -89,7 +89,7 @@ export default function FlightGlobe({
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const mapboxRef = useRef<typeof import("mapbox-gl").default | null>(null);
   const airportMarkersRef = useRef<Array<import("mapbox-gl").Marker>>([]);
-  const basemapRef = useRef<BasemapMode>("standard");
+  const basemapRef = useRef<BasemapMode>("satellite");
   const basemapThemeRef = useRef<"light" | "dark">(theme);
   const followVehicleRef = useRef(followVehicle);
   const liveDataRef = useRef<LiveData>({
@@ -153,7 +153,7 @@ export default function FlightGlobe({
       mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
       const map = new mapboxgl.Map({
         container: hostRef.current,
-        style: styleUrl("standard"),
+        style: styleUrl("satellite"),
         projection: "globe",
         center: [126, 27],
         zoom: 2.05,
@@ -193,20 +193,6 @@ export default function FlightGlobe({
         map.getCanvas().style.cursor = "pointer";
       });
       map.on("mouseleave", "flighty-airport-dots", () => {
-        map.getCanvas().style.cursor = "";
-      });
-      map.on("click", "flighty-journey-stop-dots", (event) => {
-        const feature = event.features?.[0] as
-          | { properties?: { segmentId?: unknown } }
-          | undefined;
-        const segmentId = feature?.properties?.segmentId;
-        if (typeof segmentId === "string")
-          callbacksRef.current.onJourneySegmentSelect?.(segmentId);
-      });
-      map.on("mouseenter", "flighty-journey-stop-dots", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", "flighty-journey-stop-dots", () => {
         map.getCanvas().style.cursor = "";
       });
     });
@@ -285,11 +271,6 @@ export default function FlightGlobe({
     )?.setData(
       journeyLineFeatures(journeySegments, selectedJourneySegmentId, roadTraffic),
     );
-    (
-      map.getSource("flighty-journey-stops") as
-        | import("mapbox-gl").GeoJSONSource
-        | undefined
-    )?.setData(journeyStopFeatures(journeySegments, selectedJourneySegmentId));
   }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, styleRevision]);
 
   useEffect(() => {
@@ -458,12 +439,17 @@ export default function FlightGlobe({
       (item) => item.id === selectedJourneySegmentId,
     );
     if (!segment) return;
-    const [aLongitude, aLatitude] = segment.origin.coordinate;
-    const [bLongitude, bLatitude] = segment.destination.coordinate;
+    const route = unwrap(greatCircleCoordinates(
+      segment.origin.coordinate,
+      segment.destination.coordinate,
+      96,
+    ));
+    const longitudes = route.map(([longitude]) => longitude);
+    const latitudes = route.map(([, latitude]) => latitude);
     map.fitBounds(
       [
-        [Math.min(aLongitude, bLongitude), Math.min(aLatitude, bLatitude)],
-        [Math.max(aLongitude, bLongitude), Math.max(aLatitude, bLatitude)],
+        [Math.min(...longitudes), Math.min(...latitudes)],
+        [Math.max(...longitudes), Math.max(...latitudes)],
       ],
       { padding: 110, maxZoom: 7, duration: 850, essential: true },
     );
@@ -472,6 +458,7 @@ export default function FlightGlobe({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
+    if (selectedJourneySegmentId) return;
     map.flyTo({
       center: [126, 27],
       zoom: weatherMode === "none" ? 2.05 : 1.85,
@@ -480,7 +467,7 @@ export default function FlightGlobe({
       duration: 820,
       essential: true,
     });
-  }, [resetToken, loaded, weatherMode, styleRevision]);
+  }, [resetToken, loaded, weatherMode, styleRevision, selectedJourneySegmentId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -529,14 +516,16 @@ export default function FlightGlobe({
             "raster-fade-duration": 180,
           },
         });
-        currentMap.flyTo({
-          center: weatherMode === "us" ? [-98, 38] : [118, 25],
-          zoom: weatherMode === "us" ? 2.75 : 1.85,
-          pitch: 0,
-          bearing: 0,
-          duration: 900,
-          essential: true,
-        });
+        if (!liveDataRef.current.selectedJourneySegmentId && !liveDataRef.current.airportsVisible) {
+          currentMap.flyTo({
+            center: weatherMode === "us" ? [-98, 38] : [118, 25],
+            zoom: weatherMode === "us" ? 2.75 : 1.85,
+            pitch: 0,
+            bearing: 0,
+            duration: 900,
+            essential: true,
+          });
+        }
         setRadarUpdated(
           new Date().toLocaleTimeString([], {
             hour: "2-digit",
@@ -657,15 +646,6 @@ function installProductLayers(
       ),
     });
   }
-  if (!map.getSource("flighty-journey-stops")) {
-    map.addSource("flighty-journey-stops", {
-      type: "geojson",
-      data: journeyStopFeatures(
-        data.journeySegments,
-        data.selectedJourneySegmentId,
-      ),
-    });
-  }
   if (!map.getLayer("flighty-journey-glow")) {
     map.addLayer({
       id: "flighty-journey-glow",
@@ -674,9 +654,9 @@ function installProductLayers(
       slot: "top",
       paint: {
         "line-color": ["coalesce", ["get", "trafficColor"], ["get", "color"]],
-        "line-width": ["case", ["get", "selected"], 10, 7],
-        "line-opacity": 0.16,
-        "line-blur": 5,
+        "line-width": 11,
+        "line-opacity": 0.24,
+        "line-blur": 5.5,
       },
     });
   }
@@ -689,37 +669,8 @@ function installProductLayers(
       layout: { "line-cap": "round", "line-join": "round" },
       paint: {
         "line-color": ["coalesce", ["get", "trafficColor"], ["get", "color"]],
-        "line-width": ["case", ["get", "selected"], 3.5, 2.2],
-        "line-opacity": ["case", ["get", "selected"], 1, 0.72],
-        "line-dasharray": [2, 1.6],
-      },
-    });
-  }
-  if (!map.getLayer("flighty-journey-stop-glow")) {
-    map.addLayer({
-      id: "flighty-journey-stop-glow",
-      type: "circle",
-      source: "flighty-journey-stops",
-      slot: "top",
-      paint: {
-        "circle-radius": ["case", ["get", "selected"], 13, 9],
-        "circle-color": ["get", "color"],
-        "circle-opacity": 0.18,
-        "circle-blur": 0.45,
-      },
-    });
-  }
-  if (!map.getLayer("flighty-journey-stop-dots")) {
-    map.addLayer({
-      id: "flighty-journey-stop-dots",
-      type: "circle",
-      source: "flighty-journey-stops",
-      slot: "top",
-      paint: {
-        "circle-radius": ["case", ["get", "selected"], 6, 4],
-        "circle-color": ["get", "color"],
-        "circle-stroke-color": "#ffffff",
-        "circle-stroke-width": 1.4,
+        "line-width": 4.2,
+        "line-opacity": 1,
       },
     });
   }
@@ -862,7 +813,7 @@ function journeyLineFeatures(
 ) {
   return {
     type: "FeatureCollection" as const,
-    features: segments.map((segment) => {
+    features: segments.filter((segment) => segment.id === selectedId).map((segment) => {
       const traffic = roadTraffic[segment.id];
       return {
         type: "Feature" as const,
@@ -874,7 +825,7 @@ function journeyLineFeatures(
         },
         geometry: {
           type: "LineString" as const,
-          coordinates: traffic?.coordinates ?? greatCircleCoordinates(segment.origin.coordinate, segment.destination.coordinate),
+          coordinates: unwrap(traffic?.coordinates ?? greatCircleCoordinates(segment.origin.coordinate, segment.destination.coordinate)),
         },
       };
     }),
@@ -887,22 +838,6 @@ function congestionColor(levels: RoadTrafficRoute["congestion"]) {
   if (levels.includes("moderate")) return "#ffd60a";
   if (levels.includes("low")) return "#30d158";
   return "#ff453a";
-}
-
-function journeyStopFeatures(segments: JourneySegment[], selectedId: string | null) {
-  const features = segments.flatMap((segment) =>
-    [segment.origin, segment.destination].map((place) => ({
-      type: "Feature" as const,
-      properties: {
-        segmentId: segment.id,
-        code: place.code,
-        color: journeyColor[segment.mode],
-        selected: segment.id === selectedId,
-      },
-      geometry: { type: "Point" as const, coordinates: place.coordinate },
-    })),
-  );
-  return { type: "FeatureCollection" as const, features };
 }
 
 function greatCircleCoordinates(a: [number, number], b: [number, number], steps = 48) {

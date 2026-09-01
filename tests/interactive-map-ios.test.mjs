@@ -56,7 +56,7 @@ test("keeps mobile sheets draggable, keyboard accessible and haptic", async () =
     read("../package.json"),
   ]);
 
-  assert.match(page, /\[0\.36, 0\.58, 0\.84\]/);
+  assert.match(page, /\[0\.33, 0\.5, 0\.82\]/);
   assert.match(mobile, /\[0\.32, 0\.58, 0\.84\]/);
   assert.match(hook, /setPointerCapture/);
   assert.match(hook, /ArrowDown/);

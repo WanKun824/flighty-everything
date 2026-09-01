@@ -359,3 +359,285 @@
   .mobile-detail-body,
   .mobile-detail-mini-state { padding-inline: 15px; }
 }
+
+/* Final My Flights calibration: one selected route, one clean status row, one geometry system. */
+.ios-status {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.ios-status time,
+.ios-status .status-signals { position: relative; z-index: 2; }
+.dynamic-island {
+  position: absolute;
+  top: 11px;
+  left: 50%;
+  width: 126px;
+  margin: 0;
+  transform: translateX(-50%);
+}
+.dynamic-island.has-activity { width: min(196px,50vw); }
+
+.flight-panel.journey-panel {
+  left: 10px;
+  right: 10px;
+  bottom: 8px;
+  padding: 26px 25px 0;
+  border: 1px solid var(--journey-line);
+  border-radius: 34px;
+}
+.flight-panel.journey-panel .panel-titlebar {
+  min-height: 51px;
+  align-items: center;
+}
+.flight-panel.journey-panel .panel-titlebar::before { display: none; }
+.flight-panel.journey-panel .panel-titlebar h1 {
+  max-width: 55vw;
+  font-size: clamp(34px,9.5vw,42px);
+  font-weight: 730;
+  letter-spacing: -.055em;
+}
+.flight-panel.journey-panel > .sheet-drag-handle span { opacity: 0; }
+.flight-panel.journey-panel .round-button { width: 45px; height: 45px; }
+
+.flighty-journey-list.mobile-journey-target {
+  inset: 0;
+  padding: 82px 25px 88px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+.flighty-journey-list.mobile-journey-target.is-compact {
+  padding-top: 82px;
+  padding-bottom: 82px;
+  overflow: hidden;
+}
+.flighty-journey-list .mobile-segment-list {
+  margin: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  display: grid;
+  gap: 0;
+}
+.flighty-journey-list .mobile-segment-card {
+  position: relative;
+  min-height: 119px;
+  padding: 0;
+  overflow: hidden;
+  color: var(--journey-text);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  display: block;
+}
+.flighty-journey-list .mobile-segment-card + .mobile-segment-card {
+  border-top: 1px solid var(--journey-line);
+}
+.flighty-journey-list .mobile-segment-card.selected {
+  background: transparent;
+  box-shadow: none;
+}
+.flighty-journey-list .mobile-segment-select,
+.flighty-journey-list.is-compact .mobile-segment-select {
+  width: 100%;
+  min-height: 119px;
+  padding: 15px 27px 15px 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  display: grid;
+  grid-template-columns: 68px minmax(0,1fr);
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+}
+.mobile-segment-state {
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  color: var(--journey-muted);
+}
+.mobile-segment-state > span {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--journey-muted);
+  background: color-mix(in srgb,var(--journey-muted) 15%,transparent);
+  display: grid;
+  place-items: center;
+}
+.mobile-segment-state.active > span {
+  color: #f5f5f7;
+  background: color-mix(in srgb,var(--mode-color) 30%,rgba(68,68,76,.86));
+}
+.mobile-segment-state small {
+  color: var(--journey-muted);
+  font-size: 7px;
+  font-weight: 660;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+.flighty-journey-list .mobile-segment-main {
+  min-width: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.flighty-journey-list .mobile-segment-meta {
+  min-width: 0;
+  min-height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.flighty-journey-list .mobile-operator-code {
+  width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  color: #dcecff;
+  border-radius: 5px;
+  background: color-mix(in srgb,var(--mode-color) 56%,#173963);
+  display: grid;
+  place-items: center;
+  font-size: 6.5px;
+  font-weight: 800;
+  font-style: normal;
+}
+.flighty-journey-list .mobile-segment-meta b {
+  max-width: 85px;
+  color: var(--journey-muted);
+  font-size: 8.5px;
+  font-weight: 650;
+}
+.flighty-journey-list .mobile-segment-meta i {
+  margin-left: auto;
+  overflow: hidden;
+  color: var(--journey-muted);
+  font-size: 8px;
+  font-style: normal;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.flighty-journey-list .mobile-segment-meta i.active { color: #58d77e; }
+.flighty-journey-list .mobile-segment-title {
+  margin-top: 5px;
+  overflow: hidden;
+  color: var(--journey-text);
+  font-size: 15px;
+  font-weight: 720;
+  letter-spacing: -.02em;
+  line-height: 1.14;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.flighty-journey-list .mobile-segment-route-times {
+  min-width: 0;
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--journey-muted);
+  font-size: 9px;
+}
+.flighty-journey-list .mobile-segment-route-times span {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+.flighty-journey-list .mobile-segment-route-times > span > svg {
+  width: 16px;
+  height: 16px;
+  padding: 3px;
+  color: #fff;
+  border-radius: 50%;
+  background: #18a05a;
+}
+.flighty-journey-list .mobile-segment-route-times b {
+  color: #20b968;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.flighty-journey-list .mobile-segment-weather {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0 0 0 auto;
+  color: var(--journey-muted);
+}
+.flighty-journey-list .mobile-segment-detail-button {
+  right: 0;
+  top: 50%;
+  bottom: auto;
+  width: 26px;
+  height: 36px;
+  color: var(--journey-muted);
+  border-radius: 0;
+  background: transparent;
+  transform: translateY(-50%);
+}
+
+.flight-tabbar {
+  left: 28px;
+  right: 28px;
+  bottom: max(20px,env(safe-area-inset-bottom));
+  height: 58px;
+  grid-template-columns: minmax(0,1fr) 58px;
+  gap: 8px;
+}
+.flight-tabbar nav { border-radius: 30px; }
+.flight-tabbar nav button { border-radius: 25px; }
+.search-orb { width: 58px; height: 58px; }
+
+.map-follow-button {
+  position: absolute;
+  z-index: 12;
+  top: 171px;
+  right: 18px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 50%;
+  background: rgba(43,43,48,.86);
+  box-shadow: 0 5px 18px rgba(0,0,0,.26);
+  display: grid;
+  place-items: center;
+  -webkit-backdrop-filter: blur(24px) saturate(1.3);
+  backdrop-filter: blur(24px) saturate(1.3);
+}
+.map-follow-button.active { color: var(--blue); background: rgba(10,132,255,.18); }
+.map-follow-button:disabled { opacity: .38; }
+.weather-legend { display: none; }
+.flighty-page[data-theme="light"] .map-follow-button {
+  color: #1c2026;
+  border-color: rgba(33,38,46,.09);
+  background: rgba(247,249,252,.88);
+  box-shadow: 0 5px 18px rgba(44,58,76,.17),inset 0 1px rgba(255,255,255,.8);
+}
+.flighty-page[data-theme="light"] .map-follow-button.active { color: #007aff; background: rgba(219,237,255,.92); }
+
+/* A detail sheet replaces the overview sheet; never leave two independent cards stacked. */
+.flighty-page.overlay-journey-detail .journey-panel {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (max-width: 370px) {
+  .flight-panel.journey-panel { left: 7px; right: 7px; padding-inline: 20px; }
+  .flighty-journey-list.mobile-journey-target,
+  .flighty-journey-list.mobile-journey-target.is-compact { padding-inline: 20px; }
+  .flighty-journey-list .mobile-segment-select,
+  .flighty-journey-list.is-compact .mobile-segment-select { grid-template-columns: 59px minmax(0,1fr); gap: 9px; }
+  .flight-tabbar { left: 22px; right: 22px; }
+}

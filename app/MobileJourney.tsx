@@ -149,6 +149,107 @@ export function MobileJourneysPanel({
   );
 }
 
+export function FlightyJourneyPanel({
+  segments,
+  selectedSegmentId,
+  onSelect,
+  onOpenDetails,
+  compact = false,
+}: {
+  tripName: string;
+  segments: JourneySegment[];
+  selectedSegmentId: string | null;
+  onSelect: (segment: JourneySegment) => void;
+  onOpenDetails: (segment: JourneySegment) => void;
+  onToggleOverview: () => void;
+  overviewExpanded: boolean;
+  onAdd: () => void;
+  onEditNames: () => void;
+  onSaveToPassport: () => void;
+  savedToPassport: boolean;
+  compact?: boolean;
+}) {
+  const selected = segments.find((segment) => segment.id === selectedSegmentId) ?? segments[0];
+  const visibleSegments = compact ? (selected ? [selected] : []) : segments;
+  const now = useNow();
+
+  return (
+    <div className={`panel-scroll mobile-journey-target flighty-journey-list ${compact ? "is-compact" : ""}`}>
+      <div className="mobile-segment-list">
+        {visibleSegments.map((segment) => {
+          const isSelected = segment.id === selectedSegmentId;
+          const countdown = segmentCountdown(segment, now);
+          const status = segmentStatus(segment, now);
+          return (
+            <article
+              key={segment.id}
+              className={`mobile-segment-card ${status.tone} ${isSelected ? "selected" : ""}`}
+              style={{ "--mode-color": MODE_META[segment.mode].color } as CSSProperties}
+            >
+              <button
+                className="mobile-segment-select"
+                onClick={() => isSelected ? onOpenDetails(segment) : onSelect(segment)}
+                aria-pressed={isSelected}
+                aria-label={isSelected ? `再次点击打开 ${segment.title} 详情` : `在地图上定位 ${segment.title}`}
+              >
+                <span className={`mobile-segment-state ${status.tone}`}>
+                  <span aria-hidden="true"><JourneyModeIcon mode={segment.mode} /></span>
+                  <small>{compactStatusLabel(status.tone, segment.mode)}</small>
+                </span>
+                <span className="mobile-segment-main">
+                  <span className="mobile-segment-meta">
+                    <em className="mobile-operator-code">{operatorCode(segment)}</em>
+                    <b>{segment.service}</b>
+                    <i className={status.tone}>{scheduleCaption(status.tone, countdown)}</i>
+                  </span>
+                  <strong className="mobile-segment-title">{segment.title}</strong>
+                  <span className="mobile-segment-route-times">
+                    <span><SFArrowUpRight size="xs" />{segment.origin.code} <b>{segment.departure}</b></span>
+                    <span><SFArrowDownRight size="xs" />{segment.destination.code} <b>{segment.arrival}</b></span>
+                    <MobileSegmentWeather segment={segment} active={isSelected} />
+                  </span>
+                </span>
+              </button>
+              <button
+                className="mobile-segment-detail-button"
+                aria-label={`打开 ${segment.title} 详情`}
+                onClick={() => onOpenDetails(segment)}
+              >
+                <SFChevronRight size="xs" />
+              </button>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function compactStatusLabel(tone: string, mode: JourneyMode) {
+  if (tone === "complete") return "ARRIVED";
+  if (tone === "active") return mode === "flight" ? "IN AIR" : "IN TRANSIT";
+  return "UPCOMING";
+}
+
+function operatorCode(segment: JourneySegment) {
+  const code = segment.service.match(/[A-Za-z]{1,3}/)?.[0];
+  return code?.toUpperCase() || MODE_META[segment.mode].label.slice(0, 2);
+}
+
+function scheduleCaption(tone: string, countdown: { value: string; unit: string }) {
+  if (tone === "complete") return "Arrived";
+  if (countdown.unit === "计划") return "Scheduled";
+  const minuteMatch = countdown.unit.match(/(\d+)\s*分钟/);
+  const duration = countdown.unit.includes("天")
+    ? `${countdown.value}d`
+    : countdown.value.endsWith("h")
+      ? `${countdown.value}${minuteMatch ? ` ${minuteMatch[1]}m` : ""}`
+      : countdown.unit.includes("分钟")
+        ? `${countdown.value}m`
+        : countdown.value;
+  return tone === "active" ? `Landing in ${duration}` : `Departs in ${duration}`;
+}
+
 export function MobileJourneysPanelLegacy({
   tripName,
   segments,
