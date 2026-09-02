@@ -5,12 +5,14 @@ import test from "node:test";
 const read = (path) => readFile(new URL(path, import.meta.url), "utf8");
 
 test("wires real 3D vehicles, card-only weather and five production map modes", async () => {
-  const [globe, vehicle, weather, cards, journeyPage, css] = await Promise.all([
+  const [globe, vehicle, weather, cards, journeyPage, mobilePage, storage, css] = await Promise.all([
     read("../app/FlightGlobe.tsx"),
     read("../app/Vehicle3D.tsx"),
     read("../app/journeyWeather.tsx"),
     read("../app/JourneyCommunityUI.tsx"),
     read("../app/JourneyExperience27.tsx"),
+    read("../app/FlightyApp.tsx"),
+    read("../app/flightyStorage.ts"),
     read("../app/globals.css"),
   ]);
 
@@ -33,6 +35,11 @@ test("wires real 3D vehicles, card-only weather and five production map modes", 
     assert.match(vehicle, new RegExp(model.replace(".", "\\.")));
   assert.match(css, /\.journey-vehicle-3d-marker/);
   assert.match(journeyPage, /BASEMAP_OPTIONS/);
+  assert.match(mobilePage, /weather-map-layer-options/);
+  assert.match(mobilePage, /basemap=\{state\.basemap\}/);
+  assert.match(storage, /basemap: "satellite"/);
+  assert.match(storage, /setBasemap/);
+  assert.match(globe, /preserveCameraAfterStyleChangeRef/);
   assert.match(journeyPage, /journey-map-menu-popover/);
   assert.doesNotMatch(globe, /JourneyWeatherIcon/);
   assert.doesNotMatch(globe, /journey-weather-marker/);

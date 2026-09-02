@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AIRPORTS, airportByCode, airportStatusLevel, type Region } from "./flightyData";
-import type { WeatherMode } from "./flightyStorage";
+import type { MapLayerMode, WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
 import { fetchRoadTraffic, type RoadTrafficRoute } from "./roadTraffic";
@@ -12,7 +12,7 @@ import Vehicle3D from "./Vehicle3D";
 import { vehicleStageMotion } from "./vehicleMotion";
 import { createVehicleFollower } from "./vehicleFollow";
 
-export type BasemapMode = "standard" | "satellite" | "terrain" | "navigation" | "traffic";
+export type BasemapMode = MapLayerMode;
 
 type Props = {
   airportsVisible: boolean;
@@ -92,6 +92,7 @@ export default function FlightGlobe({
   const basemapRef = useRef<BasemapMode>("satellite");
   const basemapThemeRef = useRef<"light" | "dark">(theme);
   const followVehicleRef = useRef(followVehicle);
+  const preserveCameraAfterStyleChangeRef = useRef(false);
   const liveDataRef = useRef<LiveData>({
     airportsVisible,
     airportRegion,
@@ -416,7 +417,7 @@ export default function FlightGlobe({
       marker.remove();
       setRiderPortal((current) => current?.host === modelHost ? null : current);
     };
-  }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, styleRevision, vehicleScale, animationSpeed, motionEnabled]);
+  }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, vehicleScale, animationSpeed, motionEnabled]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -435,6 +436,10 @@ export default function FlightGlobe({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded || !selectedJourneySegmentId || followVehicleRef.current) return;
+    if (preserveCameraAfterStyleChangeRef.current) {
+      preserveCameraAfterStyleChangeRef.current = false;
+      return;
+    }
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
@@ -458,6 +463,10 @@ export default function FlightGlobe({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded) return;
+    if (!selectedJourneySegmentId && preserveCameraAfterStyleChangeRef.current) {
+      preserveCameraAfterStyleChangeRef.current = false;
+      return;
+    }
     if (selectedJourneySegmentId) return;
     map.flyTo({
       center: [126, 27],
@@ -552,16 +561,15 @@ export default function FlightGlobe({
     const nextUrl = styleUrl(next);
     basemapRef.current = next;
     if (!map) return;
+    preserveCameraAfterStyleChangeRef.current = true;
     if (previousUrl === nextUrl) {
       configureBasemap(map, next, basemapThemeRef.current);
       if (next === "terrain") installTerrain(map);
       else removeTerrain(map);
       if (next === "traffic") installTrafficLayers(map);
       else removeTrafficLayers(map);
-      setStyleRevision((value) => value + 1);
       return;
     }
-    setLoaded(false);
     map.setStyle(nextUrl);
   }, []);
 

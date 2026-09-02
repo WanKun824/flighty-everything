@@ -277,7 +277,8 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .airport-performance b { font-size: 17px; }
 .airport-performance small { color: #85858e; font-size: 8px; }
 
-.weather-sheet { height: 66%; }
+.weather-sheet { height: 74%; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.weather-sheet::-webkit-scrollbar { display: none; }
 .weather-sheet .sheet-header p { max-width: 300px; }
 .pro-weather { position: relative; width: 100%; min-height: 63px; margin: 17px 0 8px; padding: 10px 34px 10px 10px; border: 1px solid #b758df; border-radius: 13px; color: #c259eb; background: rgba(165,55,207,.05); display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 9px; text-align: left; }
 .pro-weather span { padding: 3px 6px; border-radius: 4px; background: rgba(183,54,236,.15); font-size: 9px; }
@@ -291,6 +292,23 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .weather-option small { margin-top: 2px; color: #8d8d96; font-size: 11px; }
 .weather-option > i { width: 28px; height: 28px; border-radius: 50%; background: #3b3b42; display: grid; place-items: center; font-style: normal; }
 .weather-option > i.selected { color: #0a84ff; background: transparent; }
+.weather-map-layers { margin-top: 17px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+.weather-map-layers > header { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.weather-map-layers > header span { min-width: 0; display: flex; flex-direction: column; }
+.weather-map-layers > header strong { font-size: 15px; }
+.weather-map-layers > header small { margin-top: 2px; color: #8d8d96; font-size: 10px; }
+.weather-map-layers > header em { padding: 3px 8px; color: #0a84ff; border-radius: 10px; background: rgba(10,132,255,.12); font-size: 9px; font-style: normal; font-weight: 700; white-space: nowrap; }
+.weather-map-layer-options { margin-top: 10px; padding: 1px 1px 3px; display: grid; grid-template-columns: repeat(5,minmax(62px,1fr)); gap: 7px; }
+.weather-map-layer { position: relative; min-width: 0; min-height: 76px; padding: 6px 4px 7px; overflow: hidden; color: #f7f8fb; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; background: #24252b; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; }
+.weather-map-layer > span { width: 100%; height: 43px; overflow: hidden; border-radius: 9px; display: grid; place-items: center; text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+.weather-map-layer.standard > span { background: linear-gradient(145deg,#c6e8c8 0 35%,#a6d7f4 36% 58%,#f0e2bd 59%); }
+.weather-map-layer.satellite > span { background: radial-gradient(circle at 32% 42%,#678757 0 15%,#263d2d 16% 29%,transparent 30%),radial-gradient(circle at 62% 47%,#7c6845 0 12%,#37452f 13% 27%,transparent 28%),#10253c; }
+.weather-map-layer.terrain > span { background: repeating-radial-gradient(ellipse at 60% 58%,transparent 0 6px,rgba(78,63,35,.3) 7px 8px),linear-gradient(145deg,#d8e9b6,#7ba267); }
+.weather-map-layer.navigation > span { background: linear-gradient(135deg,#dce7f0 0 46%,#fff 47% 56%,#bcd3e7 57%); }
+.weather-map-layer.traffic > span { background: linear-gradient(25deg,transparent 0 35%,#30d158 36% 42%,#ffd60a 43% 50%,#ff453a 51% 57%,transparent 58%),#333942; }
+.weather-map-layer strong { max-width: 100%; overflow: hidden; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.weather-map-layer > svg { position: absolute; top: 4px; right: 4px; color: #0a84ff; border-radius: 50%; background: #fff; }
+.weather-map-layer.selected { border-color: #0a84ff; box-shadow: 0 0 0 2px rgba(10,132,255,.24),0 8px 18px rgba(0,0,0,.18); transform: translateY(-1px); }
 .weather-sheet > a { display: block; margin-top: 12px; color: #777780; font-size: 9px; text-align: center; text-decoration: none; }
 .weather-legend { position: absolute; z-index: 7; top: 63px; left: 50%; min-height: 26px; padding: 5px 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(36,36,41,.88); backdrop-filter: blur(18px); font-size: 9px; white-space: nowrap; }
 .weather-legend i { width: 7px; height: 7px; border-radius: 50%; }
@@ -698,6 +716,12 @@ button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.
 .flighty-page[data-theme="light"] .map-sheet,
 .flighty-page[data-theme="light"] .stats-sheet,
 .flighty-page[data-theme="light"] .journey-composer.mobile { color: #17191f; background: rgba(247,248,251,.97); box-shadow: 0 -18px 55px rgba(37,51,69,.2); }
+.flighty-page[data-theme="light"] .weather-option { color: #17191f; border: 1px solid rgba(34,41,52,.07); background: rgba(255,255,255,.82); box-shadow: 0 6px 18px rgba(45,58,76,.07); }
+.flighty-page[data-theme="light"] .weather-option > i { background: rgba(118,118,128,.12); }
+.flighty-page[data-theme="light"] .weather-map-layers { border-top-color: rgba(34,41,52,.1); }
+.flighty-page[data-theme="light"] .weather-map-layer { color: #17191f; border-color: rgba(34,41,52,.09); background: rgba(255,255,255,.84); }
+.flighty-page[data-theme="light"] .weather-map-layer > span { color: #fff; }
+.flighty-page[data-theme="light"] .weather-map-layer.selected { border-color: #007aff; box-shadow: 0 0 0 2px rgba(0,122,255,.17),0 7px 17px rgba(45,58,76,.1); }
 
 /* Passport target: Flighty-inspired hierarchy adapted to the app's multi-modal journeys. */
 .flight-panel.passport-panel { top: auto; height: var(--sheet-height,47%); min-height: 205px; padding: 27px 16px 14px; color: #111318; border-color: rgba(32,38,48,.08); background: #fff; box-shadow: 0 -10px 42px rgba(20,27,38,.12); }

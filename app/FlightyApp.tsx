@@ -41,7 +41,7 @@ import SFStarFill from "sf-symbols-lib/monochrome/SFStarFill";
 import SFTrash from "sf-symbols-lib/monochrome/SFTrash";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import SFWifi from "sf-symbols-lib/monochrome/SFWifi";
-import FlightGlobe from "./FlightGlobe";
+import FlightGlobe, { BASEMAP_OPTIONS, type BasemapMode } from "./FlightGlobe";
 import {
   appearanceLabel,
   useAppearance,
@@ -326,6 +326,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           onAirportSelect={openAirport}
           onWeatherError={(message) => notify(`${message}，已切换为卫星地图。`)}
           theme={appearance.resolved}
+          basemap={state.basemap}
           followVehicle={followVehicle}
           onFollowInterrupted={() => {
             setFollowVehicle(false);
@@ -614,10 +615,12 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         {overlay === "weather" && (
           <WeatherSheet
             value={state.weatherMode}
+            basemap={state.basemap}
             onChange={(value) => {
               store.setWeatherMode(value);
               setResetToken((token) => token + 1);
             }}
+            onBasemapChange={store.setBasemap}
             onClose={() => setOverlay(null)}
           />
         )}
@@ -1637,11 +1640,15 @@ function AirportDetailSheet({
 
 function WeatherSheet({
   value,
+  basemap,
   onChange,
+  onBasemapChange,
   onClose,
 }: {
   value: WeatherMode;
+  basemap: BasemapMode;
   onChange: (mode: WeatherMode) => void;
+  onBasemapChange: (mode: BasemapMode) => void;
   onClose: () => void;
 }) {
   return (
@@ -1696,6 +1703,31 @@ function WeatherSheet({
           </i>
         </button>
       ))}
+      <section className="weather-map-layers" aria-labelledby="weather-map-layers-title">
+        <header>
+          <span>
+            <strong id="weather-map-layers-title">地球图层</strong>
+            <small>切换底图，不改变当前缩放与视角</small>
+          </span>
+          <em>{BASEMAP_OPTIONS.find((item) => item.id === basemap)?.label}</em>
+        </header>
+        <div className="weather-map-layer-options" role="radiogroup" aria-label="选择地球图层">
+          {BASEMAP_OPTIONS.map((item) => (
+            <button
+              className={`weather-map-layer ${item.id} ${basemap === item.id ? "selected" : ""}`}
+              key={item.id}
+              role="radio"
+              aria-checked={basemap === item.id}
+              aria-label={`${item.label}图层`}
+              onClick={() => onBasemapChange(item.id)}
+            >
+              <span><SFMapFill size="md" /></span>
+              <strong>{item.label}</strong>
+              {basemap === item.id && <SFCheckmarkCircleFill size="xs" />}
+            </button>
+          ))}
+        </div>
+      </section>
       <a href="https://www.rainviewer.com/" target="_blank" rel="noreferrer">
         Live radar data by RainViewer
       </a>

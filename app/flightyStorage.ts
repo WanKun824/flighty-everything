@@ -5,6 +5,7 @@ import type { Flight, Friend } from "./flightyData";
 
 export type Profile = { name: string; color: string; initials: string };
 export type WeatherMode = "none" | "global" | "us";
+export type MapLayerMode = "standard" | "satellite" | "terrain" | "navigation" | "traffic";
 
 export type FlightyState = {
   profile: Profile | null;
@@ -12,6 +13,7 @@ export type FlightyState = {
   friends: Friend[];
   favorites: string[];
   weatherMode: WeatherMode;
+  basemap: MapLayerMode;
 };
 
 export const EMPTY_FLIGHTY_STATE: FlightyState = {
@@ -20,9 +22,11 @@ export const EMPTY_FLIGHTY_STATE: FlightyState = {
   friends: [],
   favorites: [],
   weatherMode: "none",
+  basemap: "satellite",
 };
 
 const STORAGE_KEY = "flighty-everything:state:v1";
+const MAP_LAYERS = new Set<MapLayerMode>(["standard", "satellite", "terrain", "navigation", "traffic"]);
 
 function dedupeFlights(flights: Flight[]) {
   const seen = new Set<string>();
@@ -44,7 +48,14 @@ export function useFlightyStore() {
         const raw = window.localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const stored = JSON.parse(raw) as Partial<FlightyState>;
-          setState({ ...EMPTY_FLIGHTY_STATE, ...stored, flights: dedupeFlights(stored.flights ?? []) });
+          setState({
+            ...EMPTY_FLIGHTY_STATE,
+            ...stored,
+            flights: dedupeFlights(stored.flights ?? []),
+            basemap: MAP_LAYERS.has(stored.basemap as MapLayerMode)
+              ? stored.basemap as MapLayerMode
+              : "satellite",
+          });
         }
       } catch { /* A private or full browser store falls back to in-memory state. */ }
       setHydrated(true);
@@ -67,7 +78,8 @@ export function useFlightyStore() {
   const removeFriend = useCallback((id: string) => setState((current) => ({ ...current, friends: current.friends.filter((friend) => friend.id !== id) })), []);
   const toggleFavorite = useCallback((code: string) => setState((current) => ({ ...current, favorites: current.favorites.includes(code) ? current.favorites.filter((item) => item !== code) : [...current.favorites, code] })), []);
   const setWeatherMode = useCallback((weatherMode: WeatherMode) => setState((current) => ({ ...current, weatherMode })), []);
+  const setBasemap = useCallback((basemap: MapLayerMode) => setState((current) => ({ ...current, basemap })), []);
   const reset = useCallback(() => setState(EMPTY_FLIGHTY_STATE), []);
 
-  return { state, hydrated, addFlight, removeFlight, saveProfile, addFriend, removeFriend, toggleFavorite, setWeatherMode, reset };
+  return { state, hydrated, addFlight, removeFlight, saveProfile, addFriend, removeFriend, toggleFavorite, setWeatherMode, setBasemap, reset };
 }
