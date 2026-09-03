@@ -13,7 +13,7 @@ export default defineConfig({
     closeBundle() {
       writeFileSync(resolve("native-shell/build-info.json"), JSON.stringify({
         sourceCommit: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
-        version: "0.3.1",
+        version: "0.3.2",
         buildNumber: process.env.GITHUB_RUN_NUMBER ?? "local",
         builtAt: new Date().toISOString(),
       }, null, 2));

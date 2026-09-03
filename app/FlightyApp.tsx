@@ -76,6 +76,9 @@ import { loadAirportCatalog } from "./airportCatalog";
 import { lookupVerifiedFlight } from "./transportData";
 import { useJourneyStore, type JourneyTrip } from "./journeyStorage";
 import { useSheetDetents } from "./useSheetDetents";
+import { useMobileViewport } from "./useMobileViewport";
+import { useNativeChrome } from "./useNativeChrome";
+import { useMobileNavigation } from "./useMobileNavigation";
 import {
   useFlightyStore,
   type Profile,
@@ -158,7 +161,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const mainSheet = useSheetDetents({
     detents: [0.33, 0.5, 0.82],
     initial: 0.33,
+    minimumHeight: 338,
   });
+  useMobileViewport();
   const calendarRef = useRef<HTMLInputElement>(null);
   const stats = useMemo(() => statsForFlights(state.flights), [state.flights]);
   const selectedJourneyId = journeyStore.state.selectedSegmentId || null;
@@ -323,6 +328,15 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const profileColor = state.profile?.color ?? "#ec6f9a";
   const mapOverlayOpen = overlay === "airports" || overlay === "airport-detail";
   const airportsOnMap = mapOverlayOpen || overlay === "add-journey";
+  useNativeChrome(`${activeTab}:${overlay}:${followVehicle}:${Boolean(selectedJourneyId)}:${mainSheet.fraction > .5}:${appearance.resolved}`, Boolean(overlay));
+  useMobileNavigation(overlay, () => {
+    if (overlay === "add-journey") composerCloseRequestRef.current?.();
+    else if (overlay === "add-flight") setOverlay("add-journey");
+    else if (overlay === "airport-detail") { setSelectedAirport(null); setOverlay("airports"); }
+    else if (overlay === "profile-avatar") setOverlay("profile-name");
+    else if (overlay === "profile-name") setOverlay("friends-intro");
+    else setOverlay(null);
+  });
 
   return (
     <main className={`flighty-page ${!overlay && mainSheet.fraction > 0.5 ? "map-controls-compact" : ""} ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
@@ -413,7 +427,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         )}
 
         <section
-          className={`flight-panel has-sheet-handle ${activeTab === "flights" ? "journey-panel" : ""} ${activeTab === "passport" ? "passport-panel" : ""} ${mainSheet.dragging ? "is-dragging" : ""}`}
+          className={`flight-panel primary-panel has-sheet-handle ${activeTab === "flights" ? "journey-panel" : ""} ${activeTab === "passport" ? "passport-panel" : ""} ${mainSheet.dragging ? "is-dragging" : ""}`}
+          data-tab={activeTab}
           style={{ "--sheet-height": `${mainSheet.fraction * 100}%` } as CSSProperties}
         >
           <button
@@ -423,7 +438,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           >
             <span />
           </button>
-          <header className="panel-titlebar">
+          <header className="panel-titlebar" {...mainSheet.surfaceProps}>
             <div className="panel-title-copy">
               <h1>{title}</h1>
               {activeTab === "flights" && <button aria-label="编辑我的行程名称" onClick={() => openJourneyNames()}><SFPencil size="xs" /></button>}

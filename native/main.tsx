@@ -1,4 +1,4 @@
-import { StrictMode, lazy, Suspense, useState } from "react";
+import { StrictMode, lazy, Suspense, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import type { CommunityJourney } from "../app/communityData";
 import "../app/globals.css";
@@ -27,6 +27,21 @@ function NativeBootScreen() {
 
 function NativeApp() {
   const [screen, setScreen] = useState<NativeScreen>({ name: "home" });
+  useEffect(() => {
+    if (screen.name === "home") return;
+    const handler = (window as Window & { webkit?: { messageHandlers?: { flightyChrome?: { postMessage: (payload: unknown) => void } } } }).webkit?.messageHandlers?.flightyChrome;
+    handler?.postMessage({ bars: [], backEnabled: true });
+    const back = (event: Event) => {
+      const { phase, distance = 0 } = (event as CustomEvent<{ phase: string; distance: number }>).detail;
+      const page = document.querySelector<HTMLElement>(".community-detail, .journey-experience");
+      if (page) {
+        page.style.translate = phase === "change" ? `${distance}px 0` : "0 0";
+      }
+      if (phase === "end") setScreen({ name: screen.name === "detail" ? "community" : "home" });
+    };
+    window.addEventListener("flighty-native-back", back);
+    return () => { window.removeEventListener("flighty-native-back", back); handler?.postMessage({ bars: [], backEnabled: false }); };
+  }, [screen.name]);
   return (
     <Suspense fallback={<NativeBootScreen />}>
       {screen.name === "home" && (

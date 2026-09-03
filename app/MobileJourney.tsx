@@ -646,7 +646,7 @@ export function MobileJourneyDetail({
         <span />
       </button>
 
-      <header className="mobile-detail-summary">
+      <header className="mobile-detail-summary" {...detailSheet.surfaceProps}>
         <span className="mobile-operator-mark" style={{ color: meta.color }} aria-hidden="true">
           <JourneyModeIcon mode={segment.mode} />
         </span>

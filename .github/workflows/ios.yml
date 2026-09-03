@@ -103,7 +103,7 @@ jobs:
           retention-days: 30
 
       - name: Verify Simulator full-screen layout in light and dark mode
-        timeout-minutes: 12
+        timeout-minutes: 22
         shell: bash
         run: |
           set -euo pipefail
@@ -147,12 +147,29 @@ jobs:
             sleep 10
           done
           swift ios/qa/verifyScreenshot.swift build/ui-qa/iphone-dark.png dark
+          xcodebuild test \
+            -project ios/App/App.xcodeproj -scheme App -configuration Release \
+            -destination "platform=iOS Simulator,id=$QA_DEVICE" \
+            -parallel-testing-enabled NO \
+            -resultBundlePath build/MobileInteraction.xcresult \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          xcrun xcresulttool export attachments --path build/MobileInteraction.xcresult --output-path build/ui-qa/interactions
+          cp "$CONTAINER"/Documents/layout-*.json build/ui-qa/
       - name: Upload Simulator visual checks
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: flighty-ios-ui-qa
           path: build/ui-qa
+          retention-days: 30
+
+      - name: Upload native interaction test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: flighty-ios-gesture-tests
+          path: build/MobileInteraction.xcresult
           retention-days: 30
 
       - name: Build unsigned Apple Silicon device IPA

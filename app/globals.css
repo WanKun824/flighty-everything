@@ -14,8 +14,8 @@
 }
 
 * { box-sizing: border-box; }
-html, body { width: 100%; min-width: 320px; height: 100%; margin: 0; overflow: hidden; }
-body, button, input { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif; }
+html, body { width: 100%; min-width: 320px; height: 100%; margin: 0; overflow: hidden; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body, button, input, select, textarea { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Arial, sans-serif; }
 button, input { color: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, input:focus-visible { outline: 3px solid rgba(10,132,255,.55); outline-offset: 2px; }
