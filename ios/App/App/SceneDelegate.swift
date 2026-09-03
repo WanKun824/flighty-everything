@@ -120,6 +120,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
                   nativeShell: document.documentElement.hasAttribute('data-native-shell'),
                   nativeTheme: document.documentElement.dataset.nativeSystemTheme,
                   pageTheme: document.querySelector('.flighty-page').dataset.theme,
+                  panelBackground: getComputedStyle(document.querySelector('.journey-panel')).backgroundColor,
                   appearanceMode: document.documentElement.dataset.appearance,
                   mediaDark: matchMedia('(prefers-color-scheme: dark)').matches,
                   sceneStyle: \(self.view.window?.windowScene?.traitCollection.userInterfaceStyle.rawValue ?? -1),

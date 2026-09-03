@@ -33,6 +33,7 @@ test("IPA packaging pins source, embeds provenance and validates a running Simul
   assert.match(workflow, /b.sourceCommit!==process.env.GITHUB_SHA/);
   assert.match(workflow, /Verify Simulator full-screen layout in light and dark mode/);
   assert.match(workflow, /systemChromeDuplicates/);
+  assert.match(workflow, /verifyScreenshot.swift build\/ui-qa\/iphone-dark.png dark/);
 });
 
 test("native system appearance changes reach the React theme without overriding user choice", async () => {

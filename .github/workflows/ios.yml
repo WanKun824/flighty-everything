@@ -103,7 +103,7 @@ jobs:
           retention-days: 30
 
       - name: Verify Simulator full-screen layout in light and dark mode
-        timeout-minutes: 8
+        timeout-minutes: 12
         shell: bash
         run: |
           set -euo pipefail
@@ -125,7 +125,12 @@ jobs:
           cp "$CONTAINER/Documents/layout-audit.json" build/ui-qa/layout-audit.json
           python3 -c 'import json; a=json.load(open("build/ui-qa/layout-audit.json")); v=a["viewport"]; d=a["device"]; assert abs(d["x"])<1 and abs(d["y"])<1; assert abs(d["height"]-v["height"])<1 and abs(d["width"]-v["width"])<1; assert a["nav"]["bottom"]<=v["height"]-a["safeBottom"]+1; assert a["firstRowBottom"]<=a["nav"]["top"]; assert a["nativeShell"] and not a["systemChromeDuplicates"]; assert a["rowShadow"]=="none"; print(a)'
           sleep 12
-          xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-light.png
+          for attempt in $(seq 1 5); do
+            xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-light.png
+            swift ios/qa/verifyScreenshot.swift build/ui-qa/iphone-light.png light && break
+            sleep 10
+          done
+          swift ios/qa/verifyScreenshot.swift build/ui-qa/iphone-light.png light
           xcrun simctl ui "$QA_DEVICE" appearance dark
           for attempt in $(seq 1 20); do
             test -f "$CONTAINER/Documents/layout-dark.json" && break
@@ -136,7 +141,12 @@ jobs:
           cp "$CONTAINER/Documents/layout-dark.json" build/ui-qa/layout-dark.json
           python3 -c 'import json; a=json.load(open("build/ui-qa/layout-dark.json")); assert a["nativeTheme"]=="dark" and a["pageTheme"]=="dark"; print(a)'
           sleep 4
-          xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-dark.png
+          for attempt in $(seq 1 5); do
+            xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-dark.png
+            swift ios/qa/verifyScreenshot.swift build/ui-qa/iphone-dark.png dark && break
+            sleep 10
+          done
+          swift ios/qa/verifyScreenshot.swift build/ui-qa/iphone-dark.png dark
       - name: Upload Simulator visual checks
         if: always()
         uses: actions/upload-artifact@v7
