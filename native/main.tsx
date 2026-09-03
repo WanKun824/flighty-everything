@@ -3,6 +3,8 @@ import { createRoot } from "react-dom/client";
 import type { CommunityJourney } from "../app/communityData";
 import "../app/globals.css";
 import "../app/journey-theme.css";
+import "../app/journey-refinement.css";
+import "./transportBridge";
 
 const FlightyApp = lazy(() => import("../app/FlightyApp"));
 const JourneyExperience27 = lazy(() => import("../app/JourneyExperience27"));

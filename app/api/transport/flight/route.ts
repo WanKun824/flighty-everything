@@ -33,6 +33,10 @@ type AdsbLiveAircraft = {
 };
 
 export async function GET(request: Request) {
+  return lookupFlight(request);
+}
+
+export async function lookupFlight(request: Request, requestFetch: typeof fetch = fetch) {
   const url = new URL(request.url);
   const number = (url.searchParams.get("number") ?? "")
     .replace(/\s+/g, "")
@@ -48,7 +52,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const routeResponse = await fetch(
+    const routeResponse = await requestFetch(
       `https://api.adsbdb.com/v0/callsign/${encodeURIComponent(number)}`,
       { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(9_000) },
     );
@@ -76,7 +80,7 @@ export async function GET(request: Request) {
     const arrival = addMinutes(departure, durationMinutes);
     const callsign = route.callsign_icao || route.callsign_iata || route.callsign || number;
     const liveAircraft = date === new Date().toISOString().slice(0, 10)
-      ? await lookupLiveAircraft(callsign)
+      ? await lookupLiveAircraft(callsign, requestFetch)
       : null;
     const live = Boolean(liveAircraft && finite(liveAircraft.lat) && finite(liveAircraft.lon));
     const provider = route.airline?.name || route.airline?.iata || "已核验承运方";
@@ -173,9 +177,9 @@ export async function GET(request: Request) {
   }
 }
 
-async function lookupLiveAircraft(callsign: string) {
+async function lookupLiveAircraft(callsign: string, requestFetch: typeof fetch) {
   try {
-    const response = await fetch(
+    const response = await requestFetch(
       `https://api.adsb.lol/v2/callsign/${encodeURIComponent(callsign.trim())}`,
       { headers: { Accept: "application/json" }, signal: AbortSignal.timeout(7_000) },
     );

@@ -1,6 +1,19 @@
 import type { Flight } from "./flightyData";
 import type { JourneySegment } from "./journeyData";
 
+type TransportLookup = (kind: "flight" | "rail", params: URLSearchParams, signal?: AbortSignal) => Promise<Response>;
+let nativeTransportLookup: TransportLookup | null = null;
+
+/** The bundled client supplies a native HTTP adapter; web keeps its same-origin API. */
+export function configureNativeTransportLookup(lookup: TransportLookup) {
+  nativeTransportLookup = lookup;
+}
+
+function requestTransport(kind: "flight" | "rail", params: URLSearchParams, signal?: AbortSignal) {
+  if (nativeTransportLookup) return nativeTransportLookup(kind, params, signal);
+  return fetch(`/api/transport/${kind}?${params}`, { signal, headers: { Accept: "application/json" } });
+}
+
 export type VerifiedFlightResult = {
   flight: Flight;
   segment: JourneySegment;
@@ -33,10 +46,7 @@ export async function lookupVerifiedFlight(input: {
     date: input.date,
     departure: input.departure,
   });
-  const response = await fetch(`/api/transport/flight?${params}`, {
-    signal: input.signal,
-    headers: { Accept: "application/json" },
-  });
+  const response = await requestTransport("flight", params, input.signal);
   return readJson<VerifiedFlightResult>(response);
 }
 
@@ -53,10 +63,7 @@ export async function searchVerifiedRail(input: {
     toLat: String(input.to[1]),
     departAt: input.departAt,
   });
-  const response = await fetch(`/api/transport/rail?${params}`, {
-    signal: input.signal,
-    headers: { Accept: "application/json" },
-  });
+  const response = await requestTransport("rail", params, input.signal);
   return readJson<VerifiedRailResult>(response);
 }
 

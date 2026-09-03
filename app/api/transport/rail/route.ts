@@ -57,6 +57,10 @@ const RAIL_MODES = new Set([
 ]);
 
 export async function GET(request: Request) {
+  return lookupRail(request);
+}
+
+export async function lookupRail(request: Request, requestFetch: typeof fetch = fetch) {
   const requestUrl = new URL(request.url);
   const fromLat = numberParam(requestUrl, "fromLat", -90, 90);
   const fromLon = numberParam(requestUrl, "fromLon", -180, 180);
@@ -85,7 +89,7 @@ export async function GET(request: Request) {
   });
 
   try {
-    const response = await fetch(`https://api.transitous.org/api/v6/plan?${params}`, {
+    const response = await requestFetch(`https://api.transitous.org/api/v6/plan?${params}`, {
       headers: {
         Accept: "application/json",
         "User-Agent": "flighty-everything/0.3 (+https://transitous.org)",
