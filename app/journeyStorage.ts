@@ -159,7 +159,8 @@ function normalizeState(stored: Partial<JourneyState> | null): JourneyState {
         ? null
         : (trip.savedToPassportAt ?? trip.createdAt ?? new Date().toISOString()),
     }));
-    const trips = sourceTrips.flatMap(splitTrip);
+    // Trip membership is an explicit user choice; do not split it on reload.
+    const trips = sourceTrips;
     if (!trips.length) return INITIAL_JOURNEY_STATE;
     const active = trips.find((trip) =>
       trip.segments.some((segment) => segment.id === stored.selectedSegmentId),
@@ -263,6 +264,33 @@ export function useJourneyStore() {
         tripName: trip.name,
         segments: [],
         selectedSegmentId: "",
+      };
+    });
+  }, []);
+
+  const createTripWithSegments = useCallback((name: string, incoming: JourneySegment[]) => {
+    if (!incoming.length) return;
+    setState((current) => {
+      const index = current.trips.length;
+      const first = incoming[0];
+      const final = incoming.at(-1)!;
+      const segments = splitContinuousSegments(incoming).flat();
+      const trip: JourneyTrip = {
+        id: `trip-${Date.now()}`,
+        name: name.trim() || `${first.origin.city} → ${final.destination.city}`,
+        color: TRIP_COLORS[index % TRIP_COLORS.length],
+        motif: TRIP_MOTIFS[index % TRIP_MOTIFS.length],
+        segments,
+        createdAt: new Date().toISOString(),
+        savedToPassportAt: null,
+      };
+      return {
+        ...current,
+        trips: [...current.trips, trip],
+        activeTripId: trip.id,
+        tripName: trip.name,
+        segments,
+        selectedSegmentId: segments[0]?.id ?? "",
       };
     });
   }, []);
@@ -382,6 +410,24 @@ export function useJourneyStore() {
     });
   }, []);
 
+  const addSegmentsToActiveTrip = useCallback((incoming: JourneySegment[]) => {
+    if (!incoming.length) return;
+    setState((current) => {
+      const identities = new Set(current.segments.map(segmentIdentity));
+      const additions = incoming.filter((segment) => {
+        const identity = segmentIdentity(segment);
+        if (identities.has(identity)) return false;
+        identities.add(identity);
+        return true;
+      });
+      if (!additions.length) return current;
+      return activePatch(current, {
+        segments: [...current.segments, ...additions],
+        selectedSegmentId: additions[0].id,
+      });
+    });
+  }, []);
+
   const addSegment = useCallback((segment: JourneySegment) => addSegments([segment]), [addSegments]);
 
   const updateSegment = useCallback((segment: JourneySegment) => {
@@ -414,27 +460,6 @@ export function useJourneyStore() {
   const removeSegment = useCallback((id: string) => {
     setState((current) => {
       const segments = current.segments.filter((segment) => segment.id !== id);
-      const chains = splitContinuousSegments(segments);
-      if (chains.length > 1) {
-        const activeTrip = current.trips.find((trip) => trip.id === current.activeTripId);
-        const replacement = chains.map((chain, index) => ({
-          ...(activeTrip ?? primaryTrip),
-          id: index === 0 ? current.activeTripId : `${current.activeTripId}-continued-${Date.now()}-${index + 1}`,
-          name: index === 0 ? current.tripName : `${current.tripName} · ${index + 1}`,
-          segments: chain,
-          savedToPassportAt: index === 0 ? (activeTrip?.savedToPassportAt ?? null) : null,
-        }));
-        const trips = current.trips.flatMap((trip) => trip.id === current.activeTripId ? replacement : [trip]);
-        const next = replacement[0];
-        return {
-          ...current,
-          trips,
-          activeTripId: next.id,
-          tripName: next.name,
-          segments: next.segments,
-          selectedSegmentId: next.segments[0]?.id ?? "",
-        };
-      }
       return activePatch(current, {
         segments,
         selectedSegmentId: current.selectedSegmentId === id
@@ -467,6 +492,34 @@ export function useJourneyStore() {
     }));
   }, []);
 
+  const restartTrip = useCallback(() => {
+    setState((current) => activePatch(current, {
+      segments: current.segments.map((segment, index) => ({
+        ...segment,
+        status: index === 0 ? "active" : "upcoming",
+        progress: 0,
+      })),
+      selectedSegmentId: current.segments[0]?.id ?? "",
+    }));
+  }, []);
+
+  const advanceSegment = useCallback((id: string) => {
+    setState((current) => {
+      const index = current.segments.findIndex((segment) => segment.id === id);
+      if (index < 0) return current;
+      const next = current.segments[index + 1];
+      const segments = current.segments.map((segment, segmentIndex) => {
+        if (segmentIndex === index) return { ...segment, status: "complete" as const, progress: 1 };
+        if (next && segmentIndex === index + 1) return { ...segment, status: "active" as const, progress: 0 };
+        return segment;
+      });
+      return activePatch(current, {
+        segments,
+        selectedSegmentId: next?.id ?? id,
+      });
+    });
+  }, []);
+
   const reset = useCallback(() => setState(INITIAL_JOURNEY_STATE), []);
 
   return {
@@ -474,6 +527,7 @@ export function useJourneyStore() {
     hydrated,
     selectTrip,
     createTrip,
+    createTripWithSegments,
     deleteTrip,
     updateTripAppearance,
     selectSegment,
@@ -484,10 +538,13 @@ export function useJourneyStore() {
     saveCurrentTripToPassport,
     addSegment,
     addSegments,
+    addSegmentsToActiveTrip,
     updateSegment,
     removeSegment,
     restoreSegments,
     toggleComplete,
+    restartTrip,
+    advanceSegment,
     reset,
   };
 }

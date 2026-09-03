@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import SFCellularbars from "sf-symbols-lib/monochrome/SFCellularbars";
+import SFWifi from "sf-symbols-lib/monochrome/SFWifi";
+import SFBattery100percent from "sf-symbols-lib/monochrome/SFBattery100percent";
 import SFChevronRight from "sf-symbols-lib/monochrome/SFChevronRight";
 import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
 import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
@@ -10,6 +13,7 @@ import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import { JourneyModeIcon } from "./JourneyComposer";
 import { MODE_META, journeyStats, type JourneyMode } from "./journeyData";
 import type { JourneyTrip } from "./journeyStorage";
+import PassportWorldMap from "./PassportWorldMap";
 
 const formatDuration = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
@@ -143,6 +147,9 @@ export function JourneyPassportStatsTarget({
   onShare: () => void;
 }) {
   const [period, setPeriod] = useState<"all" | "2026">("all");
+  const [frequency, setFrequency] = useState<"weekday" | "month">("weekday");
+  const [clock, setClock] = useState(() => new Date());
+  useEffect(() => { const timer = window.setInterval(() => setClock(new Date()), 30_000); return () => window.clearInterval(timer); }, []);
   const savedTrips = trips.filter((trip) => Boolean(trip.savedToPassportAt));
   const visibleTrips = period === "all"
     ? savedTrips
@@ -150,8 +157,14 @@ export function JourneyPassportStatsTarget({
   const segments = visibleTrips.flatMap((trip) => trip.segments);
   const stats = journeyStats(segments);
   const weekdayCounts = weekDays.map((day) => segments.filter((segment) => segment.date.includes(`周${day}`)).length);
-  if (segments.length && weekdayCounts.every((count) => count === 0)) weekdayCounts[3] = segments.length;
-  const maxWeekday = Math.max(1, ...weekdayCounts);
+  const monthCounts = Array.from({ length: 12 }, (_, month) => segments.filter(segment => {
+    const value = segment.operational?.scheduledDepartureAt ?? segment.date;
+    const match = value.match(/^(?:\d{4}-)?(\d{1,2})(?:月|-)/);
+    return Number(match?.[1]) === month + 1;
+  }).length);
+  const frequencyCounts = frequency === "weekday" ? weekdayCounts : monthCounts;
+  const frequencyLabels = frequency === "weekday" ? weekDays : Array.from({ length: 12 }, (_, index) => `${index + 1}月`);
+  const maxWeekday = Math.max(1, ...frequencyCounts);
   const modeCounts = (Object.keys(MODE_META) as JourneyMode[])
     .map((mode) => ({ mode, count: segments.filter((segment) => segment.mode === mode).length }))
     .sort((a, b) => b.count - a.count);
@@ -174,7 +187,7 @@ export function JourneyPassportStatsTarget({
     <section className="passport-detail" role="dialog" aria-modal="true" aria-label="完整旅迹统计">
       <div className="passport-detail-scroll">
         <section className="passport-detail-hero">
-          <div className="passport-detail-status" aria-hidden="true"><strong>10:57</strong><span>▮▮▮ ◓ ▰</span></div>
+          <div className="passport-detail-status" aria-hidden="true"><strong>{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}</strong><span><SFCellularbars size="xs" /><SFWifi size="xs" /><SFBattery100percent size="sm" /></span></div>
           <header className="passport-detail-header">
             <button aria-label="关闭旅迹统计" onClick={onClose}><SFXmark size="md" /></button>
             <h1>flighty Everything</h1>
@@ -187,12 +200,7 @@ export function JourneyPassportStatsTarget({
           <div className="passport-mode-ribbon" aria-hidden="true">
             {segments.slice(0, 12).map((segment, index) => <span key={`${segment.id}-${index}`} style={{ color: MODE_META[segment.mode].color }}><JourneyModeIcon mode={segment.mode} /></span>)}
           </div>
-          <div className="passport-map-graphic" aria-label={`${stats.cities} 个城市的旅行路线`}>
-            <i className="passport-map-land land-a" /><i className="passport-map-land land-b" /><i className="passport-map-land land-c" />
-            <i className="passport-map-route route-a" /><i className="passport-map-route route-b" />
-            <b className="passport-map-dot dot-a" /><b className="passport-map-dot dot-b" /><b className="passport-map-dot dot-c" />
-          </div>
-          <div className="passport-hero-cities">{places.slice(0, 3).map(([city]) => <span key={city}>{city}</span>)}</div>
+          <PassportWorldMap key={period} segments={segments} />
           <div className="passport-hero-summary">
             <small>MY FLIGHTY EVERYTHING PASSPORT</small>
             <p>多载具 · MULTI-MODAL · 旅迹</p>
@@ -204,9 +212,9 @@ export function JourneyPassportStatsTarget({
           <section className="passport-stat-section passport-frequency-section">
             <div className="passport-section-heading"><h2>行程频率</h2><button onClick={onShare}><SFSquareAndArrowUp size="xs" /> 分享</button></div>
             <p><b>{visibleTrips.length}</b> 本旅迹 · {stats.segments} 段行程</p>
-            <div className="passport-stat-tabs"><button className="active">星期</button><button>月份</button></div>
+            <div className="passport-stat-tabs"><button className={frequency === "weekday" ? "active" : ""} onClick={() => setFrequency("weekday")}>星期</button><button className={frequency === "month" ? "active" : ""} onClick={() => setFrequency("month")}>月份</button></div>
             <div className="passport-week-chart">
-              {weekdayCounts.map((count, index) => <span key={weekDays[index]}><i style={{ height: `${Math.max(count ? 15 : 2, (count / maxWeekday) * 100)}%` }} /><small>{weekDays[index]}</small></span>)}
+              {frequencyCounts.map((count, index) => <span key={frequencyLabels[index]}><i style={{ height: `${Math.max(count ? 15 : 2, (count / maxWeekday) * 100)}%` }} /><small>{frequencyLabels[index]}</small></span>)}
             </div>
           </section>
 

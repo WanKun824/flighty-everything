@@ -43,9 +43,10 @@ test("airports sheet and map use real airport identities, regions and status mar
   assert.match(data, /airportStatusLevel/);
   assert.match(globe, /airportRegion/);
   assert.match(globe, /region === "All" \|\| airport\.region === region/);
-  assert.match(globe, /flighty-airport-marker/);
+  assert.match(globe, /flighty-airport-dots/);
+  assert.doesNotMatch(globe, /airportMarkersRef/);
   assert.match(page, /<AirportRow/);
-  assert.match(page, /real IATA \/ ICAO airport records/);
+  assert.match(page, /真实机场资料/);
   assert.match(css, /\.airport-signal\.warning/);
   assert.match(css, /\.airport-signal\.severe/);
 });

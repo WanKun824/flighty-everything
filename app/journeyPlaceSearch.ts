@@ -1,6 +1,8 @@
 import { JOURNEY_PLACES, type JourneyPlace } from "./journeyData";
+import { AIRPORTS, type Airport } from "./flightyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
 import { minQueryLength, stopKindOf } from "./placeSearch";
+import { loadAirportCatalog, matchAirportCatalog } from "./airportCatalog";
 
 export type JourneyPlaceSuggestion = {
   id: string;
@@ -9,6 +11,16 @@ export type JourneyPlaceSuggestion = {
   kind: JourneyPlace["kind"];
   localPlace?: JourneyPlace;
 };
+
+export function journeyPlaceFromAirport(airport: Pick<Airport, "code" | "name" | "city" | "coordinate">): JourneyPlace {
+  return {
+    code: airport.code,
+    name: airport.name,
+    city: airport.city,
+    coordinate: airport.coordinate,
+    kind: "airport",
+  };
+}
 
 type SearchBoxSuggestResponse = {
   suggestions?: Array<{
@@ -46,6 +58,23 @@ export async function searchJourneyPlaces(
   const query = rawQuery.trim();
   if (query.length < minQueryLength(query)) return [];
   const normalized = query.toLocaleLowerCase();
+  const globalAirports = await loadAirportCatalog().catch(() => []);
+  if (signal?.aborted) return [];
+  const globalMatches: JourneyPlaceSuggestion[] = matchAirportCatalog(globalAirports, query).map(airport => ({
+    id: `airport:${airport.code}`, name: airport.name,
+    subtitle: `${airport.code} · ${airport.icao} · ${airport.city}, ${airport.country}`,
+    kind: "airport", localPlace: airport,
+  }));
+  const airportMatches: JourneyPlaceSuggestion[] = AIRPORTS
+    .filter((airport) => `${airport.code} ${airport.icao} ${airport.name} ${airport.city} ${airport.country}`.toLocaleLowerCase().includes(normalized))
+    .slice(0, 6)
+    .map((airport) => ({
+      id: `airport:${airport.code}`,
+      name: airport.name,
+      subtitle: `${airport.code} · ${airport.icao} · ${airport.city}, ${airport.country}`,
+      kind: "airport",
+      localPlace: journeyPlaceFromAirport(airport),
+    }));
   const local: JourneyPlaceSuggestion[] = JOURNEY_PLACES
     .filter((place) => `${place.code} ${place.name} ${place.city}`.toLocaleLowerCase().includes(normalized))
     .slice(0, 4)
@@ -65,11 +94,13 @@ export async function searchJourneyPlaces(
     limit: "7",
     types: "poi,address,place,locality,neighborhood",
   });
+  const fallback = [...airportMatches, ...globalMatches, ...local];
   const response = await fetch(
     `https://api.mapbox.com/search/searchbox/v1/suggest?${parameters}`,
     { signal, cache: "no-store" },
-  );
-  if (!response.ok) return local;
+  ).catch(() => null);
+  if (signal?.aborted) return [];
+  if (!response?.ok) return uniqueSuggestions(fallback);
   const payload = (await response.json()) as SearchBoxSuggestResponse;
   const remote = (payload.suggestions ?? [])
     .filter((suggestion) => suggestion.mapbox_id && suggestion.name)
@@ -83,9 +114,13 @@ export async function searchJourneyPlaces(
         suggestion.name ?? "",
       ),
     }));
+  return uniqueSuggestions([...airportMatches, ...globalMatches, ...local, ...remote]);
+}
+
+function uniqueSuggestions(items: JourneyPlaceSuggestion[]) {
   const seen = new Set<string>();
-  return [...local, ...remote].filter((item) => {
-    const key = `${item.name}|${item.subtitle}`.toLocaleLowerCase();
+  return items.filter((item) => {
+    const key = item.localPlace?.code ?? `${item.name}|${item.subtitle}`.toLocaleLowerCase();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

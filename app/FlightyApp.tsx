@@ -11,6 +11,7 @@ import {
   type ElementType,
 } from "react";
 import SFAirplaneArrival from "sf-symbols-lib/monochrome/SFAirplaneArrival";
+import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
 import SFAirplaneCircleFill from "sf-symbols-lib/monochrome/SFAirplaneCircleFill";
 import SFAirplaneDeparture from "sf-symbols-lib/monochrome/SFAirplaneDeparture";
 import SFBattery100percent from "sf-symbols-lib/monochrome/SFBattery100percent";
@@ -69,7 +70,9 @@ import {
   type Flight,
   type Region,
 } from "./flightyData";
-import { segmentFromFlight, type JourneySegment } from "./journeyData";
+import { segmentFromFlight, type JourneyPlace, type JourneySegment } from "./journeyData";
+import { journeyPlaceFromAirport } from "./journeyPlaceSearch";
+import { loadAirportCatalog } from "./airportCatalog";
 import { lookupVerifiedFlight } from "./transportData";
 import { useJourneyStore, type JourneyTrip } from "./journeyStorage";
 import { useSheetDetents } from "./useSheetDetents";
@@ -108,7 +111,7 @@ type AppToast = {
 };
 
 const tabs: Array<{ id: Tab; label: string; icon: ElementType }> = [
-  { id: "flights", label: "行程", icon: SFAirplaneCircleFill },
+  { id: "flights", label: "行程", icon: SFAirplane },
   { id: "friends", label: "同行", icon: SFPerson2Fill },
   { id: "passport", label: "旅迹", icon: SFBookClosedFill },
 ];
@@ -132,6 +135,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [toast, setToast] = useState<AppToast | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [composerImportedSegments, setComposerImportedSegments] = useState<JourneySegment[]>([]);
+  const [composerMapSelection, setComposerMapSelection] = useState<{ place: JourneyPlace; token: number } | null>(null);
+  const [playbackProgress, setPlaybackProgress] = useState<{ id: string; progress: number } | null>(null);
   const composerCloseRequestRef = useRef<(() => void) | null>(null);
   const [pendingComposerTab, setPendingComposerTab] = useState<Tab | null>(null);
   const [query, setQuery] = useState("");
@@ -210,6 +215,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const closeComposer = () => {
     const nextTab = pendingComposerTab;
     setPendingComposerTab(null);
+    setComposerMapSelection(null);
+    setSelectedAirport(null);
     setOverlay(null);
     if (nextTab) chooseTab(nextTab);
   };
@@ -236,7 +243,11 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const stageFlightsForComposer = (flights: Flight[]) =>
     stageSegmentsForComposer(flights.map(segmentFromFlight));
 
-  const openAddJourney = () => setOverlay("add-journey");
+  const openAddJourney = () => {
+    setComposerMapSelection(null);
+    setSelectedAirport(null);
+    setOverlay("add-journey");
+  };
 
   const openJourneyNames = (trip: JourneyTrip = currentTrip ?? journeyStore.state.trips[0]) => {
     if (!trip) return;
@@ -246,7 +257,14 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     setOverlay("journey-names");
   };
 
-  const openAirport = (code: string) => {
+  const openAirport = async (code: string) => {
+    if (overlay === "add-journey") {
+      const airport = airportByCode(code) ?? (await loadAirportCatalog().catch(() => [])).find(airport => airport.code === code);
+      if (!airport) return;
+      setSelectedAirport(code);
+      setComposerMapSelection({ place: journeyPlaceFromAirport(airport), token: Date.now() });
+      return;
+    }
     setSelectedAirport(code);
     setOverlay("airport-detail");
   };
@@ -304,6 +322,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const initials = state.profile?.initials ?? "V";
   const profileColor = state.profile?.color ?? "#ec6f9a";
   const mapOverlayOpen = overlay === "airports" || overlay === "airport-detail";
+  const airportsOnMap = mapOverlayOpen || overlay === "add-journey";
 
   return (
     <main className={`flighty-page ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
@@ -312,19 +331,30 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         aria-label="flighty Everything flight tracker"
       >
         <FlightGlobe
-          airportsVisible={mapOverlayOpen}
-          airportRegion={airportRegion}
+          airportsVisible={airportsOnMap}
+          searchAirports={overlay === "add-journey"}
+          airportRegion={overlay === "add-journey" ? "All" : airportRegion}
           selectedAirport={selectedAirport}
           weatherMode={state.weatherMode}
           resetToken={resetToken}
-          journeySegments={mapOverlayOpen ? [] : journeyStore.state.segments}
+          journeySegments={airportsOnMap ? [] : journeyStore.state.segments}
           selectedJourneySegmentId={selectedJourneyId}
           journeySelectionToken={journeyFocusToken}
           onJourneySegmentSelect={(id) => {
             selectJourneySegment(id);
           }}
+          onJourneySegmentComplete={(id) => {
+            const index = journeyStore.state.segments.findIndex((segment) => segment.id === id);
+            journeyStore.advanceSegment(id);
+            if (index >= 0 && index < journeyStore.state.segments.length - 1) {
+              setJourneyFocusToken((value) => value + 1);
+            } else {
+              setFollowVehicle(false);
+            }
+          }}
+          onJourneyProgress={(id, progress) => setPlaybackProgress({ id, progress })}
           onAirportSelect={openAirport}
-          onWeatherError={(message) => notify(`${message}，已切换为卫星地图。`)}
+          onWeatherError={(message) => notify(message)}
           theme={appearance.resolved}
           basemap={state.basemap}
           followVehicle={followVehicle}
@@ -333,7 +363,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             notify("已暂停跟随，可自由查看地图");
           }}
         />
-        <StatusBar segment={selectedJourney} />
+        <StatusBar segment={selectedJourney && playbackProgress?.id === selectedJourney.id ? { ...selectedJourney, progress: playbackProgress.progress } : selectedJourney} />
 
         {activeTab !== "passport" &&
           ![
@@ -459,6 +489,10 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               onAdd={openAddJourney}
               onEditNames={() => openJourneyNames()}
               savedToPassport={Boolean(currentTrip?.savedToPassportAt)}
+              onRestart={() => {
+                journeyStore.restartTrip();
+                setJourneyFocusToken((value) => value + 1);
+              }}
               compact={mainSheet.atMinimum}
               onSaveToPassport={() => {
                 journeyStore.saveCurrentTripToPassport();
@@ -539,11 +573,16 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             tripName={journeyStore.state.tripName}
             initialOrigin={journeyStore.state.segments.at(-1)?.destination}
             onClose={closeComposer}
+            mapSelection={composerMapSelection}
+            onPlaceSelected={(place) => { if (place.kind === "airport") setSelectedAirport(place.code); }}
             onCloseRequestReady={registerComposerCloseRequest}
             onCloseCancelled={() => setPendingComposerTab(null)}
-            onAddMany={(segments, tripName) => {
-              journeyStore.renameTrip(tripName);
-              journeyStore.addSegments(segments);
+            onAddMany={(segments, tripName, target) => {
+              if (target === "new") journeyStore.createTripWithSegments(tripName, segments);
+              else {
+                journeyStore.renameTrip(tripName);
+                journeyStore.addSegmentsToActiveTrip(segments);
+              }
               notify(`已加入 ${segments.length} 段行程`);
             }}
             onFlightTools={() => setOverlay("add-flight")}
@@ -1108,11 +1147,11 @@ export function PassportPanel({
           All Aircraft Stats <SFChevronRight size="sm" />
         </button>
       </section>
-      <button className="pro-card">
+      <button className="pro-card" onClick={() => onStats("flight-stats")}>
         <span>
-          <b>PRO</b> Complete Your Map & Stats
+          完整旅行地图与统计
         </span>
-        <small>Upgrade to add flights older than 12 months.</small>
+        <small>查看路线、里程与旅行时间。</small>
         <SFChevronRight size="sm" />
       </button>
       <section className="past-flights">
@@ -1473,7 +1512,7 @@ function AirportsSheet({
   const preferredCodes = favorites.length ? favorites : ["HKG", "NRT"];
   const preferred = preferredCodes
     .map((code) => airportByCode(code))
-    .filter((airport): airport is Airport => Boolean(airport) && (region === "All" || airport.region === region));
+    .filter((airport): airport is Airport => airport !== undefined && (region === "All" || airport.region === region));
   const forYou = preferred.length ? preferred : filtered.slice(0, 2);
   const issues = filtered.filter((airport) => airportStatusLevel(airport) !== "normal");
   const normal = filtered.filter((airport) => airportStatusLevel(airport) === "normal");
@@ -1501,7 +1540,7 @@ function AirportsSheet({
       <div className="airport-intro">
         <strong>For You</strong>
         <span>Favorites and airports from your active journeys</span>
-        <small>{AIRPORTS.length} real IATA / ICAO airport records</small>
+        <small>真实机场资料 · 下方运行指标为示例，非实时数据</small>
       </div>
       <div className="map-sheet-scroll airport-groups">
         <section className="airport-for-you-group">
@@ -1547,7 +1586,13 @@ function AirportRow({
           </div>
         </div>
       </button>
-      <button className="favorite-button" aria-label={`${favorite ? "Remove" : "Add"} ${airport.name} favorite`} onClick={() => onFavorite(airport.code)}>
+      <button
+        type="button"
+        className="favorite-button"
+        aria-label={favorite ? `取消收藏 ${airport.name}` : `收藏 ${airport.name}`}
+        aria-pressed={favorite}
+        onClick={() => onFavorite(airport.code)}
+      >
         {favorite ? <SFStarFill size="sm" /> : <SFStar size="sm" />}
       </button>
       <small className="airport-code">{airport.code}</small>
@@ -1579,12 +1624,13 @@ function AirportDetailSheet({
       </div>
       <SheetHeader
         title={airport.name}
-        subtitle={`${airport.flag} ${airport.city.toUpperCase()}, ${airport.country.toUpperCase()}`}
+        subtitle={`${airport.city.toUpperCase()} · ${airport.country.toUpperCase()}`}
         onClose={onBack}
       />
       <button
         className="detail-favorite"
-        aria-label="Toggle airport favorite"
+        aria-label={favorite ? `取消收藏 ${airport.name}` : `收藏 ${airport.name}`}
+        aria-pressed={favorite}
         onClick={onFavorite}
       >
         {favorite ? <SFStarFill size="sm" /> : <SFStar size="sm" />}
@@ -1634,6 +1680,7 @@ function AirportDetailSheet({
           <small>arrivals on time</small>
         </span>
       </div>
+      <p className="airport-data-note">机场位置与代码为真实资料。延误、准点率及运行状态为示例数据，不用于出行决策。</p>
     </section>
   );
 }
@@ -1655,34 +1702,25 @@ function WeatherSheet({
     <section
       className="map-sheet weather-sheet"
       role="dialog"
-      aria-label="Weather Layers"
+      aria-label="天气图层"
     >
       <SheetHeader
-        title="Weather Layers"
-        subtitle="See what’s coming. All layers automatically refresh, support snow, and work on all maps."
+        title="天气图层"
+        subtitle="查看全球降雨与降雪变化，天气图层会自动刷新。"
         onClose={onClose}
       />
-      <button className="pro-weather">
-        <span>✓ PRO</span>
-        <b>
-          Enjoying complimentary access?
-          <br />
-          Upgrade to flighty Pro now.
-        </b>
-        <SFChevronRight size="sm" />
-      </button>
       {(
         [
-          { id: "us", title: "US Radar", detail: "Real-time radar in HD" },
+          { id: "us", title: "美国雷达", detail: "美国区域高清实时雷达" },
           {
             id: "global",
-            title: "Global Estimate",
-            detail: "Current worldwide composite radar",
+            title: "全球天气",
+            detail: "当前全球综合天气雷达",
           },
           {
             id: "none",
-            title: "None",
-            detail: "Satellite map without weather",
+            title: "关闭天气",
+            detail: "仅显示所选地球底图",
           },
         ] as const
       ).map((item) => (
@@ -1729,7 +1767,7 @@ function WeatherSheet({
         </div>
       </section>
       <a href="https://www.rainviewer.com/" target="_blank" rel="noreferrer">
-        Live radar data by RainViewer
+        实时雷达数据由 RainViewer 提供
       </a>
     </section>
   );

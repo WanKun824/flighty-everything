@@ -11,11 +11,13 @@ import { measure, pointAt, unwrap, type LegPath } from "./routeGeometry";
 import Vehicle3D from "./Vehicle3D";
 import { vehicleStageMotion } from "./vehicleMotion";
 import { createVehicleFollower } from "./vehicleFollow";
+import { loadAirportCatalog, type AirportCatalogEntry } from "./airportCatalog";
 
 export type BasemapMode = MapLayerMode;
 
 type Props = {
   airportsVisible: boolean;
+  searchAirports?: boolean;
   airportRegion?: "All" | Region;
   selectedAirport: string | null;
   weatherMode: WeatherMode;
@@ -26,6 +28,8 @@ type Props = {
   selectedJourneySegmentId?: string | null;
   journeySelectionToken?: number;
   onJourneySegmentSelect?: (id: string) => void;
+  onJourneySegmentComplete?: (id: string) => void;
+  onJourneyProgress?: (id: string, progress: number) => void;
   vehicleScale?: number;
   animationSpeed?: number;
   motionEnabled?: boolean;
@@ -43,6 +47,7 @@ type RadarResponse = {
 
 type LiveData = {
   airportsVisible: boolean;
+  airportCatalog: AirportCatalogEntry[];
   airportRegion: "All" | Region;
   selectedAirport: string | null;
   journeySegments: JourneySegment[];
@@ -66,6 +71,7 @@ export const BASEMAP_OPTIONS: Array<{ id: BasemapMode; label: string }> = [
 
 export default function FlightGlobe({
   airportsVisible,
+  searchAirports = false,
   airportRegion = "All",
   selectedAirport,
   weatherMode,
@@ -76,6 +82,8 @@ export default function FlightGlobe({
   selectedJourneySegmentId = null,
   journeySelectionToken = 0,
   onJourneySegmentSelect,
+  onJourneySegmentComplete,
+  onJourneyProgress,
   vehicleScale = 1,
   animationSpeed = 1,
   motionEnabled = true,
@@ -88,13 +96,16 @@ export default function FlightGlobe({
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const mapboxRef = useRef<typeof import("mapbox-gl").default | null>(null);
-  const airportMarkersRef = useRef<Array<import("mapbox-gl").Marker>>([]);
   const basemapRef = useRef<BasemapMode>("satellite");
   const basemapThemeRef = useRef<"light" | "dark">(theme);
   const followVehicleRef = useRef(followVehicle);
   const preserveCameraAfterStyleChangeRef = useRef(false);
+  const playbackRef = useRef<{ key: string; progress: number; completed: boolean } | null>(null);
+  const [airportCatalog, setAirportCatalog] = useState<AirportCatalogEntry[]>([]);
+  const visibleCatalog = searchAirports ? airportCatalog : [];
   const liveDataRef = useRef<LiveData>({
     airportsVisible,
+    airportCatalog: visibleCatalog,
     airportRegion,
     selectedAirport,
     journeySegments,
@@ -104,6 +115,8 @@ export default function FlightGlobe({
     onAirportSelect,
     onWeatherError,
     onJourneySegmentSelect,
+    onJourneySegmentComplete,
+    onJourneyProgress,
     onFollowInterrupted,
   });
   const [loaded, setLoaded] = useState(false);
@@ -111,6 +124,15 @@ export default function FlightGlobe({
   const [radarUpdated, setRadarUpdated] = useState<string | null>(null);
   const [roadTraffic, setRoadTraffic] = useState<Record<string, RoadTrafficRoute>>({});
   const [riderPortal, setRiderPortal] = useState<RiderPortal | null>(null);
+
+  useEffect(() => {
+    if (!searchAirports) return;
+    let cancelled = false;
+    void loadAirportCatalog().then(entries => { if (!cancelled) setAirportCatalog(entries); }).catch(() => {
+      callbacksRef.current.onWeatherError("机场目录暂时无法加载，请稍后重试");
+    });
+    return () => { cancelled = true; };
+  }, [searchAirports]);
 
   useEffect(() => {
     basemapThemeRef.current = theme;
@@ -123,6 +145,7 @@ export default function FlightGlobe({
   useEffect(() => {
     liveDataRef.current = {
       airportsVisible,
+      airportCatalog: visibleCatalog,
       airportRegion,
       selectedAirport,
       journeySegments,
@@ -130,6 +153,8 @@ export default function FlightGlobe({
     };
   }, [
     airportsVisible,
+    searchAirports,
+    airportCatalog,
     airportRegion,
     selectedAirport,
     journeySegments,
@@ -141,9 +166,11 @@ export default function FlightGlobe({
       onAirportSelect,
       onWeatherError,
       onJourneySegmentSelect,
+      onJourneySegmentComplete,
+      onJourneyProgress,
       onFollowInterrupted,
     };
-  }, [onAirportSelect, onWeatherError, onJourneySegmentSelect, onFollowInterrupted]);
+  }, [onAirportSelect, onWeatherError, onJourneySegmentSelect, onJourneySegmentComplete, onJourneyProgress, onFollowInterrupted]);
 
   useEffect(() => {
     let disposed = false;
@@ -222,32 +249,8 @@ export default function FlightGlobe({
       map.getSource("flighty-airports") as
         | import("mapbox-gl").GeoJSONSource
         | undefined
-    )?.setData(airportFeatures(selectedAirport, airportRegion));
-  }, [airportsVisible, airportRegion, selectedAirport, loaded, styleRevision]);
-
-  useEffect(() => {
-    for (const marker of airportMarkersRef.current) marker.remove();
-    airportMarkersRef.current = [];
-    const map = mapRef.current;
-    const mapboxgl = mapboxRef.current;
-    if (!map || !mapboxgl || !loaded || !airportsVisible) return;
-    const airports = AIRPORTS.filter((airport) => airportRegion === "All" || airport.region === airportRegion);
-    airportMarkersRef.current = airports.map((airport) => {
-      const element = document.createElement("button");
-      element.type = "button";
-      element.className = `flighty-airport-marker ${airportStatusLevel(airport)} ${airport.code === selectedAirport ? "selected" : ""}`;
-      element.setAttribute("aria-label", `${airport.code} ${airport.name}`);
-      element.addEventListener("click", (event) => {
-        event.stopPropagation();
-        callbacksRef.current.onAirportSelect(airport.code);
-      });
-      return new mapboxgl.Marker({ element, anchor: "center" }).setLngLat(airport.coordinate).addTo(map);
-    });
-    return () => {
-      for (const marker of airportMarkersRef.current) marker.remove();
-      airportMarkersRef.current = [];
-    };
-  }, [airportsVisible, airportRegion, selectedAirport, loaded]);
+    )?.setData(airportFeatures(selectedAirport, airportRegion, visibleCatalog));
+  }, [airportsVisible, airportRegion, selectedAirport, loaded, styleRevision, airportCatalog, searchAirports]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -259,8 +262,8 @@ export default function FlightGlobe({
         : airportRegion === "North America"
           ? { center: [-100, 39] as [number, number], zoom: 1.95 }
           : { center: [64, 30] as [number, number], zoom: 1.3 };
-    map.easeTo({ ...view, offset: [0, -72], duration: 520, essential: true });
-  }, [airportsVisible, airportRegion, selectedAirport, loaded]);
+    map.easeTo({ ...view, offset: [0, -map.getContainer().clientHeight * (searchAirports ? 0.33 : 0.22)], duration: 520, essential: true });
+  }, [airportsVisible, airportRegion, selectedAirport, loaded, searchAirports]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -368,16 +371,30 @@ export default function FlightGlobe({
         marker.setLngLat(coordinate);
       },
     });
-    const startedAt = performance.now() - duration * Math.max(0, Math.min(1, segment.progress));
+    const playbackKey = `${segment.id}:${journeySelectionToken}`;
+    const previousPlayback = playbackRef.current;
+    const initialProgress = previousPlayback?.key === playbackKey ? previousPlayback.progress : journeySelectionToken > 0
+      ? 0
+      : Math.max(0, Math.min(1, segment.progress));
+    const playback = { key: playbackKey, progress: initialProgress, completed: previousPlayback?.key === playbackKey && previousPlayback.completed };
+    playbackRef.current = playback;
+    const startedAt = performance.now() - duration * initialProgress;
     let frame = 0;
+    let completed = playback.completed;
     let publishedProgressAt = 0;
+    let publishedStatusAt = 0;
     let publishedStage = "";
     let publishedTrail = "";
     const animate = (now: number) => {
-      let moving = Math.max(0, Math.min(1, segment.progress));
+      let moving = initialProgress;
       if (!reduceMotion.matches && motionEnabled) {
-        const elapsed = (now - startedAt) % duration;
-        moving = elapsed / duration;
+        const elapsed = now - startedAt;
+        moving = Math.min(1, elapsed / duration);
+      }
+      playback.progress = moving;
+      if (now - publishedStatusAt >= 1000 || moving >= 1) {
+        publishedStatusAt = now;
+        callbacksRef.current.onJourneyProgress?.(segment.id, moving);
       }
       const point = pointAt(path, moving);
       // jumpTo cancels camera easing; let an active wheel/pinch zoom finish
@@ -408,6 +425,15 @@ export default function FlightGlobe({
         publishedProgressAt = now;
         setRiderPortal((current) => current?.host === modelHost ? { ...current, progress: moving } : current);
       }
+      if (moving >= 1 && motionEnabled && !reduceMotion.matches) {
+        followVehicleAt(point.coordinate, false);
+        if (!completed) {
+          completed = true;
+          playback.completed = true;
+          callbacksRef.current.onJourneySegmentComplete?.(segment.id);
+        }
+        return;
+      }
       frame = requestAnimationFrame(animate);
     };
     frame = requestAnimationFrame(animate);
@@ -417,21 +443,22 @@ export default function FlightGlobe({
       marker.remove();
       setRiderPortal((current) => current?.host === modelHost ? null : current);
     };
-  }, [journeySegments, selectedJourneySegmentId, roadTraffic, loaded, vehicleScale, animationSpeed, motionEnabled]);
+  }, [journeySegments, selectedJourneySegmentId, journeySelectionToken, roadTraffic, loaded, vehicleScale, animationSpeed, motionEnabled]);
 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded || !selectedAirport) return;
-    const airport = airportByCode(selectedAirport);
+    const airport = airportByCode(selectedAirport) ?? airportCatalog.find(airport => airport.code === selectedAirport);
     if (airport)
       map.flyTo({
         center: airport.coordinate,
         zoom: 8.4,
         pitch: 28,
         duration: 900,
+        offset: [0, -map.getContainer().clientHeight * (searchAirports ? 0.33 : 0.22)],
         essential: true,
       });
-  }, [selectedAirport, loaded, styleRevision]);
+  }, [selectedAirport, loaded, styleRevision, airportCatalog, searchAirports]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -642,7 +669,7 @@ function installProductLayers(
   if (!map.getSource("flighty-airports")) {
     map.addSource("flighty-airports", {
       type: "geojson",
-      data: airportFeatures(data.selectedAirport, data.airportRegion),
+      data: airportFeatures(data.selectedAirport, data.airportRegion, data.airportCatalog),
     });
   }
   if (!map.getSource("flighty-journey-lines")) {
@@ -689,8 +716,9 @@ function installProductLayers(
       source: "flighty-airports",
       slot: "top",
       layout: { visibility: data.airportsVisible ? "visible" : "none" },
+      filter: ["<=", ["get", "minZoom"], ["zoom"]],
       paint: {
-        "circle-radius": ["case", ["get", "selected"], 19, 13],
+        "circle-radius": ["case", ["get", "selected"], 19, ["get", "catalog"], 6, 13],
         "circle-color": ["get", "color"],
         "circle-opacity": 0.34,
         "circle-blur": 0.38,
@@ -704,8 +732,9 @@ function installProductLayers(
       source: "flighty-airports",
       slot: "top",
       layout: { visibility: data.airportsVisible ? "visible" : "none" },
+      filter: ["<=", ["get", "minZoom"], ["zoom"]],
       paint: {
-        "circle-radius": ["case", ["get", "selected"], 9, 7],
+        "circle-radius": ["case", ["get", "selected"], 9, ["get", "catalog"], 3.5, 7],
         "circle-color": ["get", "color"],
         "circle-stroke-color": "#ffffff",
         "circle-stroke-width": 2,
@@ -788,14 +817,17 @@ function styleUrl(mode: BasemapMode) {
   return "mapbox://styles/mapbox/standard";
 }
 
-function airportFeatures(selectedAirport: string | null, region: "All" | Region = "All") {
+function airportFeatures(selectedAirport: string | null, region: "All" | Region = "All", catalog: AirportCatalogEntry[] = []) {
+  const known = new Set(AIRPORTS.map(airport => airport.code));
   return {
     type: "FeatureCollection" as const,
-    features: AIRPORTS.filter((airport) => region === "All" || airport.region === region).map((airport) => ({
+    features: [...AIRPORTS.filter((airport) => region === "All" || airport.region === region).map((airport) => ({
       type: "Feature" as const,
       properties: {
         code: airport.code,
         selected: airport.code === selectedAirport,
+        minZoom: 0,
+        catalog: false,
         color: airportStatusLevel(airport) === "severe"
           ? "#ff375f"
           : airportStatusLevel(airport) === "warning"
@@ -803,7 +835,11 @@ function airportFeatures(selectedAirport: string | null, region: "All" | Region 
             : "#24c78a",
       },
       geometry: { type: "Point" as const, coordinates: airport.coordinate },
-    })),
+    })), ...catalog.filter(airport => !known.has(airport.code)).map(airport => ({
+      type: "Feature" as const,
+      properties: { code: airport.code, selected: airport.code === selectedAirport, minZoom: airport.code === selectedAirport ? 0 : airport.minZoom, catalog: true, color: "#39a7ef" },
+      geometry: { type: "Point" as const, coordinates: airport.coordinate },
+    }))],
   };
 }
 

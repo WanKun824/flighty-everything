@@ -147,7 +147,7 @@ export async function GET(request: Request) {
           ? {
               longitude: liveAircraft!.lon!,
               latitude: liveAircraft!.lat!,
-              altitudeMeters: altitudeMeters(liveAircraft),
+              altitudeMeters: altitudeMeters(liveAircraft!),
               speedKmh: finite(liveAircraft!.gs) ? Math.round(liveAircraft!.gs! * 1.852) : undefined,
               heading: finite(liveAircraft!.track) ? liveAircraft!.track : undefined,
               observedAt,

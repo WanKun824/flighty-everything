@@ -525,7 +525,7 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
 
       // 「载具」页（hero 机位）是静态展台：不起伏、不侧倾、不转轮。reduceMotion 同样全停。
       // 地图上的 rider 走 view="map"，继续按 MOTION 的动作性格动。
-      if (reduceMotion.matches || view === "hero" || kind === "car") {
+      if (reduceMotion.matches || view === "hero" || (view === "map" && kind === "flight") || kind === "car") {
         presentation.position.z = 0;
         presentation.rotation.set(0, 0, 0);
         if (!reduceMotion.matches && view === "map" && kind === "car" && motion.wheel) {

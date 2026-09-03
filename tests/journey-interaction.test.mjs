@@ -57,7 +57,8 @@ test("selected routes stay solid across the date line and stored journeys remain
   assert.doesNotMatch(globe, /flighty-journey-stop-dots/);
   assert.match(storage, /export function splitContinuousSegments/);
   assert.match(storage, /samePlace\(last\.destination, chain\[0\]\.origin\)/);
-  assert.match(storage, /sourceTrips\.flatMap\(splitTrip\)/);
+  assert.match(storage, /const trips = sourceTrips;/);
+  assert.doesNotMatch(storage, /sourceTrips\.flatMap\(splitTrip\)/);
 });
 
 test("mobile planning preserves drafts across flight tools and guards discarding", async () => {

@@ -10,6 +10,7 @@ import SFClockFill from "sf-symbols-lib/monochrome/SFClockFill";
 import SFInfoCircleFill from "sf-symbols-lib/monochrome/SFInfoCircleFill";
 import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
 import SFPlus from "sf-symbols-lib/monochrome/SFPlus";
+import SFPlayFill from "sf-symbols-lib/monochrome/SFPlayFill";
 import SFTrash from "sf-symbols-lib/monochrome/SFTrash";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import { JourneyModeIcon } from "./JourneyComposer";
@@ -150,10 +151,18 @@ export function MobileJourneysPanel({
 }
 
 export function FlightyJourneyPanel({
+  tripName,
   segments,
   selectedSegmentId,
   onSelect,
   onOpenDetails,
+  onToggleOverview,
+  overviewExpanded,
+  onAdd,
+  onEditNames,
+  onSaveToPassport,
+  savedToPassport,
+  onRestart,
   compact = false,
 }: {
   tripName: string;
@@ -167,14 +176,38 @@ export function FlightyJourneyPanel({
   onEditNames: () => void;
   onSaveToPassport: () => void;
   savedToPassport: boolean;
+  onRestart: () => void;
   compact?: boolean;
 }) {
   const selected = segments.find((segment) => segment.id === selectedSegmentId) ?? segments[0];
   const visibleSegments = compact ? (selected ? [selected] : []) : segments;
+  const stats = journeyStats(segments);
   const now = useNow();
 
   return (
     <div className={`panel-scroll mobile-journey-target flighty-journey-list ${compact ? "is-compact" : ""}`}>
+      <div className="mobile-overview-strip flighty-overview-strip">
+        <button
+          className="mobile-overview-toggle"
+          onClick={onToggleOverview}
+          aria-expanded={overviewExpanded}
+          aria-label={overviewExpanded ? "收起整趟旅程" : "展开整趟旅程"}
+        >
+          <span>{tripName}</span>
+          <small>{stats.segments} 段 · {stats.modes} 种交通 · {stats.distanceKm.toLocaleString("zh-CN")} km</small>
+          <SFChevronRight size="xs" />
+        </button>
+        {!compact && <button className="mobile-overview-edit" aria-label="编辑旅程名称" onClick={onEditNames}><SFPencil size="xs" /></button>}
+        <button className="mobile-overview-restart" aria-label="从头播放整趟旅程" onClick={onRestart}><SFPlayFill size="xs" /><span>从头</span></button>
+        <button
+          className={`mobile-overview-save ${savedToPassport ? "saved" : ""}`}
+          aria-label={savedToPassport ? "已保存到旅记" : "保存到旅记"}
+          onClick={onSaveToPassport}
+        >
+          {savedToPassport ? <SFCheckmarkCircleFill size="xs" /> : <SFBookClosedFill size="xs" />}
+        </button>
+      </div>
+      {!compact && <div className="mobile-section-heading"><span>连续行程</span><button onClick={onAdd}><SFPlus size="xs" />添加行程</button></div>}
       <div className="mobile-segment-list">
         {visibleSegments.map((segment) => {
           const isSelected = segment.id === selectedSegmentId;
@@ -198,9 +231,8 @@ export function FlightyJourneyPanel({
                 </span>
                 <span className="mobile-segment-main">
                   <span className="mobile-segment-meta">
-                    <em className="mobile-operator-code">{operatorCode(segment)}</em>
                     <b>{segment.service}</b>
-                    <i className={status.tone}>{scheduleCaption(status.tone, countdown)}</i>
+                    <i className={status.tone}>{scheduleCaption(status.tone, countdown, segment.mode)}</i>
                   </span>
                   <strong className="mobile-segment-title">{segment.title}</strong>
                   <span className="mobile-segment-route-times">
@@ -236,7 +268,7 @@ function operatorCode(segment: JourneySegment) {
   return code?.toUpperCase() || MODE_META[segment.mode].label.slice(0, 2);
 }
 
-function scheduleCaption(tone: string, countdown: { value: string; unit: string }) {
+function scheduleCaption(tone: string, countdown: { value: string; unit: string }, mode: JourneyMode) {
   if (tone === "complete") return "Arrived";
   if (countdown.unit === "计划") return "Scheduled";
   const minuteMatch = countdown.unit.match(/(\d+)\s*分钟/);
@@ -247,7 +279,7 @@ function scheduleCaption(tone: string, countdown: { value: string; unit: string 
       : countdown.unit.includes("分钟")
         ? `${countdown.value}m`
         : countdown.value;
-  return tone === "active" ? `Landing in ${duration}` : `Departs in ${duration}`;
+  return tone === "active" ? `${mode === "flight" ? "Landing" : "Arriving"} in ${duration}` : `Departs in ${duration}`;
 }
 
 export function MobileJourneysPanelLegacy({
