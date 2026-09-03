@@ -46,6 +46,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
         webView?.scrollView.scrollIndicatorInsets = .zero
         NotificationCenter.default.addObserver(self, selector: #selector(publishPresentation), name: UIAccessibility.reduceTransparencyStatusDidChangeNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(publishPresentation), name: UIAccessibility.darkerSystemColorsStatusDidChangeNotification, object: nil)
+        registerForTraitChanges([UITraitUserInterfaceStyle.self], action: #selector(publishPresentation))
     }
 
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -77,12 +78,20 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
           document.documentElement.style.setProperty('--native-safe-bottom', '\(insets.bottom)px');
           document.documentElement.dataset.reduceTransparency = '\(UIAccessibility.isReduceTransparencyEnabled)';
           document.documentElement.dataset.increaseContrast = '\(UIAccessibility.isDarkerSystemColorsEnabled)';
+          (() => {
+            const root = document.documentElement;
+            const theme = '\(traitCollection.userInterfaceStyle == .dark ? "dark" : "light")';
+            if (root.dataset.nativeSystemTheme !== theme) {
+              root.dataset.nativeSystemTheme = theme;
+              window.dispatchEvent(new Event('flighty-native-appearance-change'));
+            }
+          })();
         """, completionHandler: nil)
     }
 
     // CI-only geometry evidence from a running Simulator, never enabled in normal use.
     private func captureLayoutAudit(attempt: Int) {
-        guard attempt < 20 else { return }
+        guard attempt < 60 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self else { return }
             self.publishPresentation()
@@ -100,6 +109,8 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
                   firstRowBottom: row?.getBoundingClientRect().bottom ?? 0,
                   safeBottom: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--native-safe-bottom')) || 0,
                   nativeShell: document.documentElement.hasAttribute('data-native-shell'),
+                  nativeTheme: document.documentElement.dataset.nativeSystemTheme,
+                  pageTheme: document.querySelector('.flighty-page').dataset.theme,
                   rowBackground: row ? getComputedStyle(row).backgroundColor : null,
                   rowShadow: row ? getComputedStyle(row).boxShadow : null,
                   systemChromeDuplicates: getComputedStyle(document.querySelector('.ios-status')).display !== 'none'
@@ -112,6 +123,11 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
                 }
                 let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
                 try? data.write(to: directory.appendingPathComponent("layout-audit.json"), options: .atomic)
+                if let audit = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let theme = audit["pageTheme"] as? String, ["light", "dark"].contains(theme) {
+                    try? data.write(to: directory.appendingPathComponent("layout-\(theme).json"), options: .atomic)
+                }
+                self.captureLayoutAudit(attempt: attempt + 1)
             }
         }
     }

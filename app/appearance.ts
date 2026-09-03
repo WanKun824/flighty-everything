@@ -13,6 +13,8 @@ function validMode(value: unknown): value is AppearanceMode {
 }
 
 function systemMode(): ResolvedAppearance {
+  const nativeTheme = document.documentElement.dataset.nativeSystemTheme;
+  if (nativeTheme === "light" || nativeTheme === "dark") return nativeTheme;
   return window.matchMedia(SYSTEM_QUERY).matches ? "dark" : "light";
 }
 
@@ -45,13 +47,17 @@ function subscribeMode(onChange: () => void) {
 }
 
 function systemSnapshot() {
-  return window.matchMedia(SYSTEM_QUERY).matches;
+  return systemMode() === "dark";
 }
 
 function subscribeSystem(onChange: () => void) {
   const query = window.matchMedia(SYSTEM_QUERY);
   query.addEventListener("change", onChange);
-  return () => query.removeEventListener("change", onChange);
+  window.addEventListener("flighty-native-appearance-change", onChange);
+  return () => {
+    query.removeEventListener("change", onChange);
+    window.removeEventListener("flighty-native-appearance-change", onChange);
+  };
 }
 
 export function useAppearance() {

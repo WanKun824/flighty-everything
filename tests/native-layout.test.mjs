@@ -34,3 +34,14 @@ test("IPA packaging pins source, embeds provenance and validates a running Simul
   assert.match(workflow, /Verify Simulator full-screen layout in light and dark mode/);
   assert.match(workflow, /systemChromeDuplicates/);
 });
+
+test("native system appearance changes reach the React theme without overriding user choice", async () => {
+  const [appearance, scene, workflow] = await Promise.all([
+    read("../app/appearance.ts"), read("../ios/App/App/SceneDelegate.swift"), read("../.github/workflows/ios.yml"),
+  ]);
+  assert.match(appearance, /dataset.nativeSystemTheme/);
+  assert.match(appearance, /flighty-native-appearance-change/);
+  assert.match(appearance, /mode === "system" \? \(systemDark \? "dark" : "light"\) : mode/);
+  assert.match(scene, /registerForTraitChanges\(\[UITraitUserInterfaceStyle.self\]/);
+  assert.match(workflow, /a\["nativeTheme"\]=="dark" and a\["pageTheme"\]=="dark"/);
+});

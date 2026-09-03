@@ -127,6 +127,12 @@ jobs:
           sleep 12
           xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-light.png
           xcrun simctl ui "$QA_DEVICE" appearance dark
+          for attempt in $(seq 1 20); do
+            test -f "$CONTAINER/Documents/layout-dark.json" && break
+            sleep 2
+          done
+          cp "$CONTAINER/Documents/layout-dark.json" build/ui-qa/layout-dark.json
+          python3 -c 'import json; a=json.load(open("build/ui-qa/layout-dark.json")); assert a["nativeTheme"]=="dark" and a["pageTheme"]=="dark"; print(a)'
           sleep 4
           xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-dark.png
       - name: Upload Simulator visual checks
