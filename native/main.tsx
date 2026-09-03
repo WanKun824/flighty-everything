@@ -37,7 +37,7 @@ function NativeApp() {
       if (page) {
         page.style.translate = phase === "change" ? `${distance}px 0` : "0 0";
       }
-      if (phase === "end") setScreen({ name: screen.name === "detail" ? "community" : "home" });
+      if (phase === "end") setScreen(screen.name === "detail" ? { name: "community" } : { name: "home" });
     };
     window.addEventListener("flighty-native-back", back);
     return () => { window.removeEventListener("flighty-native-back", back); handler?.postMessage({ bars: [], backEnabled: false }); };
