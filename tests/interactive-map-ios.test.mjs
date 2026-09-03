@@ -126,6 +126,7 @@ test("packages simulator and clearly labeled device IPA while signed export stay
   assert.doesNotMatch(plist, /armv7/);
   assert.match(scene, /FlightyBridgeViewController/);
   assert.match(scene, /webView\?\.isOpaque = false/);
-  assert.match(scene, /#available\(iOS 27\.0/);
-  assert.match(scene, /UIGlassEffect\(style: \.regular\)/);
+  assert.match(scene, /viewSafeAreaInsetsDidChange/);
+  assert.match(scene, /contentInsetAdjustmentBehavior = \.never/);
+  assert.doesNotMatch(scene, /private let topSystemChrome|private let bottomSystemChrome/);
 });

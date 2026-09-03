@@ -1,0 +1,66 @@
+/* Edge-to-edge map. Safe areas constrain controls, never the map background. */
+html[data-native-shell], html[data-native-shell] body, html[data-native-shell] #root {
+  width: 100%; height: 100%; min-height: 0; margin: 0; padding: 0; overflow: hidden;
+}
+html[data-native-shell] {
+  --native-safe-top: env(safe-area-inset-top, 0px);
+  --native-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+html[data-native-shell] .flighty-page {
+  position: fixed; inset: 0; width: 100%; height: 100%; height: 100dvh;
+  padding: 0; display: block;
+}
+html[data-native-shell] .flighty-page .flighty-device {
+  width: 100%; height: 100%; min-height: 0; max-height: none;
+  margin: 0; border: 0; border-radius: 0; box-shadow: none;
+}
+/* iOS draws its real clock, battery and hardware island; do not draw duplicates. */
+html[data-native-shell] .ios-status { display: none; }
+html[data-native-shell] .map-tools { top: calc(var(--native-safe-top) + 12px); }
+html[data-native-shell] .map-follow-button { top: calc(var(--native-safe-top) + 125px); }
+html[data-native-shell] .flight-globe::after {
+  content: ""; position: absolute; z-index: 2; top: 0; left: 0; right: 0;
+  height: calc(var(--native-safe-top) + 14px); pointer-events: none;
+  background: linear-gradient(rgba(0,0,0,.35),transparent);
+}
+html[data-native-shell] .flight-tabbar { bottom: calc(var(--native-safe-bottom) + 8px); }
+html[data-native-shell] .flight-panel.journey-panel {
+  min-height: calc(330px + var(--native-safe-bottom));
+  max-height: calc(100% - var(--native-safe-top) - 12px);
+}
+html[data-native-shell] .flighty-journey-list.mobile-journey-target {
+  padding-bottom: calc(var(--native-safe-bottom) + 88px);
+}
+html[data-native-shell] .flighty-journey-list.mobile-journey-target.is-compact { padding-bottom: 12px; }
+html[data-native-shell] .passport-detail-status { display: none; }
+html[data-native-shell] .passport-detail-header { padding-top: calc(var(--native-safe-top) + 12px); }
+html[data-native-shell] .passport-detail-scroll { padding-bottom: var(--native-safe-bottom); }
+
+/* One restrained, adaptive material for floating controls, not individual rows. */
+.flighty-page[data-theme="light"] {
+  --chrome-material: rgba(245,247,250,.76);
+  --chrome-highlight: rgba(255,255,255,.7);
+  --chrome-text: #202127;
+}
+.flighty-page[data-theme] .flight-tabbar nav,
+.flighty-page[data-theme] .search-orb,
+.flighty-page[data-theme] .map-tools button,
+.flighty-page[data-theme] .map-follow-button,
+.flighty-page[data-theme] .panel-titlebar .round-button:not(.profile-button) {
+  color: var(--chrome-text);
+  background: var(--chrome-material);
+  border-color: var(--chrome-highlight);
+  box-shadow: inset 0 1px 0 var(--chrome-highlight), 0 5px 18px rgba(0,0,0,.1);
+  -webkit-backdrop-filter: blur(28px) saturate(1.35);
+  backdrop-filter: blur(28px) saturate(1.35);
+}
+.flighty-page .map-tools button.active,
+.flighty-page .map-follow-button.active { color: var(--blue); }
+@media (prefers-reduced-transparency: reduce) {
+  .flighty-page { --chrome-material: #29292f; }
+  .flighty-page[data-theme="light"] { --chrome-material: #f5f6f8; }
+  .flighty-page .flight-panel, .flighty-page .map-sheet { -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+html[data-reduce-transparency="true"] .flighty-page { --chrome-material: #29292f; }
+html[data-reduce-transparency="true"] .flighty-page[data-theme="light"] { --chrome-material: #f5f6f8; }
+html[data-increase-contrast="true"] .flighty-page { --chrome-highlight: rgba(180,180,190,.7); }

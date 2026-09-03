@@ -4,6 +4,7 @@ import type { CommunityJourney } from "../app/communityData";
 import "../app/globals.css";
 import "../app/journey-theme.css";
 import "../app/journey-refinement.css";
+import "../app/native-layout.css";
 import "./transportBridge";
 
 const FlightyApp = lazy(() => import("../app/FlightyApp"));

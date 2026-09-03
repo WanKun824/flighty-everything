@@ -86,8 +86,8 @@ test("follows system appearance and uses iOS 27 plus an Apple Silicon IPA runner
   assert.match(themeCss, /prefers-reduced-motion/);
   assert.match(layout, /suppressHydrationWarning/);
   assert.match(globe, /theme === "light" \? "day" : "night"/);
-  assert.match(scene, /#available\(iOS 27\.0/);
-  assert.match(scene, /UIGlassEffect\(style: \.regular\)/);
+  assert.match(scene, /UIAccessibility\.isReduceTransparencyEnabled/);
+  assert.match(scene, /--native-safe-top/);
   assert.match(project, /IPHONEOS_DEPLOYMENT_TARGET = 17\.0/);
   assert.match(workflow, /runs-on: xcode-27/);
   assert.match(workflow, /test "\$\(uname -m\)" = "arm64"/);

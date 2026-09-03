@@ -3,6 +3,10 @@ name: Package iOS Client
 on:
   workflow_dispatch:
     inputs:
+      source_sha:
+        description: Exact source commit to verify before packaging
+        required: false
+        type: string
       unsigned_only:
         description: Only export unsigned packages without using signing credentials
         required: true
@@ -37,6 +41,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+      - name: Verify requested source
+        env:
+          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          test -z "$REQUESTED_SOURCE_SHA" || test "$(git rev-parse HEAD)" = "$REQUESTED_SOURCE_SHA"
       - name: Verify Apple Silicon and iOS 27 SDK
         shell: bash
         run: |
@@ -59,6 +70,7 @@ jobs:
           test -f native-shell/index.html
           test -d native-shell/assets
           test -f native-shell/models/legacy-plane.glb
+          node -e "const fs=require('fs'); const b=JSON.parse(fs.readFileSync('native-shell/build-info.json')); if(b.sourceCommit!==process.env.GITHUB_SHA) throw Error('Native source revision mismatch');"
           if grep -R "manyou-travel-ui-demo.*chatgpt.site" native-shell/index.html native-shell/assets; then
             echo "The native bundle must not redirect to the hosted website."
             exit 1
@@ -90,6 +102,40 @@ jobs:
           archive: false
           retention-days: 30
 
+      - name: Verify Simulator full-screen layout in light and dark mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          RUNTIME=$(xcrun simctl list runtimes -j | python3 -c 'import json,sys; r=[x for x in json.load(sys.stdin)["runtimes"] if x.get("isAvailable") and "iOS" in x["name"]]; print(r[-1]["identifier"])')
+          DEVICE_TYPE=$(xcrun simctl list devicetypes -j | python3 -c 'import json,sys; d=[x for x in json.load(sys.stdin)["devicetypes"] if "iPhone" in x["name"]]; print(next((x["identifier"] for x in d if x["name"]=="iPhone 17 Pro"),d[-1]["identifier"]))')
+          QA_DEVICE=$(xcrun simctl create "Flighty QA $GITHUB_RUN_ID" "$DEVICE_TYPE" "$RUNTIME")
+          trap 'xcrun simctl shutdown "$QA_DEVICE" >/dev/null 2>&1 || true; xcrun simctl delete "$QA_DEVICE" >/dev/null 2>&1 || true' EXIT
+          xcrun simctl boot "$QA_DEVICE"
+          xcrun simctl bootstatus "$QA_DEVICE" -b
+          xcrun simctl ui "$QA_DEVICE" appearance light
+          xcrun simctl install "$QA_DEVICE" build/FlightyEverything-Simulator.xcarchive/Products/Applications/App.app
+          SIMCTL_CHILD_FLIGHTY_UI_QA=1 xcrun simctl launch "$QA_DEVICE" com.wankun824.flightyeverything
+          CONTAINER=$(xcrun simctl get_app_container "$QA_DEVICE" com.wankun824.flightyeverything data)
+          mkdir -p build/ui-qa
+          for attempt in $(seq 1 25); do
+            test -f "$CONTAINER/Documents/layout-audit.json" && break
+            sleep 2
+          done
+          cp "$CONTAINER/Documents/layout-audit.json" build/ui-qa/layout-audit.json
+          python3 -c 'import json; a=json.load(open("build/ui-qa/layout-audit.json")); v=a["viewport"]; d=a["device"]; assert abs(d["x"])<1 and abs(d["y"])<1; assert abs(d["height"]-v["height"])<1 and abs(d["width"]-v["width"])<1; assert a["nav"]["bottom"]<=v["height"]-a["safeBottom"]+1; assert a["firstRowBottom"]<=a["nav"]["top"]; assert a["nativeShell"] and not a["systemChromeDuplicates"]; assert a["rowShadow"]=="none"; print(a)'
+          sleep 12
+          xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-light.png
+          xcrun simctl ui "$QA_DEVICE" appearance dark
+          sleep 4
+          xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-dark.png
+      - name: Upload Simulator visual checks
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: flighty-ios-ui-qa
+          path: build/ui-qa
+          retention-days: 30
+
       - name: Build unsigned Apple Silicon device IPA
         run: |
           xcodebuild \
@@ -105,6 +151,7 @@ jobs:
             clean archive
           APP_PATH="build/FlightyEverything-Unsigned.xcarchive/Products/Applications/App.app"
           test -f "$APP_PATH/App"
+          test -f "$APP_PATH/public/build-info.json"
           lipo -info "$APP_PATH/App" | tee build/device-architectures.txt
           grep -q "arm64" build/device-architectures.txt
           mkdir -p build/unsigned/Payload build/packages

@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: "native-shell",
   ios: {
     scheme: "FlightyEverything",
-    contentInset: "automatic",
+    contentInset: "never",
     backgroundColor: "#00000000",
   },
   android: {
