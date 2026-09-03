@@ -26,6 +26,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 }
 
 final class FlightyBridgeViewController: CAPBridgeViewController {
+    private var observesWindowAppearance = false
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         // The WKWebView is the root view. Do not add glass strips to its safe areas:
@@ -46,6 +47,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
         webView?.scrollView.scrollIndicatorInsets = .zero
         NotificationCenter.default.addObserver(self, selector: #selector(publishPresentation), name: UIAccessibility.reduceTransparencyStatusDidChangeNotification, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(publishPresentation), name: UIAccessibility.darkerSystemColorsStatusDidChangeNotification, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(publishPresentation), name: UIApplication.didBecomeActiveNotification, object: nil)
         registerForTraitChanges([UITraitUserInterfaceStyle.self], action: #selector(publishPresentation))
     }
 
@@ -65,6 +67,12 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        if !observesWindowAppearance, let window = view.window {
+            observesWindowAppearance = true
+            window.registerForTraitChanges([UITraitUserInterfaceStyle.self]) { [weak self] (_: UIWindow, _: UITraitCollection) in
+                self?.publishPresentation()
+            }
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.publishPresentation() }
         if ProcessInfo.processInfo.environment["FLIGHTY_UI_QA"] == "1" {
             captureLayoutAudit(attempt: 0)
@@ -73,6 +81,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
 
     @objc private func publishPresentation() {
         let insets = view.safeAreaInsets
+        let systemStyle = view.window?.windowScene?.traitCollection.userInterfaceStyle ?? traitCollection.userInterfaceStyle
         webView?.evaluateJavaScript("""
           document.documentElement.style.setProperty('--native-safe-top', '\(insets.top)px');
           document.documentElement.style.setProperty('--native-safe-bottom', '\(insets.bottom)px');
@@ -80,7 +89,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
           document.documentElement.dataset.increaseContrast = '\(UIAccessibility.isDarkerSystemColorsEnabled)';
           (() => {
             const root = document.documentElement;
-            const theme = '\(traitCollection.userInterfaceStyle == .dark ? "dark" : "light")';
+            const theme = '\(systemStyle == .dark ? "dark" : "light")';
             if (root.dataset.nativeSystemTheme !== theme) {
               root.dataset.nativeSystemTheme = theme;
               window.dispatchEvent(new Event('flighty-native-appearance-change'));
@@ -111,6 +120,10 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
                   nativeShell: document.documentElement.hasAttribute('data-native-shell'),
                   nativeTheme: document.documentElement.dataset.nativeSystemTheme,
                   pageTheme: document.querySelector('.flighty-page').dataset.theme,
+                  appearanceMode: document.documentElement.dataset.appearance,
+                  mediaDark: matchMedia('(prefers-color-scheme: dark)').matches,
+                  sceneStyle: \(self.view.window?.windowScene?.traitCollection.userInterfaceStyle.rawValue ?? -1),
+                  controllerStyle: \(self.traitCollection.userInterfaceStyle.rawValue),
                   rowBackground: row ? getComputedStyle(row).backgroundColor : null,
                   rowShadow: row ? getComputedStyle(row).boxShadow : null,
                   systemChromeDuplicates: getComputedStyle(document.querySelector('.ios-status')).display !== 'none'
