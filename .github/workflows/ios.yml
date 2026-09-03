@@ -103,6 +103,7 @@ jobs:
           retention-days: 30
 
       - name: Verify Simulator full-screen layout in light and dark mode
+        timeout-minutes: 8
         shell: bash
         run: |
           set -euo pipefail

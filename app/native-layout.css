@@ -64,3 +64,14 @@ html[data-native-shell] .passport-detail-scroll { padding-bottom: var(--native-s
 html[data-reduce-transparency="true"] .flighty-page { --chrome-material: #29292f; }
 html[data-reduce-transparency="true"] .flighty-page[data-theme="light"] { --chrome-material: #f5f6f8; }
 html[data-increase-contrast="true"] .flighty-page { --chrome-highlight: rgba(180,180,190,.7); }
+
+/* The expanded sheet leaves one row of map controls above it, never over its title. */
+.flighty-page.map-controls-compact .map-tools { display: flex; }
+.flighty-page.map-controls-compact .map-tools button { height: 44px; }
+.flighty-page.map-controls-compact .map-tools button:first-child { border-radius: 22px 0 0 22px; }
+.flighty-page.map-controls-compact .map-tools button:last-child { border-radius: 0 22px 22px 0; border-top: 1px solid var(--chrome-highlight); border-left: 0; }
+.flighty-page.map-controls-compact .map-follow-button { top: 58px; right: 116px; }
+html[data-native-shell] .flighty-page.map-controls-compact .map-follow-button { top: calc(var(--native-safe-top) + 12px); }
+@media (max-width: 600px) {
+  html:not([data-native-shell]) .flighty-page.map-controls-compact .map-follow-button { top: 54px; }
+}

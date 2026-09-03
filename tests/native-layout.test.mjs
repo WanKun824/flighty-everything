@@ -12,6 +12,7 @@ test("native map fills the viewport and safe areas only inset controls", async (
   assert.match(css, /width: 100%; height: 100%; min-height: 0; max-height: none/);
   assert.match(css, /\.ios-status \{ display: none; \}/);
   assert.match(css, /bottom: calc\(var\(--native-safe-bottom\) \+ 8px\)/);
+  assert.match(css, /\.map-controls-compact \.map-follow-button/);
   assert.match(scene, /webView\?\.scrollView\.bounces = false/);
   assert.match(capacitor, /contentInset: "never"/);
   assert.doesNotMatch(scene, /topSystemChrome|bottomSystemChrome/);

@@ -325,7 +325,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const airportsOnMap = mapOverlayOpen || overlay === "add-journey";
 
   return (
-    <main className={`flighty-page ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
+    <main className={`flighty-page ${!overlay && mainSheet.fraction > 0.5 ? "map-controls-compact" : ""} ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
       <section
         className="flighty-device"
         aria-label="flighty Everything flight tracker"
