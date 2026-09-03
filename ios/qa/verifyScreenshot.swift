@@ -3,7 +3,8 @@ import Foundation
 
 // Check actual content pixels, not only DOM attributes or simulator preferences.
 guard CommandLine.arguments.count == 3,
-      let bitmap = NSBitmapImageRep(contentsOfFile: CommandLine.arguments[1]) else {
+      let data = try? Data(contentsOf: URL(fileURLWithPath: CommandLine.arguments[1])),
+      let bitmap = NSBitmapImageRep(data: data) else {
     exit(2)
 }
 let theme = CommandLine.arguments[2]
