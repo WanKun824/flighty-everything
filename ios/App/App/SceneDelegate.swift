@@ -28,6 +28,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 final class FlightyBridgeViewController: CAPBridgeViewController {
     private var observesWindowAppearance = false
     private let chromeHost = FlightyPassthroughView()
+    private let qaMarker = UILabel()
     private var chromeBars: [String: FlightyGlassBar] = [:]
     private lazy var chromeHandler = FlightyChromeHandler(owner: self)
     private lazy var backGesture = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleBackGesture(_:)))
@@ -58,12 +59,19 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
             // still rendered and receives real touches, but XCTest only snapshots this
             // compact native state marker instead of the entire Mapbox accessibility tree.
             webView?.accessibilityElementsHidden = true
-            chromeHost.isAccessibilityElement = true
-            chromeHost.accessibilityIdentifier = "flighty-native-chrome"
-            chromeHost.accessibilityLabel = "Flighty native chrome"
-            chromeHost.accessibilityValue = "loading"
+            qaMarker.frame = CGRect(x: 0, y: 0, width: 44, height: 44)
+            qaMarker.autoresizingMask = [.flexibleRightMargin, .flexibleBottomMargin]
+            qaMarker.text = " "
+            qaMarker.textColor = .clear
+            qaMarker.backgroundColor = .clear
+            qaMarker.isUserInteractionEnabled = false
+            qaMarker.isAccessibilityElement = true
+            qaMarker.accessibilityIdentifier = "flighty-native-chrome"
+            qaMarker.accessibilityLabel = "Flighty native chrome"
+            qaMarker.accessibilityValue = "loading"
         }
         view.addSubview(chromeHost)
+        if isUIQA { view.addSubview(qaMarker) }
         webView?.configuration.userContentController.add(chromeHandler, name: "flightyChrome")
         backGesture.edges = .left
         backGesture.delegate = self
@@ -157,7 +165,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
             state["bars"] = bars.compactMap { $0["id"] as? String }.sorted()
             if let data = try? JSONSerialization.data(withJSONObject: state, options: [.sortedKeys]),
                let value = String(data: data, encoding: .utf8) {
-                chromeHost.accessibilityValue = value
+                qaMarker.accessibilityValue = value
             }
         }
         webView?.evaluateJavaScript("document.documentElement.dataset.nativeChrome = 'true';", completionHandler: nil)

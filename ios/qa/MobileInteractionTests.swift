@@ -8,7 +8,7 @@ final class MobileInteractionTests: XCTestCase {
         app = XCUIApplication()
         app.launchEnvironment["FLIGHTY_UI_QA"] = "1"
         app.launch()
-        chrome = app.otherElements["flighty-native-chrome"]
+        chrome = app.descendants(matching: .any)["flighty-native-chrome"]
         XCTAssertTrue(chrome.waitForExistence(timeout: 25), "Native glass state marker must be present")
         XCTAssertTrue(waitForState({ ($0["ready"] as? Bool) == true }), "Native glass navigation must be ready")
     }
@@ -44,28 +44,7 @@ final class MobileInteractionTests: XCTestCase {
     private func number(_ key: String, in value: [String: Any]? = nil) -> Double {
         (value ?? state())[key] as? Double ?? -1
     }
-    func testNativeTabsPanelDragAndEdgeBack() throws {
-        let tabs: [(CGFloat, String)] = [(0.175, "flights"), (0.417, "friends"), (0.658, "passport")]
-        for (x, tab) in tabs {
-            tap(x, 0.918)
-            XCTAssertTrue(waitForState { ($0["panelTab"] as? String) == tab }, "Native tab \(tab) must switch the unified panel")
-            screenshot("tab-\(tab)")
-        }
-        tap(0.175, 0.918)
-        XCTAssertTrue(waitForState { ($0["panelTab"] as? String) == "flights" })
-        let before = number("panelTop")
-        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.65))
-        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.25))
-        start.press(forDuration: 0.1, thenDragTo: end)
-        XCTAssertTrue(waitForState { self.number("panelTop", in: $0) < before - 60 }, "Dragging the information header must expand the sheet")
-        screenshot("expanded-by-header-drag")
-        tap(0.90, 0.095)
-        XCTAssertTrue(waitForState { (($0["screenKey"] as? String) ?? "").contains("airports") })
-        edgeBack()
-        XCTAssertTrue(waitForState { ($0["backEnabled"] as? Bool) == false }, "Edge back must restore the itinerary without tapping X")
-        screenshot("edge-back-to-trip")
-    }
-    func testDetailStopsAtMinimumAndSearchKeepsPhoneScale() throws {
+    func testMobileGlassTabsDetailsSearchAndEdgeBack() throws {
         tap(0.175, 0.918)
         tap(0.86, 0.82)
         XCTAssertTrue(waitForState { ($0["detailDetent"] as? String) == "middle" }, "The selected segment must open at the map-preserving middle detent")
@@ -90,5 +69,27 @@ final class MobileInteractionTests: XCTestCase {
         XCTAssertTrue(waitForState { (($0["screenKey"] as? String) ?? "").contains("add-journey") })
         XCTAssertEqual(number("viewportScale"), 1, accuracy: 0.01, "Opening search must preserve the phone viewport scale")
         screenshot("search-fixed-over-map")
+        edgeBack()
+        XCTAssertTrue(waitForState { ($0["backEnabled"] as? Bool) == false })
+
+        let tabs: [(CGFloat, String)] = [(0.175, "flights"), (0.417, "friends"), (0.658, "passport")]
+        for (x, tab) in tabs {
+            tap(x, 0.918)
+            XCTAssertTrue(waitForState { ($0["panelTab"] as? String) == tab }, "Native tab \(tab) must switch the unified panel")
+            screenshot("tab-\(tab)")
+        }
+        tap(0.175, 0.918)
+        XCTAssertTrue(waitForState { ($0["panelTab"] as? String) == "flights" })
+        let before = number("panelTop")
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.65))
+        let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.25))
+        start.press(forDuration: 0.1, thenDragTo: end)
+        XCTAssertTrue(waitForState { self.number("panelTop", in: $0) < before - 60 }, "Dragging the information header must expand the sheet")
+        screenshot("expanded-by-header-drag")
+        tap(0.90, 0.095)
+        XCTAssertTrue(waitForState { (($0["screenKey"] as? String) ?? "").contains("airports") })
+        edgeBack()
+        XCTAssertTrue(waitForState { ($0["backEnabled"] as? Bool) == false }, "Edge back must restore the itinerary without tapping X")
+        screenshot("edge-back-to-trip")
     }
 }
