@@ -210,7 +210,10 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
 
     // CI-only geometry evidence from a running Simulator, never enabled in normal use.
     private func captureLayoutAudit(attempt: Int) {
-        guard attempt < 60 else { return }
+        // iOS 27 runners can spend several minutes warming MapKit/SnapshotService.
+        // Keep sampling for the whole QA step so a delayed screenshot retry cannot
+        // exhaust the appearance-switch audit window before dark mode is applied.
+        guard attempt < 600 else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             guard let self else { return }
             self.publishPresentation()
