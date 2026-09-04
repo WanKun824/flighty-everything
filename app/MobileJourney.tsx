@@ -616,7 +616,7 @@ export function MobileJourneyDetail({
   const countdown = segmentCountdown(segment, now);
   const detailSheet = useSheetDetents({
     detents: [0.32, 0.58, 0.84],
-    initial: 0.84,
+    initial: 0.58,
     dismissible: false,
   });
   const detent = detailSheet.atMinimum
@@ -784,7 +784,7 @@ export function MobileJourneyDetailLegacy({
   const meta = MODE_META[segment.mode];
   const detailSheet = useSheetDetents({
     detents: [0.32, 0.58, 0.84],
-    initial: 0.84,
+    initial: 0.58,
     dismissible: false,
   });
   return (

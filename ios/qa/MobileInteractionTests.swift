@@ -67,14 +67,14 @@ final class MobileInteractionTests: XCTestCase {
     }
     func testDetailStopsAtMinimumAndSearchKeepsPhoneScale() throws {
         tap(0.175, 0.918)
-        tap(0.86, 0.78)
-        XCTAssertTrue(waitForState { ($0["detailDetent"] as? String) == "maximum" }, "The selected segment must open its detail")
+        tap(0.86, 0.82)
+        XCTAssertTrue(waitForState { ($0["detailDetent"] as? String) == "middle" }, "The selected segment must open at the map-preserving middle detent")
         func pullHeaderDown(from y: CGFloat) {
             let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: y))
             let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.90))
             start.press(forDuration: 0.12, thenDragTo: end)
         }
-        pullHeaderDown(from: 0.21)
+        pullHeaderDown(from: 0.47)
         if !waitForState(timeout: 3, { ($0["detailDetent"] as? String) == "minimum" }) {
             pullHeaderDown(from: 0.45)
         }

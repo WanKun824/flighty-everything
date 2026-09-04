@@ -161,7 +161,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const mainSheet = useSheetDetents({
     detents: [0.33, 0.5, 0.82],
     initial: 0.33,
-    minimumHeight: 338,
+    minimumHeight: 300,
   });
   useMobileViewport();
   const calendarRef = useRef<HTMLInputElement>(null);
