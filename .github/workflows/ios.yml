@@ -155,6 +155,25 @@ jobs:
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
           xcrun xcresulttool export attachments --path build/MobileInteraction.xcresult --output-path build/ui-qa/interactions
+          CONTAINER=$(xcrun simctl get_app_container "$QA_DEVICE" com.wankun824.flightyeverything data)
+          cp "$CONTAINER/Documents/interaction-audit.json" build/ui-qa/interaction-audit.json
+          python3 - <<'PY'
+          import json
+          audit=json.load(open("build/ui-qa/interaction-audit.json"))
+          states=audit["states"]
+          assert any(x.get("ready") is True for x in states)
+          assert any(x.get("detailDetent")=="middle" for x in states), "detail did not open at middle detent"
+          minimum=[x for x in states if x.get("detailDetent")=="minimum"]
+          assert minimum, "detail did not settle at minimum detent"
+          assert any("add-journey" in x.get("screenKey","") and abs(x.get("viewportScale",0)-1)<.01 for x in states), "fixed search or viewport failed"
+          tabs={x.get("panelTab") for x in states}
+          assert {"flights","friends","passport"} <= tabs, f"missing tab transitions: {tabs}"
+          tops=[x.get("panelTop") for x in states if isinstance(x.get("panelTop"),(int,float)) and x.get("panelTop")>=0]
+          assert max(tops)-min(tops)>60, "sheet header drag did not expand the panel"
+          assert any("airports" in x.get("screenKey","") for x in states), "map control did not open airports"
+          assert states[-1].get("backEnabled") is False and states[-1].get("panelTab")=="flights", "edge back did not restore itinerary"
+          print({"states":len(states),"tabs":sorted(tabs),"panelTopRange":[min(tops),max(tops)],"latest":states[-1]})
+          PY
           cp "$CONTAINER"/Documents/layout-*.json build/ui-qa/
       - name: Upload Simulator visual checks
         if: always()

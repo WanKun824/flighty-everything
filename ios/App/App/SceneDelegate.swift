@@ -29,6 +29,8 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
     private var observesWindowAppearance = false
     private let chromeHost = FlightyPassthroughView()
     private let qaMarker = UILabel()
+    private var qaTrail: [[String: Any]] = []
+    private var lastQAFingerprint = ""
     private var chromeBars: [String: FlightyGlassBar] = [:]
     private lazy var chromeHandler = FlightyChromeHandler(owner: self)
     private lazy var backGesture = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleBackGesture(_:)))
@@ -69,6 +71,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
             qaMarker.accessibilityIdentifier = "flighty-native-chrome"
             qaMarker.accessibilityLabel = "Flighty native chrome"
             qaMarker.accessibilityValue = "loading"
+            try? FileManager.default.removeItem(at: interactionAuditURL)
         }
         view.addSubview(chromeHost)
         if isUIQA { view.addSubview(qaMarker) }
@@ -166,9 +169,31 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
             if let data = try? JSONSerialization.data(withJSONObject: state, options: [.sortedKeys]),
                let value = String(data: data, encoding: .utf8) {
                 qaMarker.accessibilityValue = value
+                recordInteractionState(state, fingerprint: value)
             }
         }
         webView?.evaluateJavaScript("document.documentElement.dataset.nativeChrome = 'true';", completionHandler: nil)
+    }
+
+    private var interactionAuditURL: URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("interaction-audit.json")
+    }
+
+    private func recordInteractionState(_ state: [String: Any], fingerprint: String) {
+        guard fingerprint != lastQAFingerprint else { return }
+        lastQAFingerprint = fingerprint
+        var entry = state
+        entry["capturedAt"] = Date().timeIntervalSince1970
+        qaTrail.append(entry)
+        if qaTrail.count > 400 { qaTrail.removeFirst(qaTrail.count - 400) }
+        let audit: [String: Any] = [
+            "version": 1,
+            "states": qaTrail,
+            "latest": entry,
+        ]
+        guard let data = try? JSONSerialization.data(withJSONObject: audit, options: [.sortedKeys]) else { return }
+        try? data.write(to: interactionAuditURL, options: .atomic)
     }
 
     @objc private func handleBackGesture(_ recognizer: UIScreenEdgePanGestureRecognizer) {
