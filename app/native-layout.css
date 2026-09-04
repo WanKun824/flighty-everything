@@ -87,7 +87,7 @@ html[data-native-shell] .flighty-page {
   --journey-line: var(--sheet-line);
   top: auto; left: 10px; right: 10px; bottom: 8px;
   height: var(--sheet-height);
-  min-height: min(calc(300px + var(--mobile-safe-bottom)), calc(100% - var(--mobile-safe-top) - 66px));
+  min-height: min(calc(304px + var(--mobile-safe-bottom)), calc(100% - var(--mobile-safe-top) - 66px));
   max-height: calc(100% - var(--mobile-safe-top) - 66px);
   padding: 26px var(--sheet-padding) 0;
   border: 1px solid var(--sheet-line); border-radius: 34px;
