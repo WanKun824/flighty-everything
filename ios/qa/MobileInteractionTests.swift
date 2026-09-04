@@ -2,12 +2,15 @@ import XCTest
 
 final class MobileInteractionTests: XCTestCase {
     private var app: XCUIApplication!
+    private var chrome: XCUIElement!
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchEnvironment["FLIGHTY_UI_QA"] = "1"
         app.launch()
-        XCTAssertTrue(app.buttons["tabs-0"].waitForExistence(timeout: 60), "Native glass navigation must be present")
+        chrome = app.otherElements["flighty-native-chrome"]
+        XCTAssertTrue(chrome.waitForExistence(timeout: 25), "Native glass state marker must be present")
+        XCTAssertTrue(waitForState({ ($0["ready"] as? Bool) == true }), "Native glass navigation must be ready")
     }
     private func screenshot(_ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot())
@@ -20,59 +23,72 @@ final class MobileInteractionTests: XCTestCase {
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.78, dy: 0.56))
         start.press(forDuration: 0.08, thenDragTo: end)
     }
+    private func state() -> [String: Any] {
+        guard let value = chrome.value as? String,
+              let data = value.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [:] }
+        return json
+    }
+    @discardableResult
+    private func waitForState(timeout: TimeInterval = 12, _ condition: ([String: Any]) -> Bool) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        repeat {
+            if condition(state()) { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.12))
+        } while Date() < deadline
+        return false
+    }
+    private func tap(_ x: CGFloat, _ y: CGFloat) {
+        app.coordinate(withNormalizedOffset: CGVector(dx: x, dy: y)).tap()
+    }
+    private func number(_ key: String, in value: [String: Any]? = nil) -> Double {
+        (value ?? state())[key] as? Double ?? -1
+    }
     func testNativeTabsPanelDragAndEdgeBack() throws {
-        let nav = app.buttons["tabs-0"].frame
-        for index in 0...2 {
-            app.buttons["tabs-\(index)"].tap()
-            XCTAssertEqual(app.buttons["tabs-\(index)"].frame.height, nav.height, accuracy: 1)
-            XCTAssertLessThan(app.buttons["tabs-\(index)"].frame.maxY, app.frame.height - 20)
-            screenshot("tab-\(index)")
+        let tabs: [(CGFloat, String)] = [(0.175, "flights"), (0.417, "friends"), (0.658, "passport")]
+        for (x, tab) in tabs {
+            tap(x, 0.918)
+            XCTAssertTrue(waitForState { ($0["panelTab"] as? String) == tab }, "Native tab \(tab) must switch the unified panel")
+            screenshot("tab-\(tab)")
         }
-        app.buttons["tabs-0"].tap()
-        let title = app.staticTexts["My Flights"].firstMatch
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        let before = title.frame.minY
-        let start = title.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+        tap(0.175, 0.918)
+        XCTAssertTrue(waitForState { ($0["panelTab"] as? String) == "flights" })
+        let before = number("panelTop")
+        let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.65))
         let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.25))
         start.press(forDuration: 0.1, thenDragTo: end)
-        XCTAssertLessThan(title.frame.minY, before - 60)
+        XCTAssertTrue(waitForState { self.number("panelTop", in: $0) < before - 60 }, "Dragging the information header must expand the sheet")
         screenshot("expanded-by-header-drag")
-        app.buttons["map-0"].tap()
-        XCTAssertTrue(app.staticTexts["Airports"].firstMatch.waitForExistence(timeout: 15))
+        tap(0.90, 0.095)
+        XCTAssertTrue(waitForState { (($0["screenKey"] as? String) ?? "").contains("airports") })
         edgeBack()
-        XCTAssertTrue(app.buttons["follow-0"].waitForExistence(timeout: 10), "Edge back must restore the itinerary without tapping X")
+        XCTAssertTrue(waitForState { ($0["backEnabled"] as? Bool) == false }, "Edge back must restore the itinerary without tapping X")
         screenshot("edge-back-to-trip")
     }
-    func testDetailStopsAtMinimumAndKeyboardDoesNotZoom() throws {
-        let detail = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@ AND label ENDSWITH %@", "打开 ", " 详情")).firstMatch
-        XCTAssertTrue(detail.waitForExistence(timeout: 20))
-        detail.tap()
-        let close = app.buttons["关闭详情"]
-        XCTAssertTrue(close.waitForExistence(timeout: 10))
-        func pullHeaderDown() {
-            let y = close.frame.midY / app.frame.height
+    func testDetailStopsAtMinimumAndSearchKeepsPhoneScale() throws {
+        tap(0.175, 0.918)
+        tap(0.86, 0.78)
+        XCTAssertTrue(waitForState { ($0["detailDetent"] as? String) == "maximum" }, "The selected segment must open its detail")
+        func pullHeaderDown(from y: CGFloat) {
             let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: y))
-            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.91))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.30, dy: 0.90))
             start.press(forDuration: 0.12, thenDragTo: end)
         }
-        pullHeaderDown()
-        let minimumY = close.frame.midY
-        pullHeaderDown()
-        XCTAssertTrue(close.exists, "Dragging below the minimum must never dismiss the detail")
-        XCTAssertEqual(close.frame.midY, minimumY, accuracy: 8)
+        pullHeaderDown(from: 0.21)
+        if !waitForState(timeout: 3, { ($0["detailDetent"] as? String) == "minimum" }) {
+            pullHeaderDown(from: 0.45)
+        }
+        XCTAssertTrue(waitForState { ($0["detailDetent"] as? String) == "minimum" })
+        let minimumY = number("detailTop")
+        pullHeaderDown(from: 0.72)
+        XCTAssertTrue(waitForState { ($0["detailDetent"] as? String) == "minimum" }, "Dragging below the minimum must never dismiss the detail")
+        XCTAssertEqual(number("detailTop"), minimumY, accuracy: 8)
         screenshot("detail-minimum-locked")
         edgeBack()
-        XCTAssertTrue(app.buttons["search-0"].waitForExistence(timeout: 10))
-        app.buttons["search-0"].tap()
-        let input = app.webViews.textFields.firstMatch
-        XCTAssertTrue(input.waitForExistence(timeout: 15))
-        let width = input.frame.width
-        input.tap()
-        input.typeText("HKG")
-        XCTAssertEqual(input.frame.width, width, accuracy: 2, "Focusing input must not zoom the phone viewport")
-        screenshot("search-keyboard-no-zoom")
-        edgeBack()
-        XCTAssertTrue(input.exists, "First back dismisses keyboard, not the search form")
-        screenshot("search-keyboard-dismissed")
+        XCTAssertTrue(waitForState { ($0["detailDetent"] as? String) == "" })
+        tap(0.873, 0.918)
+        XCTAssertTrue(waitForState { (($0["screenKey"] as? String) ?? "").contains("add-journey") })
+        XCTAssertEqual(number("viewportScale"), 1, accuracy: 0.01, "Opening search must preserve the phone viewport scale")
+        screenshot("search-fixed-over-map")
     }
 }

@@ -32,6 +32,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
     private lazy var chromeHandler = FlightyChromeHandler(owner: self)
     private lazy var backGesture = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleBackGesture(_:)))
     private var canNavigateBack = false
+    private var isUIQA: Bool { ProcessInfo.processInfo.environment["FLIGHTY_UI_QA"] == "1" }
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         // The WKWebView is the root view. Do not add glass strips to its safe areas:
@@ -52,6 +53,16 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
         webView?.scrollView.scrollIndicatorInsets = .zero
         chromeHost.frame = view.bounds
         chromeHost.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        if isUIQA {
+            // Keep simulator interaction checks fast and deterministic. The web UI is
+            // still rendered and receives real touches, but XCTest only snapshots this
+            // compact native state marker instead of the entire Mapbox accessibility tree.
+            webView?.accessibilityElementsHidden = true
+            chromeHost.isAccessibilityElement = true
+            chromeHost.accessibilityIdentifier = "flighty-native-chrome"
+            chromeHost.accessibilityLabel = "Flighty native chrome"
+            chromeHost.accessibilityValue = "loading"
+        }
         view.addSubview(chromeHost)
         webView?.configuration.userContentController.add(chromeHandler, name: "flightyChrome")
         backGesture.edges = .left
@@ -86,7 +97,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
             }
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.publishPresentation() }
-        if ProcessInfo.processInfo.environment["FLIGHTY_UI_QA"] == "1" {
+        if isUIQA {
             captureLayoutAudit(attempt: 0)
         }
     }
@@ -138,6 +149,16 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
             bar.isHidden = false
             bar.frame = frame
             bar.update(buttons)
+        }
+        if isUIQA {
+            var state = payload["qa"] as? [String: Any] ?? [:]
+            state["ready"] = true
+            state["backEnabled"] = canNavigateBack
+            state["bars"] = bars.compactMap { $0["id"] as? String }.sorted()
+            if let data = try? JSONSerialization.data(withJSONObject: state, options: [.sortedKeys]),
+               let value = String(data: data, encoding: .utf8) {
+                chromeHost.accessibilityValue = value
+            }
         }
         webView?.evaluateJavaScript("document.documentElement.dataset.nativeChrome = 'true';", completionHandler: nil)
     }
@@ -268,6 +289,7 @@ private final class FlightyGlassBar: UIVisualEffectView {
             else {
                 button = UIButton(type: .system)
                 button.accessibilityIdentifier = id
+                button.isAccessibilityElement = true
                 button.addAction(UIAction { [weak self] _ in self?.onAction?(id) }, for: .touchUpInside)
                 controls[id] = button
                 contentView.addSubview(button)

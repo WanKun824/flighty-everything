@@ -40,14 +40,33 @@ export function useNativeChrome(screenKey: string, backEnabled: boolean) {
           };
         }) }];
       });
-      const payload = { bars, backEnabled, theme: document.querySelector<HTMLElement>(".flighty-page")?.dataset.theme ?? "dark" };
+      const panel = document.querySelector<HTMLElement>(".primary-panel");
+      const detail = document.querySelector<HTMLElement>(".mobile-journey-detail-target");
+      const panelRect = panel?.getBoundingClientRect();
+      const detailRect = detail?.getBoundingClientRect();
+      const payload = {
+        bars,
+        backEnabled,
+        theme: document.querySelector<HTMLElement>(".flighty-page")?.dataset.theme ?? "dark",
+        qa: {
+          screenKey,
+          panelTab: panel?.dataset.tab ?? "",
+          panelTop: panelRect?.top ?? -1,
+          panelHeight: panelRect?.height ?? 0,
+          detailDetent: detail?.dataset.detent ?? "",
+          detailTop: detailRect?.top ?? -1,
+          detailHeight: detailRect?.height ?? 0,
+          keyboardOpen: keyboard,
+          viewportScale: window.visualViewport?.scale ?? 1,
+        },
+      };
       const serialized = JSON.stringify(payload);
       if (serialized !== lastPayload) { lastPayload = serialized; handler.postMessage(payload); }
     };
     const schedule = () => { if (!frame) frame = requestAnimationFrame(publish); };
     const action = (event: Event) => actions.get((event as CustomEvent<string>).detail)?.click();
     const observer = new ResizeObserver(schedule);
-    for (const element of document.querySelectorAll(".flighty-device, .flight-tabbar, .map-tools, .map-follow-button")) observer.observe(element);
+    for (const element of document.querySelectorAll(".flighty-device, .flight-tabbar, .map-tools, .map-follow-button, .primary-panel, .mobile-journey-detail-target")) observer.observe(element);
     const settings = new MutationObserver(schedule);
     settings.observe(document.documentElement, { attributes: true, attributeFilter: ["data-keyboard-open", "data-native-system-theme", "data-theme"] });
     window.addEventListener("flighty-native-chrome-action", action);

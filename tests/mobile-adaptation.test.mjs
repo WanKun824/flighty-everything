@@ -31,6 +31,9 @@ test("all primary tabs share typography, glass and geometry; readable input size
   assert.match(css, /primary-panel \.panel-titlebar h1/);
   assert.match(css, /primary-panel \.passport-target-scroll/);
   assert.match(css, /primary-panel \.friends-body/);
+  assert.match(css, /--sheet-material: rgba\(246,249,253,\.56\)/);
+  assert.match(css, /blur\(34px\) saturate\(1\.55\)/);
+  assert.match(css, /map-sheet\.mobile-journey-detail-target[\s\S]*border-radius: 34px 34px 0 0/);
   assert.match(css, /font-size: 16px !important/);
   assert.match(base, /-webkit-text-size-adjust: 100%/);
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);
@@ -42,7 +45,9 @@ test("native controls use UIKit glass and Apple symbols with a guarded, state-ba
   assert.match(scene, /UIScreenEdgePanGestureRecognizer/);
   assert.match(scene, /message.frameInfo.isMainFrame/);
   assert.match(scene, /webView\?\.url\?\.scheme == "capacitor"/);
+  assert.match(scene, /accessibilityIdentifier = "flighty-native-chrome"/);
   assert.match(bridge, /ResizeObserver/);
+  assert.match(bridge, /detailDetent/);
   assert.doesNotMatch(bridge, /setInterval/);
   assert.match(app, /composerCloseRequestRef.current\?\.\(\)/);
   assert.match(nav, /keyboardOpen === "true"/);
