@@ -118,12 +118,14 @@ jobs:
           SIMCTL_CHILD_FLIGHTY_UI_QA=1 xcrun simctl launch "$QA_DEVICE" com.wankun824.flightyeverything
           CONTAINER=$(xcrun simctl get_app_container "$QA_DEVICE" com.wankun824.flightyeverything data)
           mkdir -p build/ui-qa
-          for attempt in $(seq 1 25); do
-            test -f "$CONTAINER/Documents/layout-audit.json" && break
+          for attempt in $(seq 1 60); do
+            if test -f "$CONTAINER/Documents/layout-audit.json" && python3 -c 'import json; a=json.load(open("'"$CONTAINER"'/Documents/layout-audit.json")); raise SystemExit(0 if a.get("nativeTheme")=="light" and a.get("nativeGlass") and a.get("mapReady") else 1)'; then
+              break
+            fi
             sleep 2
           done
           cp "$CONTAINER/Documents/layout-audit.json" build/ui-qa/layout-audit.json
-          python3 -c 'import json; a=json.load(open("build/ui-qa/layout-audit.json")); v=a["viewport"]; d=a["device"]; assert abs(d["x"])<1 and abs(d["y"])<1; assert abs(d["height"]-v["height"])<1 and abs(d["width"]-v["width"])<1; assert a["nav"]["bottom"]<=v["height"]-a["safeBottom"]+1; assert a["firstRowBottom"]<=a["nav"]["top"]; assert a["nativeShell"] and not a["systemChromeDuplicates"]; assert a["rowShadow"]=="none"; print(a)'
+          python3 -c 'import json; a=json.load(open("build/ui-qa/layout-audit.json")); v=a["viewport"]; d=a["device"]; assert abs(d["x"])<1 and abs(d["y"])<1; assert abs(d["height"]-v["height"])<1 and abs(d["width"]-v["width"])<1; assert a["nav"]["bottom"]<=v["height"]-a["safeBottom"]+1; assert a["firstRowBottom"]<=a["nav"]["top"]; assert a["nativeShell"] and a["nativeGlass"] and a["mapReady"] and not a["systemChromeDuplicates"]; assert a["rowShadow"]=="none"; print(a)'
           sleep 12
           for attempt in $(seq 1 5); do
             xcrun simctl io "$QA_DEVICE" screenshot build/ui-qa/iphone-light.png

@@ -76,6 +76,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
         view.addSubview(chromeHost)
         if isUIQA { view.addSubview(qaMarker) }
         webView?.configuration.userContentController.add(chromeHandler, name: "flightyChrome")
+        notifyWebChromeReady()
         backGesture.edges = .left
         backGesture.delegate = self
         view.addGestureRecognizer(backGesture)
@@ -107,7 +108,10 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
                 self?.publishPresentation()
             }
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in self?.publishPresentation() }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            self?.publishPresentation()
+            self?.notifyWebChromeReady()
+        }
         if isUIQA {
             captureLayoutAudit(attempt: 0)
         }
@@ -130,6 +134,10 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
             }
           })();
         """, completionHandler: nil)
+    }
+
+    private func notifyWebChromeReady() {
+        webView?.evaluateJavaScript("window.dispatchEvent(new Event('flighty-native-ready'));", completionHandler: nil)
     }
 
     fileprivate func updateChrome(_ message: WKScriptMessage) {
@@ -239,6 +247,7 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
                   titleSize: getComputedStyle(document.querySelector('.panel-titlebar h1')).fontSize,
                   titleRect: document.querySelector('.panel-titlebar h1').getBoundingClientRect().toJSON(),
                   nativeGlass: document.documentElement.dataset.nativeChrome === 'true',
+                  mapReady: document.querySelector('.flight-globe-map')?.dataset.mapReady === 'true',
                   viewportScale: visualViewport?.scale ?? 1,
                   horizontalOverflow: document.documentElement.scrollWidth > innerWidth,
                   appearanceMode: document.documentElement.dataset.appearance,

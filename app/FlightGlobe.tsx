@@ -203,10 +203,15 @@ export default function FlightGlobe({
 
       map.on("style.load", () => {
         if (disposed) return;
+        if (hostRef.current) hostRef.current.dataset.mapReady = "false";
         configureBasemap(map, basemapRef.current, basemapThemeRef.current);
         installProductLayers(map, liveDataRef.current, basemapRef.current);
         setLoaded(true);
         setStyleRevision((value) => value + 1);
+      });
+
+      map.on("idle", () => {
+        if (!disposed && hostRef.current) hostRef.current.dataset.mapReady = "true";
       });
 
       map.on("click", "flighty-airport-dots", (event) => {
@@ -588,6 +593,7 @@ export default function FlightGlobe({
     const nextUrl = styleUrl(next);
     basemapRef.current = next;
     if (!map) return;
+    if (hostRef.current) hostRef.current.dataset.mapReady = "false";
     preserveCameraAfterStyleChangeRef.current = true;
     if (previousUrl === nextUrl) {
       configureBasemap(map, next, basemapThemeRef.current);
