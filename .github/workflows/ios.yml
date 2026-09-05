@@ -133,9 +133,12 @@ jobs:
             sleep 10
           done
           swift ios/qa/verifyScreenshot.swift build/ui-qa/iphone-light.png light
+          rm -f "$CONTAINER/Documents/layout-dark.json"
           xcrun simctl ui "$QA_DEVICE" appearance dark
-          for attempt in $(seq 1 20); do
-            test -f "$CONTAINER/Documents/layout-dark.json" && break
+          for attempt in $(seq 1 60); do
+            if test -f "$CONTAINER/Documents/layout-dark.json" && python3 -c 'import json; a=json.load(open("'"$CONTAINER"'/Documents/layout-dark.json")); raise SystemExit(0 if a.get("nativeTheme")=="dark" and a.get("pageTheme")=="dark" and a.get("nativeGlass") and a.get("mapReady") else 1)'; then
+              break
+            fi
             sleep 2
           done
           cp "$CONTAINER/Documents/layout-audit.json" build/ui-qa/layout-after-switch.json
@@ -163,6 +166,7 @@ jobs:
           retention-days: 30
 
       - name: Build unsigned Apple Silicon device IPA
+        if: always()
         run: |
           xcodebuild \
             -project ios/App/App.xcodeproj \
@@ -188,6 +192,7 @@ jobs:
           )
           unzip -t build/packages/flighty-everything-ios-arm64-unsigned.ipa
       - name: Upload unsigned device IPA
+        if: always() && hashFiles('build/packages/flighty-everything-ios-arm64-unsigned.ipa') != ''
         uses: actions/upload-artifact@v7
         with:
           name: flighty-everything-ios-arm64-unsigned
