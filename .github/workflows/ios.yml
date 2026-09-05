@@ -133,8 +133,11 @@ jobs:
             sleep 10
           done
           swift ios/qa/verifyScreenshot.swift build/ui-qa/iphone-light.png light
+          xcrun simctl terminate "$QA_DEVICE" com.wankun824.flightyeverything || true
           rm -f "$CONTAINER/Documents/layout-dark.json"
           xcrun simctl ui "$QA_DEVICE" appearance dark
+          SIMCTL_CHILD_FLIGHTY_UI_QA=1 xcrun simctl launch "$QA_DEVICE" com.wankun824.flightyeverything
+          CONTAINER=$(xcrun simctl get_app_container "$QA_DEVICE" com.wankun824.flightyeverything data)
           for attempt in $(seq 1 60); do
             if test -f "$CONTAINER/Documents/layout-dark.json" && python3 -c 'import json; a=json.load(open("'"$CONTAINER"'/Documents/layout-dark.json")); raise SystemExit(0 if a.get("nativeTheme")=="dark" and a.get("pageTheme")=="dark" and a.get("nativeGlass") and a.get("mapReady") else 1)'; then
               break
