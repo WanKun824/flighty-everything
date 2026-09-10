@@ -10,8 +10,8 @@ test("playback completes once, advances in order and preserves completion throug
   assert.doesNotMatch(globe, /elapsed % duration/);
   assert.match(globe, /previousPlayback\?\.key === playbackKey \? previousPlayback\.progress/);
   assert.match(globe, /playback\.completed = true/);
-  assert.match(store, /const next = current\.segments\[index \+ 1\]/);
-  assert.match(store, /selectedSegmentId: next\?\.id \?\? id/);
+  assert.match(store, /nextPlaybackSelection\(current\.segments, id\)/);
+  assert.doesNotMatch(store.slice(store.indexOf("const restartTrip"), store.indexOf("const reset")), /status:|progress:/);
   assert.match(app, /journeyStore\.advanceSegment\(id\)/);
   assert.match(app, /journeyStore\.restartTrip\(\)/);
 });

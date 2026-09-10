@@ -1,5 +1,6 @@
 "use client";
 
+import { sameJourneyPlace } from "./journeyLifecycle";
 import { useEffect, useRef, useState, type CSSProperties, type ElementType } from "react";
 import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
 import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
@@ -52,10 +53,11 @@ type ComposerDraft = {
   title: string;
   drafts: JourneySegment[];
   planning: boolean;
-  saveTarget?: "current" | "new";
+  saveTarget?: "current" | "new" | "";
+  targetTripId?: string;
 };
 
-export type JourneySaveTarget = "current" | "new";
+export type JourneySaveTarget = "current" | "new" | "";
 
 function readComposerDraft() {
   if (typeof window === "undefined") return null;
@@ -87,11 +89,15 @@ export default function JourneyComposer({
   initialOrigin,
   mapSelection,
   onPlaceSelected,
+  trips = [],
+  contextTripId,
 }: {
   variant: "desktop" | "mobile";
+  trips?: { id: string; name: string; segments: JourneySegment[] }[];
+  contextTripId?: string | null;
   onClose: () => void;
   onAdd?: (segment: JourneySegment) => void;
-  onAddMany?: (segments: JourneySegment[], tripName: string, target: JourneySaveTarget) => void;
+  onAddMany?: (segments: JourneySegment[], tripName: string, target: JourneySaveTarget, tripId?: string) => void;
   onFlightTools?: () => void;
   importedSegments?: JourneySegment[];
   onImportedSegmentsConsumed?: () => void;
@@ -116,7 +122,7 @@ export default function JourneyComposer({
   const [mode, setMode] = useState<JourneyMode>(restoredDraft?.mode ?? "flight");
   const [name, setName] = useState(restoredDraft?.name ?? tripName);
   const [origin, setOrigin] = useState<JourneyPlace>(importedLast?.destination ?? restoredDraft?.origin ?? fallbackOrigin);
-  const [originQuery, setOriginQuery] = useState(importedLast?.destination.name ?? restoredDraft?.originQuery ?? fallbackOrigin.name);
+  const [originQuery, setOriginQuery] = useState(importedLast?.destination.name ?? restoredDraft?.originQuery ?? (initialOrigin ? fallbackOrigin.name : ""));
   const [originSuggestions, setOriginSuggestions] = useState<JourneyPlaceSuggestion[]>([]);
   const [originSearching, setOriginSearching] = useState(false);
   const [destination, setDestination] = useState<JourneyPlace | null>(importedLast ? null : (restoredDraft?.destination ?? null));
@@ -129,7 +135,9 @@ export default function JourneyComposer({
   const [title, setTitle] = useState(restoredDraft?.title ?? "");
   const [drafts, setDrafts] = useState<JourneySegment[]>(initialDrafts);
   const [planning, setPlanning] = useState(Boolean(importedLast) || restoredDraft?.planning || variant === "desktop");
-  const [saveTarget, setSaveTarget] = useState<JourneySaveTarget>(restoredDraft?.saveTarget ?? "current");
+  const [saveTarget, setSaveTarget] = useState<JourneySaveTarget>(restoredDraft?.saveTarget ?? (contextTripId || variant === "desktop" ? "current" : ""));
+  const [targetTripId, setTargetTripId] = useState(restoredDraft?.targetTripId ?? contextTripId ?? "");
+  const targetTrip = trips.find(trip => trip.id === targetTripId);
   const [error, setError] = useState<string | null>(null);
   const [railResults, setRailResults] = useState<JourneySegment[]>([]);
   const [selectedRailSegment, setSelectedRailSegment] = useState<JourneySegment | null>(null);
@@ -166,6 +174,7 @@ export default function JourneyComposer({
     drafts,
     planning,
     saveTarget,
+    targetTripId,
   });
 
   const clearComposerDraft = () => {
@@ -177,11 +186,13 @@ export default function JourneyComposer({
     window.sessionStorage.setItem(MOBILE_DRAFT_KEY, JSON.stringify(snapshot()));
   };
 
-  const isDirty = saveTarget === "new" || drafts.length > 0 || Boolean(destination) || Boolean(query.trim()) ||
+  const isDirty = saveTarget === "new" || drafts.length > 0 || Boolean(destination) ||
     name !== tripName || origin.code !== fallbackOrigin.code || Boolean(title.trim()) || Boolean(note.trim());
   const validOrigin = originQuery.trim() === origin.name;
   const pendingLegReady = Boolean(destination && validOrigin);
   const stagedCount = drafts.length + (pendingLegReady ? 1 : 0);
+  const previousDestination = drafts.at(-1)?.destination ?? (saveTarget === "current" ? targetTrip?.segments.at(-1)?.destination : undefined);
+  const hasConnectionGap = previousDestination && validOrigin && !sameJourneyPlace(previousDestination, origin);
 
   const requestClose = () => {
     if (variant === "mobile" && isDirty) {
@@ -225,9 +236,10 @@ export default function JourneyComposer({
       drafts,
       planning,
       saveTarget,
+    targetTripId,
     };
     window.sessionStorage.setItem(MOBILE_DRAFT_KEY, JSON.stringify(draft));
-  }, [mode, name, origin, originQuery, destination, query, date, departure, note, title, drafts, planning, saveTarget, variant]);
+  }, [mode, name, origin, originQuery, destination, query, date, departure, note, title, drafts, planning, saveTarget, targetTripId, variant]);
 
   useEffect(() => {
     if (!initialImportedSegments.length || importedConsumedRef.current) return;
@@ -385,6 +397,10 @@ export default function JourneyComposer({
   };
 
   const save = () => {
+    if (variant === "mobile" && (!saveTarget || (saveTarget === "current" && !targetTrip))) {
+      setError("请选择加入哪趟旅程，或新建旅程");
+      return;
+    }
     if (destination && !validOrigin) {
       setError("请先选择这段行程的起点");
       return;
@@ -395,7 +411,7 @@ export default function JourneyComposer({
       setError("请先搜索并选择一个目的地");
       return;
     }
-    if (onAddMany) onAddMany(segments, name.trim() || tripName, saveTarget);
+    if (onAddMany) onAddMany(segments, name.trim() || tripName, saveTarget, targetTripId);
     else segments.forEach((segment) => onAdd?.(segment));
     clearComposerDraft();
     onClose();
@@ -432,11 +448,11 @@ export default function JourneyComposer({
           <button aria-label="关闭添加行程" onClick={requestClose}><SFXmark size="md" /></button>
         </header>
 
-        <div className={`journey-draft-status ${stagedCount > 0 ? "has-items" : ""}`} role="status" aria-live="polite">
+        {(drafts.length > 0 || pendingLegReady) && <div className={`journey-draft-status ${stagedCount > 0 ? "has-items" : ""}`} role="status" aria-live="polite">
           <SFCheckmarkCircleFill size="xs" />
-          <strong>已暂存 {stagedCount} 段</strong>
-          <small>仅保存在这台设备</small>
-        </div>
+          <strong>已暂存 {drafts.length} 段</strong>
+          <small>{pendingLegReady ? "另有 1 段待确认" : "仅保存在这台设备"}</small>
+        </div>}
 
         <label className="journey-target-search">
           <SFMagnifyingglass size="md" />
@@ -480,7 +496,6 @@ export default function JourneyComposer({
               <button onClick={() => setPlanning(true)}><SFArrowLeftArrowRight size="sm" /><span><strong>按路线规划</strong><small>组合飞机、火车、汽车与轮船</small></span><SFChevronRight size="xs" /></button>
               <button onClick={openFlightTools}><SFAirplane size="sm" /><span><strong>按航班号添加</strong><small>搜索真实航班或导入日历</small></span><SFChevronRight size="xs" /></button>
               <button onClick={openFlightTools}><SFCalendarBadgePlus size="sm" /><span><strong>从日历导入</strong><small>识别日历中的航班</small></span><SFChevronRight size="xs" /></button>
-              <button onClick={randomDestination}><SFDiceFill size="sm" /><span><strong>随机探索</strong><small>从当前位置生成下一站</small></span><SFChevronRight size="xs" /></button>
             </section>
           </div>
         )}
@@ -499,8 +514,8 @@ export default function JourneyComposer({
                   if (name === "新的旅程") setName(tripName);
                 }}
               >
-                <strong>加入当前旅程</strong>
-                <small>{tripName}</small>
+                <strong>加入已有旅程</strong>
+                <small>{targetTrip?.name || "选择一趟旅程"}</small>
               </button>
               <button
                 type="button"
@@ -514,11 +529,17 @@ export default function JourneyComposer({
                 }}
               >
                 <strong>新建旅程</strong>
-                <small>单独保存这一组连续行程</small>
+                <small>为这次旅行建立独立旅程</small>
               </button>
             </div>
+            {saveTarget === "current" && <label className="trip-context-picker"><span>保存到</span><select aria-label="行程所属旅程" value={targetTripId} onChange={event => {
+              const id = event.target.value; setTargetTripId(id);
+              const chosen = trips.find(trip => trip.id === id);
+              const last = chosen?.segments.at(-1)?.destination;
+              if (!drafts.length && last) { setOrigin(last); setOriginQuery(last.name); }
+            }}><option value="" disabled>请选择旅程</option>{trips.map(trip => <option key={trip.id} value={trip.id}>{trip.name}</option>)}</select></label>}
             <div className="journey-planner-heading"><span><small>连续路线</small><strong>{originQuery === origin.name ? origin.city : "选择起点"} → {destination?.city ?? "下一站"}</strong></span>{destination && <button onClick={() => { setDestination(null); setQuery(""); }}>更换目的地</button>}</div>
-            <label className="trip-name-field journey-target-trip-name"><span>旅程名称</span><input value={name} maxLength={48} onChange={(event) => setName(event.target.value)} placeholder="例如：东京到濑户内海" /></label>
+            {saveTarget === "new" && <label className="trip-name-field journey-target-trip-name"><span>旅程名称</span><input value={name} maxLength={48} onChange={(event) => setName(event.target.value)} placeholder="例如：东京到濑户内海" /></label>}
             <label className="journey-place-search journey-origin-search journey-target-origin">
               <span>当前起点</span>
               <div><SFLocationFill size="sm" /><input value={originQuery} onFocus={() => { if (originQuery === origin.name) setOriginQuery(""); }} onChange={(event) => { const value = event.target.value; setOriginQuery(value); setOriginSearching(hasSearchText(value)); if (!hasSearchText(value)) setOriginSuggestions([]); }} placeholder="输入当前地址、机场或车站" /><i>{originSearching ? "搜索中" : originQuery === origin.name ? "已选择" : ""}</i></div>
@@ -561,7 +582,8 @@ export default function JourneyComposer({
                 )}
               </>
             )}
-            <div className="journey-builder-actions journey-target-actions"><button className="journey-add-leg" disabled={!pendingLegReady} onClick={addNextLeg}><SFPlus size="xs" /> 添加下一段</button><button className="journey-submit" disabled={stagedCount === 0 || Boolean(destination && !validOrigin)} onClick={save}>保存行程 · {stagedCount} 段</button></div>
+            {hasConnectionGap && <p className="journey-context-hint" role="status"><strong>接驳尚未记录：</strong>{previousDestination?.name} → {origin.name}。可调整起点补充接驳，也可以保留间隔；保存不会自动拆成另一趟旅程。</p>}
+            <div className="journey-builder-actions journey-target-actions"><button className="journey-add-leg" disabled={!pendingLegReady} onClick={addNextLeg}><SFPlus size="xs" /> 暂存并添加下一段</button><button className="journey-submit" disabled={stagedCount === 0 || Boolean(destination && !validOrigin)} onClick={save}>保存行程 · {stagedCount} 段</button></div>
           </div>
         )}
         {discardPrompt && (

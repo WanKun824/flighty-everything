@@ -160,8 +160,9 @@ export function FlightyJourneyPanel({
   overviewExpanded,
   onAdd,
   onEditNames,
-  onSaveToPassport,
-  savedToPassport,
+  trips,
+  activeTripId,
+  onChooseTrip,
   onRestart,
   compact = false,
 }: {
@@ -174,19 +175,21 @@ export function FlightyJourneyPanel({
   overviewExpanded: boolean;
   onAdd: () => void;
   onEditNames: () => void;
-  onSaveToPassport: () => void;
-  savedToPassport: boolean;
+  trips: JourneyTrip[];
+  activeTripId: string;
+  onChooseTrip: (id: string) => void;
   onRestart: () => void;
   compact?: boolean;
 }) {
   const selected = segments.find((segment) => segment.id === selectedSegmentId) ?? segments[0];
-  const visibleSegments = compact ? (selected ? [selected] : []) : segments;
+  const visibleSegments = compact || !overviewExpanded ? (selected ? [selected] : []) : segments;
   const stats = journeyStats(segments);
   const now = useNow();
 
   return (
     <div className={`panel-scroll mobile-journey-target flighty-journey-list ${compact ? "is-compact" : ""}`}>
-      <div className="mobile-overview-strip flighty-overview-strip">
+      {!compact && <label className="trip-context-picker"><span>旅程</span><select aria-label="切换旅程" value={activeTripId} onChange={event => onChooseTrip(event.target.value)}>{trips.map(trip => <option key={trip.id} value={trip.id}>{trip.name}</option>)}</select></label>}
+      {!compact && <div className="mobile-overview-strip flighty-overview-strip">
         <button
           className="mobile-overview-toggle"
           onClick={onToggleOverview}
@@ -198,16 +201,10 @@ export function FlightyJourneyPanel({
           <SFChevronRight size="xs" />
         </button>
         {!compact && <button className="mobile-overview-edit" aria-label="编辑旅程名称" onClick={onEditNames}><SFPencil size="xs" /></button>}
-        <button className="mobile-overview-restart" aria-label="从头播放整趟旅程" onClick={onRestart}><SFPlayFill size="xs" /><span>从头</span></button>
-        <button
-          className={`mobile-overview-save ${savedToPassport ? "saved" : ""}`}
-          aria-label={savedToPassport ? "已保存到旅记" : "保存到旅记"}
-          onClick={onSaveToPassport}
-        >
-          {savedToPassport ? <SFCheckmarkCircleFill size="xs" /> : <SFBookClosedFill size="xs" />}
-        </button>
-      </div>
-      {!compact && <div className="mobile-section-heading"><span>连续行程</span><button onClick={onAdd}><SFPlus size="xs" />添加行程</button></div>}
+        <button className="mobile-overview-restart" aria-label="从头播放整趟旅程" onClick={onRestart}><SFPlayFill size="xs" /><span>回放</span></button>
+      </div>}
+      {!compact && <div className="mobile-section-heading"><span>路段</span><button onClick={onAdd}><SFPlus size="xs" />添加路段</button></div>}
+      {!segments.length && <div className="journey-empty"><p>还没有路段</p><button onClick={onAdd}><SFPlus size="xs" />添加第一段行程</button></div>}
       <div className="mobile-segment-list">
         {visibleSegments.map((segment) => {
           const isSelected = segment.id === selectedSegmentId;
@@ -271,6 +268,7 @@ function operatorCode(segment: JourneySegment) {
 function scheduleCaption(tone: string, countdown: { value: string; unit: string }, mode: JourneyMode) {
   if (tone === "complete") return "Arrived";
   if (countdown.unit === "计划") return "Scheduled";
+  if (`${countdown.value}${countdown.unit}`.includes("待确认")) return "待确认到达";
   const minuteMatch = countdown.unit.match(/(\d+)\s*分钟/);
   const duration = countdown.unit.includes("天")
     ? `${countdown.value}d`
@@ -438,12 +436,13 @@ function bestArrivalAt(segment: JourneySegment) {
 }
 
 function segmentCountdown(segment: JourneySegment, now: number) {
+  if (segment.status === "complete") return { value: "已", unit: "完成" };
   const departure = bestDepartureAt(segment);
   const arrival = bestArrivalAt(segment);
   const start = departure ? new Date(departure).getTime() : Number.NaN;
   const end = arrival ? new Date(arrival).getTime() : Number.NaN;
   const hasSchedule = Number.isFinite(start) && Number.isFinite(end);
-  if ((hasSchedule && now >= end) || (!hasSchedule && segment.status === "complete")) return { value: "已", unit: "到达" };
+  if (hasSchedule && now >= end) return { value: "待", unit: "确认到达" };
   if ((hasSchedule && now >= start && now < end) || (!hasSchedule && segment.status === "active")) {
     const minutes = Number.isFinite(end)
       ? Math.max(0, Math.round((end - now) / 60_000))
@@ -462,13 +461,14 @@ function segmentCountdown(segment: JourneySegment, now: number) {
 }
 
 function segmentStatus(segment: JourneySegment, now: number) {
+  if (segment.status === "complete") return { label: "已完成", tone: "complete" };
   const departure = bestDepartureAt(segment);
   const arrival = bestArrivalAt(segment);
   const start = departure ? new Date(departure).getTime() : Number.NaN;
   const end = arrival ? new Date(arrival).getTime() : Number.NaN;
   const hasSchedule = Number.isFinite(start) && Number.isFinite(end);
-  if ((hasSchedule && now >= end) || (!hasSchedule && segment.status === "complete")) {
-    return { label: "已到达", tone: "complete" };
+  if (hasSchedule && now >= end) {
+    return { label: "计划时间已过 · 待确认", tone: "upcoming" };
   }
   if ((hasSchedule && now >= start && now < end) || (!hasSchedule && segment.status === "active")) {
     return { label: segment.operational?.statusText || "进行中", tone: "active" };
@@ -601,11 +601,13 @@ export function MobileJourneyPassport({
 
 export function MobileJourneyDetail({
   segment,
+  initialDetent = .33,
   onClose,
   onToggleComplete,
   onDelete,
 }: {
   segment: JourneySegment;
+  initialDetent?: number;
   onClose: () => void;
   onToggleComplete: () => void;
   onDelete: () => void;
@@ -615,8 +617,9 @@ export function MobileJourneyDetail({
   const status = segmentStatus(segment, now);
   const countdown = segmentCountdown(segment, now);
   const detailSheet = useSheetDetents({
-    detents: [0.32, 0.58, 0.84],
-    initial: 0.58,
+    detents: [.33, .57, .93],
+    initial: initialDetent,
+    minimumHeight: 256,
     dismissible: false,
   });
   const detent = detailSheet.atMinimum
@@ -632,21 +635,14 @@ export function MobileJourneyDetail({
       className={`map-sheet mobile-journey-detail mobile-journey-detail-target ${detailSheet.dragging ? "is-dragging" : ""}`}
       role="dialog"
       aria-label={`${segment.title}详情`}
+      {...detailSheet.sheetProps}
       data-detent={detent}
       style={{
         "--mode-color": meta.color,
         "--sheet-height": `${detailSheet.fraction * 100}%`,
       } as CSSProperties}
     >
-      <button
-        className="sheet-drag-handle detail-sheet-handle"
-        aria-label="拖动调整详情高度；最小状态会保持固定"
-        {...detailSheet.handleProps}
-      >
-        <span />
-      </button>
-
-      <header className="mobile-detail-summary" {...detailSheet.surfaceProps}>
+      <header className="mobile-detail-summary">
         <span className="mobile-operator-mark" style={{ color: meta.color }} aria-hidden="true">
           <JourneyModeIcon mode={segment.mode} />
         </span>

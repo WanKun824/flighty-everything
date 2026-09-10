@@ -17,7 +17,7 @@ test("journey selection has one source of truth and separates map focus from det
   assert.match(mobile, /className="mobile-segment-select"[\s\S]*?onClick=\{\(\) => selected \? onOpenDetails\(segment\) : onSelect\(segment\)\}/);
   assert.match(mobile, /className="mobile-segment-detail-button"[\s\S]*?onClick=\{\(\) => onOpenDetails\(segment\)\}/);
   assert.match(mobile, /onClick=\{onToggleOverview\}[\s\S]*?aria-expanded=\{overviewExpanded\}/);
-  assert.match(app, /mainSheet\.fraction > 0\.5 \? mainSheet\.minimum : mainSheet\.maximum/);
+  assert.match(app, /onToggleOverview=\{\(\) => setOverviewExpanded\(value => !value\)\}/);
 });
 
 test("journey details stop at their minimum height and destructive actions can be undone", async () => {
@@ -27,7 +27,7 @@ test("journey details stop at their minimum height and destructive actions can b
     read("../app/journeyStorage.ts"),
   ]);
 
-  assert.match(mobile, /detents: \[0\.32, 0\.58, 0\.84\][\s\S]*?dismissible: false/);
+  assert.match(mobile, /initial: initialDetent,[\s\S]*?dismissible: false/);
   assert.doesNotMatch(mobile, /onDismiss: onClose/);
   assert.match(app, /notify\("已删除这段行程", "撤销"/);
   assert.match(app, /journeyStore\.restoreSegments\(snapshot, deletedId\)/);
@@ -56,7 +56,7 @@ test("selected routes stay solid across the date line and stored journeys remain
   assert.doesNotMatch(globe, /line-dasharray/);
   assert.doesNotMatch(globe, /flighty-journey-stop-dots/);
   assert.match(storage, /export function splitContinuousSegments/);
-  assert.match(storage, /samePlace\(last\.destination, chain\[0\]\.origin\)/);
+  assert.match(storage, /appendUniqueSegments\(current\.segments, incoming\)/);
   assert.match(storage, /const trips = sourceTrips;/);
   assert.doesNotMatch(storage, /sourceTrips\.flatMap\(splitTrip\)/);
 });
@@ -70,7 +70,7 @@ test("mobile planning preserves drafts across flight tools and guards discarding
   assert.match(composer, /MOBILE_DRAFT_KEY/);
   assert.match(composer, /window\.sessionStorage\.setItem/);
   assert.match(composer, /role="alertdialog"/);
-  assert.match(composer, /已暂存 \{stagedCount\} 段/);
+  assert.match(composer, /已暂存 \{drafts\.length\} 段/);
   assert.match(composer, /保存这次规划草稿？/);
   assert.match(composer, /保存草稿并退出/);
   assert.match(composer, /importedSegments/);

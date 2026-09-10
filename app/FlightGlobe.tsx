@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AIRPORTS, airportByCode, airportStatusLevel, type Region } from "./flightyData";
+import { AIRPORTS, airportByCode, type Region } from "./flightyData";
 import type { MapLayerMode, WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
@@ -834,16 +834,12 @@ function airportFeatures(selectedAirport: string | null, region: "All" | Region 
         selected: airport.code === selectedAirport,
         minZoom: 0,
         catalog: false,
-        color: airportStatusLevel(airport) === "severe"
-          ? "#ff375f"
-          : airportStatusLevel(airport) === "warning"
-            ? "#ff9f0a"
-            : "#24c78a",
+        color: airport.code === selectedAirport ? "#0a84ff" : "#8e8e93",
       },
       geometry: { type: "Point" as const, coordinates: airport.coordinate },
     })), ...catalog.filter(airport => !known.has(airport.code)).map(airport => ({
       type: "Feature" as const,
-      properties: { code: airport.code, selected: airport.code === selectedAirport, minZoom: airport.code === selectedAirport ? 0 : airport.minZoom, catalog: true, color: "#39a7ef" },
+      properties: { code: airport.code, selected: airport.code === selectedAirport, minZoom: airport.code === selectedAirport ? 0 : airport.minZoom, catalog: true, color: airport.code === selectedAirport ? "#0a84ff" : "#8e8e93" },
       geometry: { type: "Point" as const, coordinates: airport.coordinate },
     }))],
   };

@@ -37,6 +37,7 @@ test("airports sheet and map use real airport identities, regions and status mar
     readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
+  const airportSource = await readFile(new URL("../app/AirportPanels.tsx", import.meta.url), "utf8");
   for (const code of ["HKG", "NRT", "SIN", "ICN", "LHR", "CDG", "ORD", "JFK", "LAX"])
     assert.match(data, new RegExp(`code: "${code}"`));
   assert.ok((data.match(/timeZone:/g) ?? []).length >= 25);
@@ -45,8 +46,11 @@ test("airports sheet and map use real airport identities, regions and status mar
   assert.match(globe, /region === "All" \|\| airport\.region === region/);
   assert.match(globe, /flighty-airport-dots/);
   assert.doesNotMatch(globe, /airportMarkersRef/);
-  assert.match(page, /<AirportRow/);
-  assert.match(page, /真实机场资料/);
+  assert.match(airportSource, /<AirportRow/);
+  assert.match(airportSource, /暂无实时运行数据/);
+  assert.doesNotMatch(page, /airportByCode\(selectedAirport\) \?\? AIRPORTS\[0\]/);
+  assert.doesNotMatch(airportSource, /departureOnTime|Operations Normal|View Full Operational Report/);
+  assert.match(airportSource, /catalog\.find\(entry => entry\.code === code\)/);
   assert.match(css, /\.airport-signal\.warning/);
   assert.match(css, /\.airport-signal\.severe/);
 });
@@ -89,7 +93,7 @@ test("passport keeps the shared draggable sheet while mobile search stays fixed 
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(page, /activeTab === "passport" \? "passport-panel"/);
-  assert.match(page, /\.\.\.mainSheet\.handleProps/);
+  assert.match(page, /\.\.\.mainSheet\.sheetProps/);
   assert.doesNotMatch(composer, /拖动调整搜索面板高度/);
   assert.match(css, /\.flight-panel\.passport-panel \{ top: auto; height: var\(--sheet-height,47%\)/);
   assert.match(css, /\.journey-composer\.mobile\.journey-search-target \{ height: 86%/);
