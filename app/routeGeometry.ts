@@ -96,7 +96,7 @@ export type LegPath = {
   cumulativeWeb: number[];
   km: number;
   /** road 表示来自 Directions 真实路网，geodesic 表示大圆。 */
-  source: "geodesic" | "road";
+  source: "geodesic" | "road" | "rail";
   /** 按巡航速度折算的小时数，动画时间轴按它分配。 */
   hours: number;
 };

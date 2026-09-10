@@ -52,7 +52,9 @@ test("selected routes stay solid across the date line and stored journeys remain
   ]);
 
   assert.match(globe, /segments\.filter\(\(segment\) => segment\.id === selectedId\)/);
-  assert.match(globe, /coordinates: unwrap\(traffic\?\.coordinates \?\? greatCircleCoordinates/);
+  assert.match(globe, /coordinates: journeySegmentPath\(segment, traffic\?\.coordinates\)\.coordinates/);
+  const path = await readFile(new URL("../app/journeyPath.ts", import.meta.url), "utf8");
+  assert.match(path, /unwrap\(geodesic\(segment.origin.coordinate, segment.destination.coordinate, 128\)\)/);
   assert.doesNotMatch(globe, /line-dasharray/);
   assert.doesNotMatch(globe, /flighty-journey-stop-dots/);
   assert.match(storage, /export function splitContinuousSegments/);

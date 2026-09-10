@@ -1,5 +1,6 @@
 import { airportByCode, type Flight } from "./flightyData.ts";
 import type { RouteTransport } from "./routeRules";
+import type { RailGeometry } from "./railGeometry.ts";
 
 export type JourneyMode = RouteTransport;
 export type JourneyStatus = "upcoming" | "active" | "complete";
@@ -67,6 +68,7 @@ export type JourneySegment = {
   note: string;
   progress: number;
   operational?: JourneyOperationalData;
+  railGeometry?: RailGeometry;
 };
 
 export const MODE_META: Record<

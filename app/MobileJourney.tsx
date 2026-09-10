@@ -1,5 +1,6 @@
 "use client";
 
+import { railRouteLabel } from "./journeyPath";
 import { useEffect, useState, type CSSProperties } from "react";
 import SFArrowDownRight from "sf-symbols-lib/monochrome/SFArrowDownRight";
 import SFArrowUpRight from "sf-symbols-lib/monochrome/SFArrowUpRight";
@@ -707,6 +708,7 @@ export function MobileJourneyDetail({
           <span>
             <strong>{sourceLabel(segment)}</strong>
             <small>{freshnessLabel(segment)}</small>
+            {segment.mode === "train" && <small>{railRouteLabel(segment)} · <a href="https://transitous.org/sources/" target="_blank" rel="noreferrer">数据来源</a></small>}
           </span>
         </section>
 

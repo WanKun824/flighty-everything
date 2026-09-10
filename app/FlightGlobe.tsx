@@ -7,8 +7,11 @@ import type { MapLayerMode, WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
 import { fetchRoadTraffic, type RoadTrafficRoute } from "./roadTraffic";
-import { measure, pointAt, unwrap, type LegPath } from "./routeGeometry";
-import Vehicle3D from "./Vehicle3D";
+import { pointAt, type LegPath } from "./routeGeometry";
+import Vehicle3D, { preloadVehicle, type VehicleKind } from "./Vehicle3D";
+import { animationDuration, createPlaybackClock, nextVehicleKind } from "./vehiclePlayback";
+import { selectedSegmentCamera } from "./vehicleFollow";
+import { journeySegmentPath } from "./journeyPath";
 import { vehicleStageMotion } from "./vehicleMotion";
 import { createVehicleFollower } from "./vehicleFollow";
 import { loadAirportCatalog, type AirportCatalogEntry } from "./airportCatalog";
@@ -124,6 +127,30 @@ export default function FlightGlobe({
   const [radarUpdated, setRadarUpdated] = useState<string | null>(null);
   const [roadTraffic, setRoadTraffic] = useState<Record<string, RoadTrafficRoute>>({});
   const [riderPortal, setRiderPortal] = useState<RiderPortal | null>(null);
+  const riderElementsRef = useRef<{ element: HTMLButtonElement; host: HTMLSpanElement } | null>(null);
+  const riderReadyKindRef = useRef<VehicleKind | null>(null);
+  const handleVehicleReady = useCallback((kind: VehicleKind) => { riderReadyKindRef.current = kind; }, []);
+
+  useEffect(() => {
+    const current = journeySegments.find(segment => segment.id === selectedJourneySegmentId);
+    const nextKind = nextVehicleKind(journeySegments, selectedJourneySegmentId);
+    if (!current || !nextKind) return;
+    let cancelled = false;
+    let idle: number | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Prioritize the visible model; reuse its preparation cache and warm the next one.
+    void preloadVehicle(current.mode).then(() => {
+      if (cancelled) return;
+      const warm = () => { if (!cancelled) void preloadVehicle(nextKind).catch(() => {}); };
+      if ("requestIdleCallback" in window) idle = window.requestIdleCallback(warm, { timeout: 1500 });
+      else timer = setTimeout(warm, 250);
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+      if (idle !== undefined) window.cancelIdleCallback(idle);
+      if (timer !== undefined) clearTimeout(timer);
+    };
+  }, [journeySegments, selectedJourneySegmentId]);
 
   useEffect(() => {
     if (!searchAirports) return;
@@ -317,33 +344,33 @@ export default function FlightGlobe({
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
-    if (!segment) return;
+    if (!segment) {
+      setRiderPortal(null);
+      riderReadyKindRef.current = null;
+      return;
+    }
     const road = roadTraffic[segment.id]?.coordinates;
-    const coordinates = road ?? greatCircleCoordinates(
-      segment.origin.coordinate,
-      segment.destination.coordinate,
-      128,
-    );
-    const path: LegPath = measure(
-      segment.mode,
-      unwrap(coordinates),
-      road ? "road" : "geodesic",
-    );
-    const duration = animationDuration(segment.mode) / Math.max(0.25, animationSpeed);
+    const path: LegPath = journeySegmentPath(segment, road);
+    const duration = animationDuration(segment.mode, animationSpeed);
 
-    const element = document.createElement("button");
-    element.type = "button";
+    // Keep the portal target stable: road-data updates must not rebuild WebGL.
+    if (!riderElementsRef.current) {
+      const element = document.createElement("button");
+      element.type = "button";
+      const host = document.createElement("span");
+      host.className = "journey-vehicle-3d-host";
+      element.appendChild(host);
+      element.addEventListener("click", () => {
+        const id = liveDataRef.current.selectedJourneySegmentId;
+        if (id) callbacksRef.current.onJourneySegmentSelect?.(id);
+      });
+      riderElementsRef.current = { element, host };
+    }
+    const { element, host: modelHost } = riderElementsRef.current;
     element.className = `journey-vehicle-3d-marker ${segment.mode}`;
     element.style.setProperty("--vehicle-3d-size", `${104 * vehicleScale}px`);
-    element.setAttribute(
-      "aria-label",
-      `${segment.title} · ${transportLabel(segment.mode)}正在路线中移动`,
-    );
-    element.addEventListener("click", () => callbacksRef.current.onJourneySegmentSelect?.(segment.id));
-
-    const modelHost = document.createElement("span");
-    modelHost.className = "journey-vehicle-3d-host";
-    element.appendChild(modelHost);
+    element.setAttribute("aria-label", `${segment.title} · ${transportLabel(segment.mode)}正在准备`);
+    if (riderReadyKindRef.current !== segment.mode) riderReadyKindRef.current = null;
     let publishedHeading = Number.NaN;
     setRiderPortal({ host: modelHost, segment, heading: 0, progress: segment.progress });
 
@@ -383,7 +410,9 @@ export default function FlightGlobe({
       : Math.max(0, Math.min(1, segment.progress));
     const playback = { key: playbackKey, progress: initialProgress, completed: previousPlayback?.key === playbackKey && previousPlayback.completed };
     playbackRef.current = playback;
-    const startedAt = performance.now() - duration * initialProgress;
+    const playbackClock = createPlaybackClock(initialProgress);
+    const pauseClock = () => { playbackClock(performance.now(), duration, false); };
+    document.addEventListener("visibilitychange", pauseClock);
     let frame = 0;
     let completed = playback.completed;
     let publishedProgressAt = 0;
@@ -391,11 +420,8 @@ export default function FlightGlobe({
     let publishedStage = "";
     let publishedTrail = "";
     const animate = (now: number) => {
-      let moving = initialProgress;
-      if (!reduceMotion.matches && motionEnabled) {
-        const elapsed = now - startedAt;
-        moving = Math.min(1, elapsed / duration);
-      }
+      const ready = riderReadyKindRef.current === segment.mode;
+      const moving = playbackClock(now, duration, ready && !reduceMotion.matches && motionEnabled && !document.hidden);
       playback.progress = moving;
       if (now - publishedStatusAt >= 1000 || moving >= 1) {
         publishedStatusAt = now;
@@ -445,8 +471,9 @@ export default function FlightGlobe({
 
     return () => {
       cancelAnimationFrame(frame);
+      document.removeEventListener("visibilitychange", pauseClock);
       marker.remove();
-      setRiderPortal((current) => current?.host === modelHost ? null : current);
+      element.remove();
     };
   }, [journeySegments, selectedJourneySegmentId, journeySelectionToken, roadTraffic, loaded, vehicleScale, animationSpeed, motionEnabled]);
 
@@ -468,29 +495,16 @@ export default function FlightGlobe({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded || !selectedJourneySegmentId || followVehicleRef.current) return;
-    if (preserveCameraAfterStyleChangeRef.current) {
-      preserveCameraAfterStyleChangeRef.current = false;
-      return;
-    }
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
     if (!segment) return;
-    const route = unwrap(greatCircleCoordinates(
-      segment.origin.coordinate,
-      segment.destination.coordinate,
-      96,
-    ));
-    const longitudes = route.map(([longitude]) => longitude);
-    const latitudes = route.map(([, latitude]) => latitude);
-    map.fitBounds(
-      [
-        [Math.min(...longitudes), Math.min(...latitudes)],
-        [Math.max(...longitudes), Math.max(...latitudes)],
-      ],
-      { padding: 110, maxZoom: 7, duration: 850, essential: true },
-    );
-  }, [selectedJourneySegmentId, journeySelectionToken, journeySegments, loaded, styleRevision]);
+    // Selection pans only. Do not frame the whole route or overwrite zoom/pitch/bearing.
+    const progress = playbackRef.current?.progress ?? 0;
+    const path = journeySegmentPath(segment, roadTraffic[segment.id]?.coordinates);
+    map.jumpTo(selectedSegmentCamera(pointAt(path, progress).coordinate));
+    // Geometry/traffic/style updates must not recenter a user's manually moved map.
+  }, [selectedJourneySegmentId, journeySelectionToken, loaded]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -618,6 +632,8 @@ export default function FlightGlobe({
       {riderPortal && createPortal(
         <Vehicle3D
           kind={riderPortal.segment.mode}
+          onReady={handleVehicleReady}
+          retryToken={journeySelectionToken}
           view="map"
           heading={riderPortal.heading}
           progress={riderPortal.progress}
@@ -871,7 +887,7 @@ function journeyLineFeatures(
         },
         geometry: {
           type: "LineString" as const,
-          coordinates: unwrap(traffic?.coordinates ?? greatCircleCoordinates(segment.origin.coordinate, segment.destination.coordinate)),
+          coordinates: journeySegmentPath(segment, traffic?.coordinates).coordinates,
         },
       };
     }),
@@ -884,34 +900,6 @@ function congestionColor(levels: RoadTrafficRoute["congestion"]) {
   if (levels.includes("moderate")) return "#ffd60a";
   if (levels.includes("low")) return "#30d158";
   return "#ff453a";
-}
-
-function greatCircleCoordinates(a: [number, number], b: [number, number], steps = 48) {
-  const points: [number, number][] = [];
-  const radians = (value: number) => (value * Math.PI) / 180;
-  const degrees = (value: number) => (value * 180) / Math.PI;
-  const aVector = vector(radians(a[0]), radians(a[1]));
-  const bVector = vector(radians(b[0]), radians(b[1]));
-  const angle = Math.acos(Math.min(1, Math.max(-1, aVector[0] * bVector[0] + aVector[1] * bVector[1] + aVector[2] * bVector[2])));
-  for (let index = 0; index <= steps; index += 1) {
-    const ratio = index / steps;
-    const sinAngle = Math.sin(angle);
-    const left = angle < 1e-6 ? 1 - ratio : Math.sin((1 - ratio) * angle) / sinAngle;
-    const right = angle < 1e-6 ? ratio : Math.sin(ratio * angle) / sinAngle;
-    const x = left * aVector[0] + right * bVector[0];
-    const y = left * aVector[1] + right * bVector[1];
-    const z = left * aVector[2] + right * bVector[2];
-    points.push([degrees(Math.atan2(y, x)), degrees(Math.atan2(z, Math.hypot(x, y)))]);
-  }
-  return points;
-}
-
-function vector(longitude: number, latitude: number): [number, number, number] {
-  return [Math.cos(latitude) * Math.cos(longitude), Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude)];
-}
-
-function animationDuration(mode: JourneyMode) {
-  return { flight: 18_000, train: 25_000, car: 31_000, ferry: 36_000 }[mode];
 }
 
 function transportLabel(mode: JourneyMode) {

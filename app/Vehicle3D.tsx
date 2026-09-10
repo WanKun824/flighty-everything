@@ -24,6 +24,8 @@ type Vehicle3DProps = {
   /** 播放倍速，1 为基准。各载具按自己的跟随系数把它折进动作频率。 */
   rate?: number;
   view?: VehicleView;
+  onReady?: (kind: VehicleKind) => void;
+  retryToken?: number;
 };
 
 const LABELS: Record<VehicleKind, string> = {
@@ -107,29 +109,37 @@ function orientationMatrix(asset: VehicleAsset) {
  */
 const prepared = new Map<VehicleKind, Promise<THREE.Object3D>>();
 
-function loadVehicle(kind: VehicleKind) {
+let sharedLoader: GLTFLoader | null = null;
+function vehicleLoader() {
+  if (!sharedLoader) {
+    const draco = new DRACOLoader().setDecoderPath("/draco/").setWorkerLimit(1);
+    sharedLoader = new GLTFLoader().setDRACOLoader(draco);
+  }
+  return sharedLoader;
+}
+
+export function preloadVehicle(kind: VehicleKind) {
   const cached = prepared.get(kind);
   if (cached) return cached;
   const asset = ASSETS[kind];
   const task = new Promise<THREE.Object3D>((resolve, reject) => {
-    const draco = new DRACOLoader();
-    draco.setDecoderPath("/draco/");
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(draco);
-    loader.load(
+    vehicleLoader().load(
       asset.url,
       (gltf) => {
-        // 三步顺序都不能换，理由见 vehicleShading.ts 顶部。
-        smoothModel(gltf.scene, (asset.crease ?? 65) * Math.PI / 180);
-        if (asset.paint) paintModel(gltf.scene, { paint: asset.paint, paintColor: asset.paintColor ?? "#c9ced6" });
-        else if (asset.preserveMaterials) flattenMaterials(gltf.scene);
-        curveModel(gltf.scene);
-        draco.dispose();
-        resolve(gltf.scene);
+        try {
+          // Preserve the exact existing geometry/material pipeline.
+          smoothModel(gltf.scene, (asset.crease ?? 65) * Math.PI / 180);
+          if (asset.paint) paintModel(gltf.scene, { paint: asset.paint, paintColor: asset.paintColor ?? "#c9ced6" });
+          else if (asset.preserveMaterials) flattenMaterials(gltf.scene);
+          curveModel(gltf.scene);
+          resolve(gltf.scene);
+        } catch (error) {
+          prepared.delete(kind);
+          reject(error);
+        }
       },
       undefined,
       (error) => {
-        draco.dispose();
         // 失败的 promise 别留在缓存里，否则重挂的实例只会拿到同一个已拒绝的结果。
         prepared.delete(kind);
         reject(error);
@@ -259,12 +269,21 @@ function makeEnvironment(renderer: THREE.WebGLRenderer) {
   return target;
 }
 
-export default function Vehicle3D({ kind, progress = 0, className = "", heading, rate = 1, view = "hero" }: Vehicle3DProps) {
+export default function Vehicle3D({ kind, progress = 0, className = "", heading, rate = 1, view = "hero", onReady, retryToken = 0 }: Vehicle3DProps) {
   const mountRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef(progress);
   const headingRef = useRef(heading);
   const rateRef = useRef(rate);
+  const onReadyRef = useRef(onReady);
+  onReadyRef.current = onReady;
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
+  const [retry, setRetry] = useState(0);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  useEffect(() => {
+    // An explicit re-selection may retry a failed load without remounting healthy models.
+    if (stateRef.current === "error") setRetry(value => value + 1);
+  }, [retryToken]);
 
   useEffect(() => { progressRef.current = progress; }, [progress]);
   useEffect(() => { headingRef.current = heading; }, [heading]);
@@ -280,6 +299,8 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
     const elevation = THREE.MathUtils.degToRad(shot.elevation);
     let disposed = false;
     let frame = 0;
+    let modelReady = false;
+    let readyPublished = false;
     setState("loading");
 
     const scene = new THREE.Scene();
@@ -376,7 +397,7 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
     let groundZ = 0;
     const wheels: THREE.Object3D[] = [];
 
-    loadVehicle(kind)
+    preloadVehicle(kind)
       .then((source) => {
         if (disposed) return;
         // 缓存里那份是共享的，实例拿克隆体；几何和材质仍按引用共用，只有变换是各自的。
@@ -478,7 +499,7 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
         }
         placeCamera();
         presentation.add(body);
-        setState("ready");
+        modelReady = true;
       })
       .catch(() => { if (!disposed) setState("error"); });
 
@@ -501,6 +522,10 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
     yaw.rotation.z = yawFor(view, shot.rest);
 
     const render = (now: number) => {
+      if (!modelReady) {
+        frame = requestAnimationFrame(render);
+        return;
+      }
       const elapsed = (now - start) / 1000;
       // 切走标签页再回来时 now 会跳一大截，截断避免动作瞬移。
       const delta = previous ? Math.min(.05, (now - previous) / 1000) : 0;
@@ -550,6 +575,11 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
         }
       }
       renderer.render(scene, camera);
+      if (!readyPublished) {
+        readyPublished = true;
+        setState("ready");
+        onReadyRef.current?.(kind);
+      }
       frame = requestAnimationFrame(render);
     };
     frame = requestAnimationFrame(render);
@@ -566,7 +596,7 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
       renderer.dispose();
       renderer.domElement.remove();
     };
-  }, [kind, view]);
+  }, [kind, view, retry]);
 
   return (
     <div ref={mountRef} className={`vehicle-3d ${className} is-${state}`} aria-label={`${LABELS[kind]} 3D 模型`}>

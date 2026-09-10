@@ -1,4 +1,5 @@
 import type { JourneyPlace, JourneySegment, JourneyStatus } from "../../../journeyData";
+import { railGeometryFromLegs, railDistanceKm, type EncodedRailPolyline } from "../../../railGeometry.ts";
 
 type TransitPlace = {
   name?: string;
@@ -34,6 +35,7 @@ type TransitLeg = {
   headsign?: string;
   tripId?: string;
   distance?: number;
+  legGeometry?: EncodedRailPolyline;
 };
 
 type TransitItinerary = {
@@ -84,7 +86,7 @@ export async function lookupRail(request: Request, requestFetch: typeof fetch = 
     maxTransfers: "2",
     numItineraries: "4",
     maxItineraries: "6",
-    detailedLegs: "false",
+    detailedLegs: "true",
     detailedTransfers: "false",
   });
 
@@ -143,6 +145,7 @@ function itinerarySegment(itinerary: TransitItinerary, index: number): JourneySe
 
   const origin = railPlace(first.from, "FROM");
   const destination = railPlace(last.to, "TO");
+  const railGeometry = railGeometryFromLegs(railLegs, origin.coordinate, destination.coordinate);
   const services = unique(railLegs.map((leg) => leg.displayName || leg.routeShortName || leg.tripShortName || "列车"));
   const providers = unique(railLegs.map((leg) => leg.agencyName || "铁路运营方"));
   const realtime = railLegs.some((leg) => leg.realTime);
@@ -172,7 +175,10 @@ function itinerarySegment(itinerary: TransitItinerary, index: number): JourneySe
     departure: formatTime(departureAt, originTimeZone),
     arrival: formatTime(arrivalAt, destinationTimeZone),
     durationMinutes,
-    distanceKm: Math.max(1, Math.round(haversineKm(origin.coordinate, destination.coordinate))),
+    distanceKm: Math.max(1, Math.round(railGeometry
+      ? railDistanceKm(railGeometry.coordinates)
+      : haversineKm(origin.coordinate, destination.coordinate))),
+    railGeometry,
     status,
     note: `${providers.join(" · ")} · ${railLegs.length > 1 ? `${railLegs.length - 1} 次换乘` : "直达"}`,
     progress,
@@ -235,7 +241,9 @@ function unique(values: string[]) {
 }
 
 function numberParam(url: URL, key: string, min: number, max: number) {
-  const value = Number(url.searchParams.get(key));
+  const raw = url.searchParams.get(key);
+  if (raw === null || raw.trim() === "") return null;
+  const value = Number(raw);
   return Number.isFinite(value) && value >= min && value <= max ? value : null;
 }
 
