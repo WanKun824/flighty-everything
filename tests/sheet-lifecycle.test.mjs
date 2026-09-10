@@ -10,6 +10,14 @@ const segment = (id, status = 'upcoming', date = '2026-12-31T23:40:00-08:00') =>
   distanceKm:100,durationMinutes:60,operational:{scheduledDepartureAt:date},
 });
 
+test('undo stays attached to its original trip even after switching journeys',async()=>{
+  const app=await read('../app/FlightyApp.tsx'), store=await read('../app/journeyStorage.ts');
+  assert.match(app,/restoreSegments\(snapshot, deletedId, tripId\)/);
+  assert.match(app,/restoreSegment\(tripId, selectedJourney\)/);
+  assert.match(store,/targetId !== current.activeTripId/);
+  assert.match(store,/tripId === current.activeTripId \? activePatch/);
+});
+
 test('whole-surface upward drag expands before scrolling, then transfers the remainder',()=>{
   assert.deepEqual(consumeSheetDrag(300,0,-100,300,800,1000),{sheet:400,scroll:0});
   assert.deepEqual(consumeSheetDrag(760,0,-100,300,800,1000),{sheet:800,scroll:60});

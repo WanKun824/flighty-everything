@@ -422,13 +422,28 @@ export function useJourneyStore() {
     });
   }, []);
 
-  const restoreSegments = useCallback((segments: JourneySegment[], selectedSegmentId = "") => {
-    setState((current) => activePatch(current, {
+  const restoreSegments = useCallback((segments: JourneySegment[], selectedSegmentId = "", tripId?: string) => {
+    setState((current) => {
+      const targetId = tripId ?? current.activeTripId;
+      if (!current.trips.some(trip => trip.id === targetId)) return current;
+      if (targetId !== current.activeTripId) return { ...current, trips: current.trips.map(trip => trip.id === targetId ? { ...trip, segments } : trip) };
+      return activePatch(current, {
       segments,
       selectedSegmentId: segments.some((segment) => segment.id === selectedSegmentId)
         ? selectedSegmentId
         : (segments[0]?.id ?? ""),
-    }));
+      });
+    });
+  }, []);
+
+  const restoreSegment = useCallback((tripId: string, segment: JourneySegment) => {
+    setState(current => {
+      const trip = current.trips.find(item => item.id === tripId);
+      if (!trip) return current;
+      const segments = trip.segments.map(item => item.id === segment.id ? segment : item);
+      return tripId === current.activeTripId ? activePatch(current, { segments })
+        : { ...current, trips: current.trips.map(item => item.id === tripId ? { ...item, segments } : item) };
+    });
   }, []);
 
   const toggleComplete = useCallback((id: string) => {
@@ -477,6 +492,7 @@ export function useJourneyStore() {
     updateSegment,
     removeSegment,
     restoreSegments,
+    restoreSegment,
     toggleComplete,
     restartTrip,
     advanceSegment,

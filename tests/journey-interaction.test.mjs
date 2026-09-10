@@ -30,7 +30,7 @@ test("journey details stop at their minimum height and destructive actions can b
   assert.match(mobile, /initial: initialDetent,[\s\S]*?dismissible: false/);
   assert.doesNotMatch(mobile, /onDismiss: onClose/);
   assert.match(app, /notify\("已删除这段行程", "撤销"/);
-  assert.match(app, /journeyStore\.restoreSegments\(snapshot, deletedId\)/);
+  assert.match(app, /journeyStore\.restoreSegments\(snapshot, deletedId, tripId\)/);
   assert.match(storage, /const restoreSegments = useCallback/);
 });
 

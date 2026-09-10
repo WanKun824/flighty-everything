@@ -700,20 +700,22 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             onClose={() => setOverlay(null)}
             onToggleComplete={() => {
               const wasComplete = selectedJourney.status === "complete";
+              const tripId = journeyStore.state.activeTripId;
               journeyStore.toggleComplete(selectedJourney.id);
               notify(
                 wasComplete ? "已恢复为待出发" : "已标记为完成",
                 "撤销",
-                () => journeyStore.toggleComplete(selectedJourney.id),
+                () => journeyStore.restoreSegment(tripId, selectedJourney),
               );
             }}
             onDelete={() => {
               const snapshot = [...journeyStore.state.segments];
+              const tripId = journeyStore.state.activeTripId;
               const deletedId = selectedJourney.id;
               journeyStore.removeSegment(selectedJourney.id);
               setOverlay(null);
               notify("已删除这段行程", "撤销", () => {
-                journeyStore.restoreSegments(snapshot, deletedId);
+                journeyStore.restoreSegments(snapshot, deletedId, tripId);
                 setJourneyFocusToken((value) => value + 1);
               });
             }}
