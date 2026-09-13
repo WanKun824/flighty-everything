@@ -39,3 +39,9 @@
 .flighty-page .airport-status-unavailable p { font-size: 14px; line-height: 1.6; color: var(--sheet-muted); }
 .flighty-page .airport-load-state { min-height: 44px; color: var(--blue); }
 @media (prefers-reduced-motion: reduce) { .flighty-page[data-theme] .coordinated-airport-sheet { transition: none; } }
+
+.flighty-page .airport-catalog-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; background: var(--sheet-control); color: var(--blue); }
+.flighty-page .airport-route-actions { display: grid; gap: 10px; margin: 24px 0; }
+.flighty-page .airport-route-actions button { display: flex; justify-content: center; align-items: center; gap: 8px; min-height: 52px; border: 0; border-radius: 16px; background: var(--blue); color: white; font-size: 16px; font-weight: 600; }
+.flighty-page .airport-route-actions button + button { color: var(--blue); background: var(--sheet-control); }
+.flighty-page .airport-detail-content .airport-data-note a { color: var(--blue); }

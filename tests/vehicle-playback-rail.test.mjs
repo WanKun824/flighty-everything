@@ -24,7 +24,7 @@ export function encode(points, precision = 6) {
 }
 const segment = { id: "rail", mode: "train", origin: { coordinate: curve[0] }, destination: { coordinate: curve.at(-1) } };
 
-test("a loading model does not invisibly consume segment time; duration settings stay unchanged", () => {
+test("a loading model does not invisibly consume segment time; airplane speed is 85% and other durations stay unchanged", () => {
   const tick = createPlaybackClock(0);
   assert.equal(tick(0, 31000, false), 0);
   assert.equal(tick(10000, 31000, false), 0);
@@ -34,7 +34,7 @@ test("a loading model does not invisibly consume segment time; duration settings
   assert.equal(tick(21000, 31000, true), 1 / 31);
   assert.equal(tick(22000, 31000, true), 2 / 31);
   assert.equal(tick(80000, 31000, true), 1);
-  assert.deepEqual(["flight", "train", "car", "ferry"].map(mode => animationDuration(mode)), [18000, 25000, 31000, 36000]);
+  assert.deepEqual(["flight", "train", "car", "ferry"].map(mode => animationDuration(mode)), [18000 / .85, 25000, 31000, 36000]);
   assert.equal(animationDuration("car", 2), 15500);
   assert.equal(animationDuration("car", NaN), 31000);
 });

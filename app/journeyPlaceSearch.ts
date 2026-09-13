@@ -95,6 +95,10 @@ export async function searchJourneyPlaces(
     types: "poi,address,place,locality,neighborhood",
   });
   const fallback = [...airportMatches, ...globalMatches, ...local];
+  // Airport codes already resolve against the bundled catalog: don't wait for remote POIs.
+  if (fallback.some(item => item.localPlace?.kind === "airport" && item.localPlace.code.toUpperCase() === query.toUpperCase())) {
+    return uniqueSuggestions(fallback);
+  }
   const response = await fetch(
     `https://api.mapbox.com/search/searchbox/v1/suggest?${parameters}`,
     { signal, cache: "no-store" },

@@ -138,7 +138,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [toast, setToast] = useState<AppToast | null>(null);
   const toastTimerRef = useRef<number | null>(null);
   const [composerImportedSegments, setComposerImportedSegments] = useState<JourneySegment[]>([]);
-  const [composerMapSelection, setComposerMapSelection] = useState<{ place: JourneyPlace; token: number } | null>(null);
+  const [composerMapSelection, setComposerMapSelection] = useState<{ place: JourneyPlace; token: number; field?: "origin" | "destination" } | null>(null);
   const composerCloseRequestRef = useRef<(() => void) | null>(null);
   const [pendingComposerTab, setPendingComposerTab] = useState<Tab | null>(null);
   const [query, setQuery] = useState("");
@@ -389,6 +389,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         {activeTab !== "passport" &&
           ![
             "add-flight",
+            "add-journey",
             "flight-stats",
             "delay-stats",
             "aircraft-stats",
@@ -403,7 +404,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             <div className="map-tools" aria-label="地图工具">
               <button
                 className={mapOverlayOpen ? "active" : ""}
-                aria-label="打开机场动态"
+                aria-label="打开机场资料与收藏"
                 onClick={() => {
                   setSelectedAirport(null);
                   setOverlay(overlay === "airports" ? null : "airports");
@@ -545,7 +546,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
 
         </section>
 
-        {(!overlay || overlay === "add-journey" || overlay === "add-flight") && (
+        {!overlay && (
           <BottomBar
             activeTab={activeTab}
             chooseTab={chooseBottomTab}
@@ -593,6 +594,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             initialOrigin={composerContextTripId ? journeyStore.state.segments.at(-1)?.destination : undefined}
             trips={journeyStore.state.trips}
             contextTripId={composerContextTripId}
+            favoriteCodes={state.favorites}
+            onFavorite={store.toggleFavorite}
+            onMapSelectionConsumed={() => setComposerMapSelection(null)}
             onClose={closeComposer}
             mapSelection={composerMapSelection}
             onPlaceSelected={(place) => { if (place.kind === "airport") setSelectedAirport(place.code); }}
@@ -663,6 +667,12 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             code={selectedAirport}
             favorite={state.favorites.includes(selectedAirport)}
             onFavorite={() => store.toggleFavorite(selectedAirport)}
+            onPlan={(place, field) => {
+              setComposerContextTripId(null);
+              setComposerMapSelection({ place, field, token: Date.now() });
+              setFollowVehicle(false);
+              setOverlay("add-journey");
+            }}
             onBack={() => {
               setSelectedAirport(null);
               setOverlay("airports");

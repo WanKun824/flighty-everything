@@ -18,11 +18,12 @@ test("playback completes once, advances in order and preserves completion throug
 
 test("journey creation is explicit and map airplanes do not wobble", async () => {
   const [composer, vehicle, app] = await Promise.all([read("../app/JourneyComposer.tsx"), read("../app/Vehicle3D.tsx"), read("../app/FlightyApp.tsx")]);
-  assert.match(composer, /role="radiogroup" aria-label="选择保存到哪个旅程"/);
-  assert.match(composer, /JOURNEY_PLACES\.slice\(4, 7\)/);
+  assert.match(composer, /aria-label="行程所属旅程"/);
+  assert.match(composer, /recentJourneyPlaces\(trips\)/);
   assert.match(composer, /const validOrigin = originQuery\.trim\(\) === origin\.name/);
-  assert.match(composer, /if \(!drafts\.length\) setOriginQuery\(""\)/);
-  assert.match(composer, /disabled=\{stagedCount === 0 \|\| Boolean\(destination && !validOrigin\)\}/);
+  assert.match(composer, /openPlacePicker/);
+  assert.match(composer, /stagedCount === 0/);
+  assert.match(composer, /routeInputProblem/);
   assert.match(vehicle, /view === "map" && kind === "flight"/);
   assert.match(app, /createTripWithSegments\(tripName, segments\)/);
   assert.match(app, /title="天气图层"/);

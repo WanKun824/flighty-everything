@@ -2,7 +2,7 @@ import type { JourneyMode, JourneySegment } from "./journeyData.ts";
 
 /** Map-preview time, not a claim about the vehicle's real-world speed. */
 export const VEHICLE_PLAYBACK_MS: Readonly<Record<JourneyMode, number>> = {
-  flight: 18_000,
+  flight: 18_000 / 0.85, // 15% slower: ~21.18 seconds per preview segment.
   train: 25_000,
   car: 31_000,
   ferry: 36_000,

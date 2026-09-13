@@ -11,7 +11,7 @@ function BootScreen() {
         <div className="flighty-boot-screen">
           <strong>flighty <em>Everything</em></strong>
           <span>我的行程</span>
-          <button className="visually-hidden" aria-label="打开机场动态" disabled />
+          <button className="visually-hidden" aria-label="打开机场资料与收藏" disabled />
         </div>
       </section>
     </main>

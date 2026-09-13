@@ -70,11 +70,11 @@ test("mobile planning preserves drafts across flight tools and guards discarding
   ]);
 
   assert.match(composer, /MOBILE_DRAFT_KEY/);
-  assert.match(composer, /window\.sessionStorage\.setItem/);
+  assert.match(composer, /window\.localStorage\.setItem/);
   assert.match(composer, /role="alertdialog"/);
   assert.match(composer, /已暂存 \{drafts\.length\} 段/);
-  assert.match(composer, /保存这次规划草稿？/);
-  assert.match(composer, /保存草稿并退出/);
+  assert.match(composer, /setDiscardPrompt\(true\)/);
+  assert.match(composer, /persistComposerDraft\(\)\) onClose/);
   assert.match(composer, /importedSegments/);
   assert.match(app, /stageFlightsForComposer/);
   assert.match(app, /onClose=\{\(\) => setOverlay\("add-journey"\)\}/);

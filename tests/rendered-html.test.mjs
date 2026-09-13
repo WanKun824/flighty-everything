@@ -94,7 +94,8 @@ test("every product class used in active JSX has a CSS rule", async () => {
       readFile(new URL("../app/journey-refinement.css", import.meta.url), "utf8"),
     ]);
   const nativeCss = await readFile(new URL("../app/native-layout.css", import.meta.url), "utf8");
-  const css = `${globalsCss}\n${themeCss}\n${refinementCss}\n${nativeCss}`;
+  const composerCss = await readFile(new URL("../app/composer.css", import.meta.url), "utf8");
+  const css = `${globalsCss}\n${themeCss}\n${refinementCss}\n${nativeCss}\n${composerCss}`;
 
   const used = new Set();
   for (const source of [page, flightyApp, desktop, mobile, composer, passportTarget, globe, vehicle]) {

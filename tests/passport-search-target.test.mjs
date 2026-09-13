@@ -47,7 +47,8 @@ test("airports sheet and map use real airport identities, regions and status mar
   assert.match(globe, /flighty-airport-dots/);
   assert.doesNotMatch(globe, /airportMarkersRef/);
   assert.match(airportSource, /<AirportRow/);
-  assert.match(airportSource, /暂无实时运行数据/);
+  assert.match(airportSource, /onPlan\(airport, "origin"\)/);
+  assert.doesNotMatch(airportSource, /暂无实时运行数据/);
   assert.doesNotMatch(page, /airportByCode\(selectedAirport\) \?\? AIRPORTS\[0\]/);
   assert.doesNotMatch(airportSource, /departureOnTime|Operations Normal|View Full Operational Report/);
   assert.match(airportSource, /catalog\.find\(entry => entry\.code === code\)/);
@@ -57,7 +58,7 @@ test("airports sheet and map use real airport identities, regions and status mar
 
 test("mobile search keeps place lookup and all four vehicle modes usable", async () => {
   const source = await readFile(new URL("../app/JourneyComposer.tsx", import.meta.url), "utf8");
-  assert.match(source, /搜索城市、景点、机场或车站/);
+  assert.match(source, /placeholder="机场、车站、城市或景点"/);
   assert.match(source, /searchJourneyPlaces\(query/);
   assert.match(source, /retrieveJourneyPlace\(suggestion/);
   assert.match(source, /Object\.keys\(MODE_META\)/);
