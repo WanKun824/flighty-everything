@@ -1,5 +1,6 @@
 "use client";
 
+import type { LocationFix } from "./realJourney";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AIRPORTS, airportByCode, type Region } from "./flightyData";
@@ -19,6 +20,7 @@ import { loadAirportCatalog, type AirportCatalogEntry } from "./airportCatalog";
 export type BasemapMode = MapLayerMode;
 
 type Props = {
+  userLocation?: LocationFix | null;
   airportsVisible: boolean;
   searchAirports?: boolean;
   airportRegion?: "All" | Region;
@@ -74,6 +76,7 @@ export const BASEMAP_OPTIONS: Array<{ id: BasemapMode; label: string }> = [
 
 export default function FlightGlobe({
   airportsVisible,
+  userLocation = null,
   searchAirports = false,
   airportRegion = "All",
   selectedAirport,
@@ -344,7 +347,7 @@ export default function FlightGlobe({
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
-    if (!segment) {
+    if (!segment || segment.travelPlan?.mode === "real") {
       setRiderPortal(null);
       riderReadyKindRef.current = null;
       return;
@@ -476,6 +479,17 @@ export default function FlightGlobe({
       element.remove();
     };
   }, [journeySegments, selectedJourneySegmentId, journeySelectionToken, roadTraffic, loaded, vehicleScale, animationSpeed, motionEnabled]);
+
+  useEffect(() => {
+    const map = mapRef.current, mapboxgl = mapboxRef.current;
+    if (!map || !mapboxgl || !loaded || !userLocation) return;
+    const element = document.createElement("span");
+    element.className = "real-user-location"; element.setAttribute("role", "img"); element.setAttribute("aria-label", "我的实时位置");
+    const coordinate: [number, number] = [userLocation.longitude, userLocation.latitude];
+    const marker = new mapboxgl.Marker({ element, anchor: "center" }).setLngLat(coordinate).addTo(map);
+    if (followVehicleRef.current && !map.isZooming()) map.jumpTo({ center: coordinate });
+    return () => { marker.remove(); };
+  }, [userLocation, loaded, styleRevision, followVehicle]);
 
   useEffect(() => {
     const map = mapRef.current;

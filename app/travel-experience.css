@@ -1,0 +1,34 @@
+/* Compact cards leave the map in charge; one material across phone modes. */
+.flighty-page[data-theme] .primary-panel[data-tab="flights"][data-minimum="true"] { --sheet-header-height: 60px; padding-top: 10px; }
+.flighty-page[data-theme] .primary-panel[data-tab="passport"][data-minimum="true"] { --sheet-header-height: 0px; }
+.flighty-page[data-theme] .primary-panel[data-tab="flights"][data-minimum="true"] .panel-titlebar h1 { font-size: 28px; }
+.flighty-page[data-theme] .primary-panel[data-minimum="true"] .mobile-segment-select { min-height: 78px; padding-block: 4px; }
+.flighty-page[data-theme] .primary-panel[data-minimum="true"] .mobile-segment-card { min-height: 78px; }
+.flighty-page[data-theme] .mobile-journey-detail-target[data-detent="minimum"] .mobile-detail-summary { min-height: 74px; padding-block: 14px 8px; }
+.flighty-page[data-theme] .mobile-journey-detail-target[data-detent="minimum"] .mobile-detail-mini-state { gap: 5px; padding-block: 8px 12px; align-content: start; }
+.flighty-page[data-theme] .mobile-journey-detail-target[data-detent="minimum"] .mobile-detail-mini-state > b { font-size: 14px; }
+.flighty-page[data-theme] .mobile-journey-detail-target[data-detent="minimum"] .mobile-detail-mini-state > span:last-child { font-size: 14px; }
+.journey-mode-control { margin: 12px 0 18px; padding: 14px; background: var(--sheet-control); border: 1px solid var(--sheet-line); border-radius: 20px; }
+.journey-mode-control > div[role="group"], .composer-plan-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--sheet-control); }
+.journey-mode-control button, .flighty-page .composer-plan-mode button { min-height: 44px; border: 0; border-radius: 11px; background: transparent; color: var(--sheet-text); font-size: 15px; font-weight: 600; }
+.journey-mode-control > div[role="group"] button[aria-pressed="true"], .flighty-page .composer-plan-mode button[aria-pressed="true"] { color: var(--blue); background: var(--sheet-material); box-shadow: 0 2px 8px #0001; }
+.journey-mode-control p, .journey-location-control small, .real-plan-editor p { display: block; font-size: 14px; line-height: 1.5; color: var(--sheet-muted); margin: 10px 0; }
+.journey-location-control > button { display: block; width: 100%; color: var(--blue); }
+.journey-location-control > button:first-of-type { background: var(--blue); color: white; margin-block: 10px; }
+.real-plan-editor h3 { font-size: 18px; margin: 16px 0; }
+.real-plan-editor label { display: grid; grid-template-columns: 74px minmax(0,1fr); gap: 8px; min-height: 54px; align-items: center; font-size: 14px; border-bottom: 1px solid var(--sheet-line); }
+.real-plan-editor input { width: 100%; min-width: 0; min-height: 40px; font-size: 16px; border: 0; background: transparent; color: var(--sheet-text); }
+.real-plan-editor > div { display: flex; justify-content: space-between; gap: 8px; }
+.real-plan-editor > div button { flex: 1; color: var(--blue); }
+.real-plan-editor button:disabled { opacity: .4; }
+.real-user-location { width: 19px; height: 19px; border: 3px solid white; border-radius: 50%; background: #087dff; box-shadow: 0 0 0 7px #087dff28, 0 2px 6px #0005; }
+.flighty-page[data-theme] .journey-composer.composer-v2 { top: auto; bottom: 8px; height: var(--composer-height,93%); max-height: calc(100% - var(--mobile-safe-top,0px) - 12px); transition: height .28s cubic-bezier(.2,.8,.2,1); }
+.flighty-page[data-theme] .journey-composer.composer-v2.is-dragging { transition: none; }
+.flighty-page .composer-v2 .composer-grabber { flex: 0 0 20px; display: grid; place-items: center; width: 100%; min-height: 20px; padding: 0; background: var(--chrome-material); border-radius: 0; touch-action: none; }
+.composer-grabber span { display: block; width: 36px; height: 5px; border-radius: 3px; background: var(--sheet-muted); opacity: .4; }
+.flighty-page .composer-v2 .composer-header { padding-top: 2px; padding-bottom: 10px; }
+.flighty-page .composer-v2 .composer-scroll { padding-top: 8px; }
+.flighty-page .composer-v2 .composer-zone-hint { padding: 0 14px 12px; margin: 0; }
+.flighty-page .composer-v2 .composer-endpoint { min-height: 60px; }
+html[data-keyboard-open="true"] .flighty-page[data-theme] .journey-composer.composer-v2 { height: calc(93% - var(--keyboard-inset,0px)); bottom: calc(var(--keyboard-inset,0px) + 4px); padding-bottom: 0; }
+@media (prefers-reduced-motion: reduce) { .flighty-page[data-theme] .journey-composer.composer-v2 { transition: none; } }

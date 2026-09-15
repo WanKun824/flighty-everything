@@ -50,9 +50,9 @@ export function useSheetDetents({ detents: requestedDetents, initial, minimumHei
       const safeTop = parseFloat(style.getPropertyValue("--native-safe-top")) || 0;
       const safeBottom = parseFloat(style.getPropertyValue("--native-safe-bottom")) || 0;
       const height = device.clientHeight || window.innerHeight;
-      const min = minimumHeight ? Math.max(.32, Math.min(minimumHeight + safeBottom, height * .43) / height) : requestedDetents[0];
+      const min = minimumHeight ? Math.min(minimumHeight + safeBottom, height * .43) / height : requestedDetents[0];
       const max = Math.min(.93, (height - safeTop - 12) / height);
-      const next = [min, Math.max(min, Math.min(.57, max)), max];
+      const next = [min, Math.max(min, Math.min(requestedDetents[1], max)), max];
       const old = previousDetents.current;
       const index = old.indexOf(nearestDetent(fractionRef.current, old));
       previousDetents.current = next;

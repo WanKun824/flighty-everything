@@ -446,6 +446,13 @@ export function useJourneyStore() {
     });
   }, []);
 
+  const confirmLocationArrival = useCallback((id: string, at: string) => {
+    setState(current => activePatch(current, { segments: current.segments.map(segment =>
+      segment.id === id && segment.travelPlan?.mode === "real" && segment.status !== "complete"
+        ? { ...segment, status: "complete", progress: 1, travelPlan: { ...segment.travelPlan, arrivedAt: at, arrivalSource: "location" } }
+        : segment) }));
+  }, []);
+
   const toggleComplete = useCallback((id: string) => {
     setState((current) => activePatch(current, {
       segments: current.segments.map((segment) =>
@@ -454,6 +461,10 @@ export function useJourneyStore() {
               ...segment,
               status: segment.status === "complete" ? "upcoming" : "complete",
               progress: segment.status === "complete" ? 0 : 1,
+              travelPlan: segment.travelPlan ? { ...segment.travelPlan,
+                arrivedAt: segment.status === "complete" ? undefined : new Date().toISOString(),
+                arrivalSource: segment.status === "complete" ? undefined : "manual",
+              } : undefined,
             }
           : segment,
       ),
@@ -474,6 +485,7 @@ export function useJourneyStore() {
   return {
     state,
     hydrated,
+    confirmLocationArrival,
     selectTrip,
     createTrip,
     createTripWithSegments,

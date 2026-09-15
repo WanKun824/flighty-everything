@@ -1,5 +1,7 @@
 "use client";
 
+import "./travel-experience.css";
+
 import {
   useCallback,
   useEffect,
@@ -75,6 +77,8 @@ import { loadAirportCatalog } from "./airportCatalog";
 import { AirportsSheet, AirportDetailSheet } from "./AirportPanels";
 import { lookupVerifiedFlight } from "./transportData";
 import { useJourneyStore, type JourneyTrip } from "./journeyStorage";
+import { useRealJourney } from "./useRealJourney";
+import { journeyPhase } from "./realJourney";
 import { useSheetDetents } from "./useSheetDetents";
 import { useMobileViewport } from "./useMobileViewport";
 import { useNativeChrome } from "./useNativeChrome";
@@ -156,9 +160,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [avatarColor, setAvatarColor] = useState("#ec6f9a");
   const [randomIndex, setRandomIndex] = useState(0);
-  const flightSheet = useSheetDetents({ detents: [.33, .57, .93], initial: .33, minimumHeight: 256 });
+  const flightSheet = useSheetDetents({ detents: [.28, .57, .93], initial: .28, minimumHeight: 232 });
   const friendsSheet = useSheetDetents({ detents: [.33, .57, .93], initial: .33, minimumHeight: 256 });
-  const passportSheet = useSheetDetents({ detents: [.33, .57, .93], initial: .93, minimumHeight: 256 });
+  const passportSheet = useSheetDetents({ detents: [.3, .57, .93], initial: .93, minimumHeight: 248 });
   const mainSheet = activeTab === "passport" ? passportSheet : activeTab === "friends" ? friendsSheet : flightSheet;
   const tabScrollPositions = useRef<Partial<Record<Tab, number>>>({});
   useLayoutEffect(() => {
@@ -177,6 +181,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     journeyStore.state.segments.find(
       (segment) => segment.id === selectedJourneyId,
     ) ?? null;
+  const location = useRealJourney(selectedJourney, journeyStore.confirmLocationArrival);
   const currentTrip = journeyStore.state.trips.find(
     (trip) => trip.id === journeyStore.state.activeTripId,
   );
@@ -352,6 +357,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         aria-label="flighty Everything flight tracker"
       >
         <FlightGlobe
+          userLocation={selectedJourney?.travelPlan?.mode === "real" ? location.fix : null}
           airportsVisible={airportsOnMap}
           searchAirports={overlay === "add-journey"}
           airportRegion={overlay === "add-journey" ? "All" : airportRegion}
@@ -365,6 +371,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             selectJourneySegment(id);
           }}
           onJourneySegmentComplete={(id) => {
+            if (selectedJourney?.travelPlan?.mode === "real") return;
             if (overlay) return; // Never replace a route while its detail or an editor is open.
             const index = journeyStore.state.segments.findIndex((segment) => segment.id === id);
             journeyStore.advanceSegment(id);
@@ -425,9 +432,9 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         {activeTab === "flights" && !mapOverlayOpen && (!overlay || overlay === "journey-detail") && (
           <button
             className={`map-follow-button ${followVehicle ? "active" : ""}`}
-            aria-label="跟随当前选中路段"
+            aria-label={selectedJourney?.travelPlan?.mode === "real" ? "跟随我的位置" : "跟随当前选中路段"}
             aria-pressed={followVehicle}
-            disabled={!selectedJourneyId}
+            disabled={!selectedJourneyId || (selectedJourney?.travelPlan?.mode === "real" && !location.fix)}
             onClick={() => setFollowVehicle((value) => !value)}
           >
             <SFLocationFill size="md" />
@@ -530,6 +537,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           )}
           {activeTab === "passport" && (
             <JourneyPassportTarget
+              compact={mainSheet.atMinimum}
               trips={journeyStore.state.trips}
               activeTripId={journeyStore.state.activeTripId}
               onSelect={(id) => {
@@ -707,6 +715,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           <MobileJourneyDetail
             segment={selectedJourney}
             initialDetent={detailInitial}
+            location={location}
+            onUpdate={journeyStore.updateSegment}
             onClose={() => setOverlay(null)}
             onToggleComplete={() => {
               const wasComplete = selectedJourney.status === "complete";
@@ -883,12 +893,15 @@ function StatusBar({ segment }: { segment: JourneySegment | null }) {
 }
 
 function dynamicActivity(segment: JourneySegment | null, now: number) {
-  if (!segment || segment.status === "complete") return { active: false, label: "" };
+  if (!segment) return { active: false, label: "" };
+  if (segment.travelPlan?.mode !== "real") return { active: true, label: "模拟预览" };
+  const phase = journeyPhase(segment, now);
+  if (phase.tone === "complete") return { active: true, label: `${segment.destination.code} 已到达` };
   const operational = segment.operational;
-  const departure = operational?.actualDepartureAt
+  const departure = segment.travelPlan?.departureAt || operational?.actualDepartureAt
     || operational?.estimatedDepartureAt
     || operational?.scheduledDepartureAt;
-  const arrival = operational?.actualArrivalAt
+  const arrival = segment.travelPlan?.arrivalAt || operational?.actualArrivalAt
     || operational?.estimatedArrivalAt
     || operational?.scheduledArrivalAt;
   const start = departure ? new Date(departure).getTime() : Number.NaN;

@@ -38,7 +38,9 @@ export default function JourneyPassportTarget({
   onEdit,
   onOpenStats,
   onShare,
+  compact = false,
 }: {
+  compact?: boolean;
   trips: JourneyTrip[];
   activeTripId: string;
   onSelect: (id: string) => void;
@@ -49,7 +51,7 @@ export default function JourneyPassportTarget({
   const [period, setPeriod] = useState<string>("all");
   const [view, setView] = useState<"list" | "compact">("list");
   const years = passportYears(trips);
-  const visibleTrips = passportTrips(trips, period);
+  const visibleTrips = passportTrips(trips, compact ? "all" : period);
   const segments = visibleTrips.flatMap((trip) => trip.segments);
   const stats = journeyStats(segments);
   const modeCounts = (Object.keys(MODE_META) as JourneyMode[])
@@ -67,7 +69,7 @@ export default function JourneyPassportTarget({
 
       <section className="passport-summary-card">
         <button className="passport-card-share" aria-label="分享旅行护照" onClick={onShare}><SFSquareAndArrowUp size="sm" /></button>
-        <small>{period === "all" ? "ALL-TIME" : period === "unknown" ? "UNDATED" : period} FLIGHTY PASSPORT</small>
+        <small>{compact || period === "all" ? "ALL-TIME" : period === "unknown" ? "UNDATED" : period} FLIGHTY PASSPORT</small>
         <p>护照 · PASSPORT · 旅迹</p>
         <div className="passport-summary-grid">
           <span><small>行程段</small><strong>{stats.segments}</strong><em>{stats.modes} 种交通方式</em></span>

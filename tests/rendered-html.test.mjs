@@ -31,7 +31,7 @@ test("server-renders the Chinese flighty Everything journey shell and social met
   assert.match(html, /class="flighty-page"/);
   assert.match(html, /class="flighty-device"/);
   assert.match(html, />我的行程</);
-  assert.match(html, /aria-label="打开机场动态"/);
+  assert.match(html, /aria-label="打开机场资料与收藏"/);
 });
 
 test("keeps the live globe, radar, Apple icons and multi-transport persistence wired", async () => {
@@ -95,7 +95,8 @@ test("every product class used in active JSX has a CSS rule", async () => {
     ]);
   const nativeCss = await readFile(new URL("../app/native-layout.css", import.meta.url), "utf8");
   const composerCss = await readFile(new URL("../app/composer.css", import.meta.url), "utf8");
-  const css = `${globalsCss}\n${themeCss}\n${refinementCss}\n${nativeCss}\n${composerCss}`;
+  const experienceCss = await readFile(new URL("../app/travel-experience.css", import.meta.url), "utf8");
+  const css = `${globalsCss}\n${themeCss}\n${refinementCss}\n${nativeCss}\n${composerCss}\n${experienceCss}`;
 
   const used = new Set();
   for (const source of [page, flightyApp, desktop, mobile, composer, passportTarget, globe, vehicle]) {

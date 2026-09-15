@@ -7,6 +7,8 @@ import SFChevronLeft from "sf-symbols-lib/monochrome/SFChevronLeft";
 import SFStar from "sf-symbols-lib/monochrome/SFStar";
 import SFStarFill from "sf-symbols-lib/monochrome/SFStarFill";
 import "./composer.css";
+import { useSheetDetents } from "./useSheetDetents";
+import { realScheduleProblem, zonedPlanTime } from "./realJourney";
 import { useEffect, useRef, useState, type CSSProperties, type ElementType } from "react";
 import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
 import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
@@ -55,6 +57,10 @@ type ComposerDraft = {
   query: string;
   date: string;
   departure: string;
+  travelMode?: "simulation" | "real";
+  arrivalDate?: string;
+  arrivalTime?: string;
+  timeZone?: string;
   note: string;
   title: string;
   drafts: JourneySegment[];
@@ -143,6 +149,11 @@ export default function JourneyComposer({
   const [searching, setSearching] = useState(false);
   const [date, setDate] = useState(restoredDraft?.date ?? localInputDate());
   const [departure, setDeparture] = useState(restoredDraft?.departure ?? "09:00");
+  const composerSheet = useSheetDetents({ detents: [.4, .67, .93], initial: .93 });
+  const [travelMode, setTravelMode] = useState<"simulation" | "real">(restoredDraft?.travelMode ?? "simulation");
+  const [arrivalDate, setArrivalDate] = useState(restoredDraft?.arrivalDate ?? localInputDate());
+  const [arrivalTime, setArrivalTime] = useState(restoredDraft?.arrivalTime ?? "12:00");
+  const [timeZone, setTimeZone] = useState(restoredDraft?.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
   const [note, setNote] = useState(restoredDraft?.note ?? "");
   const [title, setTitle] = useState(restoredDraft?.title ?? "");
   const [drafts, setDrafts] = useState<JourneySegment[]>(initialDrafts);
@@ -212,7 +223,7 @@ export default function JourneyComposer({
   };
   const openPlacePicker = (field: "origin" | "destination") => {
     searchEpochRef.current += 1;
-    setPlaceQuery(""); setPlaceResults([]); setEditingPlace(field); setError(null);
+    setPlaceQuery(""); setPlaceResults([]); setEditingPlace(field); setError(null); composerSheet.snapTo(.93);
   };
   const pickResult = async (suggestion: JourneyPlaceSuggestion) => {
     if (!editingPlace) return;
@@ -243,6 +254,7 @@ export default function JourneyComposer({
     query,
     date,
     departure,
+    travelMode, arrivalDate, arrivalTime, timeZone,
     note,
     title,
     drafts,
@@ -269,10 +281,10 @@ export default function JourneyComposer({
   };
 
   const isDirty = drafts.length > 0 || Boolean(destination) || Boolean(originQuery && (!initialOrigin || origin.code !== initialOrigin.code)) ||
-    date !== localInputDate() || departure !== "09:00" ||
+    date !== localInputDate() || departure !== "09:00" || travelMode === "real" ||
     Boolean(name.trim() && name !== tripName) || Boolean(title.trim()) || Boolean(note.trim());
   const validOrigin = originQuery.trim() === origin.name;
-  const inputProblem = routeInputProblem(validOrigin ? origin : null, destination, date, departure);
+  const inputProblem = routeInputProblem(validOrigin ? origin : null, destination, date, departure) || (travelMode === "real" ? realScheduleProblem(date, departure, arrivalDate, arrivalTime, timeZone) : null);
   const pendingLegReady = !inputProblem;
   const stagedCount = drafts.length + (pendingLegReady ? 1 : 0);
   const previousDestination = drafts.at(-1)?.destination ?? (saveTarget === "current" ? targetTrip?.segments.at(-1)?.destination : undefined);
@@ -316,6 +328,7 @@ export default function JourneyComposer({
       query,
       date,
       departure,
+      travelMode, arrivalDate, arrivalTime, timeZone,
       note,
       title,
       drafts,
@@ -324,7 +337,7 @@ export default function JourneyComposer({
     targetTripId,
     };
     try { window.localStorage.setItem(MOBILE_DRAFT_KEY, JSON.stringify(draft)); } catch { /* Explicit saving reports the storage failure and keeps this form open. */ }
-  }, [mode, name, origin, originQuery, destination, query, date, departure, note, title, drafts, planning, saveTarget, targetTripId, variant]);
+  }, [mode, name, origin, originQuery, destination, query, date, departure, note, title, drafts, planning, saveTarget, targetTripId, variant, travelMode, arrivalDate, arrivalTime, timeZone]);
 
   useEffect(() => {
     if (!initialImportedSegments.length || importedConsumedRef.current) return;
@@ -440,13 +453,21 @@ export default function JourneyComposer({
     setSelectedRailSegment({ ...segment, id: `${segment.id}-${Date.now()}` });
     setTitle(segment.title);
     setNote(segment.note);
+    if (segment.operational?.scheduledDepartureAt && segment.operational?.scheduledArrivalAt) {
+      const parts = (iso: string) => {
+        const d = new Date(iso);
+        return { date: localInputDate(d), time: d.toTimeString().slice(0, 5) };
+      };
+      const from = parts(segment.operational.scheduledDepartureAt), to = parts(segment.operational.scheduledArrivalAt);
+      setDate(from.date); setDeparture(from.time); setArrivalDate(to.date); setArrivalTime(to.time);
+      setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    }
     setError(null);
   };
 
   const buildLeg = () => {
     if (!destination || inputProblem) return null;
-    if (mode === "train" && selectedRailSegment) return selectedRailSegment;
-    return createJourneySegmentBetween({
+    const segment = mode === "train" && selectedRailSegment ? selectedRailSegment : createJourneySegmentBetween({
       mode,
       origin,
       destination,
@@ -455,12 +476,20 @@ export default function JourneyComposer({
       note,
       title,
     });
+    if (travelMode === "simulation") return { ...segment, travelPlan: { mode: "simulation" as const, departureAt: "", arrivalAt: "", timeZone } };
+    const departureAt = zonedPlanTime(date, departure, timeZone)!, arrivalAt = zonedPlanTime(arrivalDate, arrivalTime, timeZone)!;
+    return {
+      ...segment, date, departure, arrival: arrivalTime, status: "upcoming" as const, progress: 0,
+      durationMinutes: Math.round((Date.parse(arrivalAt) - Date.parse(departureAt)) / 60000),
+      travelPlan: { mode: "real" as const, departureAt, arrivalAt, timeZone },
+    };
   };
 
   const addNextLeg = () => {
     const segment = buildLeg();
     if (!segment) return;
     setDrafts((current) => [...current, segment]);
+    if (travelMode === "real") { setDate(arrivalDate); setDeparture(arrivalTime); }
     setOrigin(segment.destination);
     setOriginQuery(segment.destination.name);
     setDestination(null);
@@ -533,7 +562,8 @@ export default function JourneyComposer({
       </div>
     );
     return (
-      <section className="journey-composer mobile composer-v2" role="dialog" aria-modal="true" aria-label={editingPlace ? `选择${fieldLabel}` : "添加行程"}>
+      <section className={`journey-composer mobile composer-v2 ${composerSheet.dragging ? "is-dragging" : ""}`} {...composerSheet.sheetProps} style={{ "--composer-height": `${composerSheet.fraction * 100}%` } as CSSProperties} role="dialog" aria-label={editingPlace ? `选择${fieldLabel}` : "添加行程"}>
+        <button type="button" className="composer-grabber" aria-label="展开或收起添加行程" onClick={composerSheet.toggleExpanded}><span /></button>
         <header className="composer-header">
           {editingPlace && <button className="composer-circle" aria-label="返回路线编辑" onClick={() => { searchEpochRef.current += 1; setEditingPlace(null); setError(null); }}><SFChevronLeft size="sm" /></button>}
           <h2>{editingPlace ? `选择${fieldLabel}` : "添加行程"}</h2>
@@ -572,6 +602,11 @@ export default function JourneyComposer({
         ) : (
           <>
             <div className="composer-scroll">
+              <div className="composer-plan-mode" role="group" aria-label="行程模式">
+                <button type="button" aria-pressed={travelMode === "simulation"} onClick={() => setTravelMode("simulation")}>模拟预览</button>
+                <button type="button" aria-pressed={travelMode === "real"} onClick={() => setTravelMode("real")}>真实行程</button>
+              </div>
+              <p className="composer-hint">{travelMode === "real" ? "按你的真实时间规划，开启定位后可确认到达。" : "快速预览路线，不代表真实位置，也不会自动记为到达。"}</p>
               <section className="composer-section">
                 <label className="composer-field composer-target">
                   <span>所属旅程</span>
@@ -591,7 +626,7 @@ export default function JourneyComposer({
                     {trips.map(trip => <option key={trip.id} value={trip.id}>{trip.name}</option>)}
                   </select>
                 </label>
-                {saveTarget === "new" && <p className="composer-hint">独立保存为一趟新旅程；名称可在下方修改。</p>}
+
               </section>
 
               <section className="composer-section">
@@ -610,9 +645,17 @@ export default function JourneyComposer({
               </section>
 
               <section className="composer-section composer-field-group">
-                <label className="composer-field"><span>出发日期</span><input type="date" aria-label="出发日期" value={date} onChange={event => setDate(event.target.value)} /></label>
-                <label className="composer-field"><span>出发时间</span><input type="time" aria-label="出发时间" value={departure} onChange={event => setDeparture(event.target.value)} /></label>
+                <label className="composer-field"><span>出发日期</span><input type="date" aria-label="出发日期" value={date} onInput={event => setDate(event.currentTarget.value)} onChange={event => setDate(event.target.value)} /></label>
+                <label className="composer-field"><span>出发时间</span><input type="time" aria-label="出发时间" value={departure} onInput={event => setDeparture(event.currentTarget.value)} onChange={event => setDeparture(event.target.value)} /></label>
               </section>
+
+              {travelMode === "real" && <section className="composer-section composer-field-group">
+                <label className="composer-field"><span>到达日期</span><input type="date" aria-label="到达日期" value={arrivalDate} onInput={event => setArrivalDate(event.currentTarget.value)} onChange={event => setArrivalDate(event.target.value)} /></label>
+                <label className="composer-field"><span>到达时间</span><input type="time" aria-label="到达时间" value={arrivalTime} onInput={event => setArrivalTime(event.currentTarget.value)} onChange={event => setArrivalTime(event.target.value)} /></label>
+                <label className="composer-field"><span>时间基准</span><input aria-label="计划时区" list="planning-time-zones" value={timeZone} onChange={event => setTimeZone(event.target.value.trim())} /></label>
+                <datalist id="planning-time-zones">{Array.from(new Set([Intl.DateTimeFormat().resolvedOptions().timeZone, "Asia/Hong_Kong", "Asia/Shanghai", "Asia/Tokyo", "Europe/London", "America/New_York", "America/Los_Angeles", "UTC"])).map(zone => <option key={zone} value={zone} />)}</datalist>
+                <p className="composer-hint composer-zone-hint">出发和到达均按 {timeZone} 填写，跨时区旅行请换算为此时区。</p>
+              </section>}
 
               {mode === "flight" && onFlightTools && <button type="button" className="composer-tool" onClick={openFlightTools}><SFAirplane size="sm" /><span>通过航班号或日历添加</span><SFChevronRight size="xs" /></button>}
               {mode === "train" && <section className="composer-section">

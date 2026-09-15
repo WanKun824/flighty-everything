@@ -23,12 +23,16 @@ html[data-native-shell], html[data-native-shell] body, html[data-native-shell] #
 .flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-target-scroll { overflow: hidden; }
 .flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-target-scroll > :not(.passport-summary-card) { display: none; }
 .flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-card {
-  margin: 0; padding: 10px 0; background: transparent; box-shadow: none; color: var(--sheet-text); min-height: 0;
+  margin: 0; padding: 16px; color: #fff; min-height: 0; border-radius: 22px;
 }
-.flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-card > :not(.passport-summary-grid),
+.flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-card > :not(.passport-summary-grid):not(small),
 .flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-grid > span:nth-child(n+3),
 .flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-grid em { display: none; }
-.flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-grid small { color: var(--sheet-muted); }
+.flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-grid small { color: #ddd9f3; }
+.flighty-page[data-theme] .primary-panel[data-tab="passport"][data-minimum="true"] .panel-titlebar { display: none; }
+.flighty-page[data-theme] .primary-panel[data-tab="passport"][data-minimum="true"] .passport-target-scroll { padding-top: 16px; }
+.flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-card > small { padding: 0; font-size: 14px; letter-spacing: .025em; line-height: 1.4; }
+.flighty-page .primary-panel[data-tab="passport"][data-minimum="true"] .passport-summary-grid { margin-top: 14px; }
 html[data-native-shell] {
   --native-safe-top: env(safe-area-inset-top, 0px);
   --native-safe-bottom: env(safe-area-inset-bottom, 0px);

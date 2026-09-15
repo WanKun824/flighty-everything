@@ -1,5 +1,8 @@
 "use client";
 
+import { journeyPhase } from "./realJourney";
+import TravelPlanEditor from "./TravelPlanEditor";
+import type { useRealJourney } from "./useRealJourney";
 import { railRouteLabel } from "./journeyPath";
 import { useEffect, useState, type CSSProperties } from "react";
 import SFArrowDownRight from "sf-symbols-lib/monochrome/SFArrowDownRight";
@@ -225,12 +228,12 @@ export function FlightyJourneyPanel({
               >
                 <span className={`mobile-segment-state ${status.tone}`}>
                   <span aria-hidden="true"><JourneyModeIcon mode={segment.mode} /></span>
-                  <small>{compactStatusLabel(status.tone, segment.mode)}</small>
+                  <small>{segment.travelPlan?.mode === "real" ? "真实" : "模拟"}</small>
                 </span>
                 <span className="mobile-segment-main">
                   <span className="mobile-segment-meta">
                     <b>{segment.service}</b>
-                    <i className={status.tone}>{scheduleCaption(status.tone, countdown, segment.mode)}</i>
+                    <i className={status.tone}>{segment.travelPlan?.mode === "real" ? scheduleCaption(status.tone, countdown, segment.mode) : "模拟预览"}</i>
                   </span>
                   <strong className="mobile-segment-title">{segment.title}</strong>
                   <span className="mobile-segment-route-times">
@@ -425,18 +428,19 @@ function useNow() {
 }
 
 function bestDepartureAt(segment: JourneySegment) {
-  return segment.operational?.actualDepartureAt
+  return segment.travelPlan?.departureAt || segment.operational?.actualDepartureAt
     || segment.operational?.estimatedDepartureAt
     || segment.operational?.scheduledDepartureAt;
 }
 
 function bestArrivalAt(segment: JourneySegment) {
-  return segment.operational?.actualArrivalAt
+  return segment.travelPlan?.arrivalAt || segment.operational?.actualArrivalAt
     || segment.operational?.estimatedArrivalAt
     || segment.operational?.scheduledArrivalAt;
 }
 
 function segmentCountdown(segment: JourneySegment, now: number) {
+  if (segment.travelPlan?.mode !== "real") return { value: "模拟", unit: "不代表实时位置" };
   if (segment.status === "complete") return { value: "已", unit: "完成" };
   const departure = bestDepartureAt(segment);
   const arrival = bestArrivalAt(segment);
@@ -461,7 +465,9 @@ function segmentCountdown(segment: JourneySegment, now: number) {
   return { value: segment.date.split(" · ")[0], unit: "计划" };
 }
 
-function segmentStatus(segment: JourneySegment, now: number) {
+const segmentStatus = journeyPhase;
+
+function legacySegmentStatus(segment: JourneySegment, now: number) {
   if (segment.status === "complete") return { label: "已完成", tone: "complete" };
   const departure = bestDepartureAt(segment);
   const arrival = bestArrivalAt(segment);
@@ -602,25 +608,31 @@ export function MobileJourneyPassport({
 
 export function MobileJourneyDetail({
   segment,
+  location,
+  onUpdate,
   initialDetent = .33,
   onClose,
   onToggleComplete,
   onDelete,
 }: {
   segment: JourneySegment;
+  location: ReturnType<typeof useRealJourney>;
+  onUpdate: (segment: JourneySegment) => void;
   initialDetent?: number;
   onClose: () => void;
   onToggleComplete: () => void;
   onDelete: () => void;
 }) {
+  const [editingPlan, setEditingPlan] = useState(false);
+  const isReal = segment.travelPlan?.mode === "real";
   const meta = MODE_META[segment.mode];
   const now = useNow();
   const status = segmentStatus(segment, now);
   const countdown = segmentCountdown(segment, now);
   const detailSheet = useSheetDetents({
-    detents: [.33, .57, .93],
+    detents: [.2, .57, .93],
     initial: initialDetent,
-    minimumHeight: 256,
+    minimumHeight: 168,
     dismissible: false,
   });
   const detent = detailSheet.atMinimum
@@ -650,7 +662,7 @@ export function MobileJourneyDetail({
         <span className="mobile-detail-summary-copy">
           <small>{segment.service} · {operationalDate(segment)}</small>
           <strong>{segment.origin.city}到{segment.destination.city}</strong>
-          <em>{segment.operational?.provider || meta.label}</em>
+          <em>{isReal ? "真实行程" : "模拟预览"} · {segment.operational?.provider || meta.label}</em>
         </span>
         <button className="mobile-detail-close" aria-label="关闭详情" onClick={onClose}>
           <SFXmark size="sm" />
@@ -664,13 +676,26 @@ export function MobileJourneyDetail({
       </div>
 
       <div className="mobile-detail-body">
+        <section className="journey-mode-control">
+          <div role="group" aria-label="查看模式">
+            <button aria-pressed={!isReal} onClick={() => { if (isReal) location.enabled && location.toggle(); onUpdate({ ...segment, travelPlan: { ...segment.travelPlan, mode: "simulation", departureAt: segment.travelPlan?.departureAt || "", arrivalAt: segment.travelPlan?.arrivalAt || "", timeZone: segment.travelPlan?.timeZone || Intl.DateTimeFormat().resolvedOptions().timeZone } }); setEditingPlan(false); }}>模拟预览</button>
+            <button aria-pressed={isReal} onClick={() => setEditingPlan(true)}>真实行程</button>
+          </div>
+          {editingPlan && <TravelPlanEditor key={segment.id} segment={segment} onSave={next => { onUpdate(next); setEditingPlan(false); }} onCancel={() => setEditingPlan(false)} />}
+          {isReal ? <div className="journey-location-control">
+            <p>{segment.travelPlan?.arrivedAt ? `已${segment.travelPlan.arrivalSource === "location" ? "根据定位" : "手动"}确认到达` : location.message}</p>
+            {segment.status !== "complete" && <button aria-pressed={location.enabled} onClick={location.toggle}>{location.enabled ? "暂停定位" : "开启我的实时位置"}</button>}
+            <button onClick={() => setEditingPlan(true)}>调整出发与到达时间</button>
+            <small>仅在应用打开时定位，不上传位置。锁屏或切到后台将暂停；无可靠定位时请手动确认到达。</small>
+          </div> : <p>地图播放的是模拟路线，不会自动标记真实到达。</p>}
+        </section>
         <section className={`mobile-operational-banner ${status.tone}`}>
           <SFInfoCircleFill size="sm" />
           <span>
-            <strong>{segment.operational?.statusText || status.label}</strong>
-            <small>{operationalMessage(segment)}</small>
+            <strong>{status.label}</strong>
+            <small>{isReal ? `按 ${segment.travelPlan?.timeZone} 计划时刻显示，不是航班实时状态` : "仅用于预览路线，不代表载具或你的实时位置"}</small>
           </span>
-          {segment.operational?.realtime && <b>实时</b>}
+          
         </section>
 
         <section className="mobile-endpoint-block departure">
@@ -680,7 +705,7 @@ export function MobileJourneyDetail({
           </div>
           <div className="mobile-endpoint-time">
             <strong>{segment.departure}</strong>
-            <span>{segment.operational?.realtime ? "预计 / 实时" : "计划出发"}</span>
+            <span>{isReal ? "计划出发" : "模拟时刻"}</span>
           </div>
           <small>{segment.date} · {segment.origin.city}</small>
         </section>
@@ -698,9 +723,9 @@ export function MobileJourneyDetail({
           </div>
           <div className="mobile-endpoint-time">
             <strong>{segment.arrival}</strong>
-            <span>{segment.operational?.realtime ? "预计 / 实时" : "计划到达"}</span>
+            <span>{isReal ? "计划到达" : "模拟时刻"}</span>
           </div>
-          <small>{segment.destination.city} · {segment.operational?.equipment || segment.note}</small>
+          <small>{isReal ? new Intl.DateTimeFormat("zh-CN", { timeZone: segment.travelPlan!.timeZone, dateStyle: "medium" }).format(new Date(segment.travelPlan!.arrivalAt)) : segment.destination.city} · {segment.travelPlan?.timeZone || segment.operational?.equipment || segment.note}</small>
         </section>
 
         <section className="mobile-data-source-card">
@@ -719,7 +744,7 @@ export function MobileJourneyDetail({
 
         <button className={`mobile-complete-button ${segment.status === "complete" ? "done" : ""}`} onClick={onToggleComplete}>
           <SFCheckmarkCircleFill size="sm" />
-          {segment.status === "complete" ? "恢复为未完成" : "标记为已完成"}
+          {segment.status === "complete" ? "恢复为未完成" : "手动确认真实已到达"}
         </button>
         <button className="mobile-delete-journey" onClick={onDelete}>
           <SFTrash size="xs" />删除这段行程

@@ -67,6 +67,14 @@ export type JourneySegment = {
   status: JourneyStatus;
   note: string;
   progress: number;
+  travelPlan?: {
+    mode: "simulation" | "real";
+    departureAt: string;
+    arrivalAt: string;
+    timeZone: string;
+    arrivedAt?: string;
+    arrivalSource?: "location" | "manual";
+  };
   operational?: JourneyOperationalData;
   railGeometry?: RailGeometry;
 };
