@@ -56,8 +56,8 @@ export function freshLocation(fix: LocationFix | null, now: number): fix is Loca
 export function arrivalEvidence(segment: JourneySegment, fix: LocationFix, now: number, previous: { since: number; last: number } | null) {
   const plan = segment.travelPlan;
   const radius = segment.destination.kind === "airport" ? 800 : 150;
-  if (plan?.mode !== "real" || segment.status === "complete" || now < Date.parse(plan.departureAt) || !freshLocation(fix, now) ||
+  if (plan?.mode !== "real" || segment.status === "complete" || !Number.isFinite(Date.parse(plan.departureAt)) || now < Date.parse(plan.departureAt) || !freshLocation(fix, now) ||
     (fix.speed !== null && fix.speed > 3) || distanceMeters([fix.longitude, fix.latitude], segment.destination.coordinate) + fix.accuracy > radius) return null;
-  if (!previous || fix.timestamp - previous.last > 30_000) return { since: fix.timestamp, last: fix.timestamp, arrived: false };
+  if (!previous || fix.timestamp < previous.last || fix.timestamp - previous.last > 30_000) return { since: fix.timestamp, last: fix.timestamp, arrived: false };
   return { since: previous.since, last: fix.timestamp, arrived: fix.timestamp - previous.since >= 45_000 };
 }

@@ -164,6 +164,7 @@ export default function JourneyComposer({
   const [error, setError] = useState<string | null>(null);
   const [railResults, setRailResults] = useState<JourneySegment[]>([]);
   const [selectedRailSegment, setSelectedRailSegment] = useState<JourneySegment | null>(null);
+  const railSelectionKey = useRef("");
   const [railSearching, setRailSearching] = useState(false);
   const [sessionToken] = useState(() =>
     typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -388,6 +389,7 @@ export default function JourneyComposer({
   }, [destination, query, sessionToken]);
 
   useEffect(() => {
+    if (railSelectionKey.current === [mode, origin.code, destination?.code, date, departure].join("|")) return;
     setRailResults([]);
     setSelectedRailSegment(null);
   }, [mode, origin.code, destination?.code, date, departure]);
@@ -459,6 +461,7 @@ export default function JourneyComposer({
         return { date: localInputDate(d), time: d.toTimeString().slice(0, 5) };
       };
       const from = parts(segment.operational.scheduledDepartureAt), to = parts(segment.operational.scheduledArrivalAt);
+      railSelectionKey.current = [mode, origin.code, destination?.code, from.date, from.time].join("|");
       setDate(from.date); setDeparture(from.time); setArrivalDate(to.date); setArrivalTime(to.time);
       setTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
     }
@@ -659,7 +662,7 @@ export default function JourneyComposer({
 
               {mode === "flight" && onFlightTools && <button type="button" className="composer-tool" onClick={openFlightTools}><SFAirplane size="sm" /><span>通过航班号或日历添加</span><SFChevronRight size="xs" /></button>}
               {mode === "train" && <section className="composer-section">
-                <button type="button" className="composer-tool" disabled={!pendingLegReady || railSearching} onClick={() => void lookupRail()}><SFTrainSideFrontCar size="sm" /><span>{railSearching ? "正在查询列车…" : "查询真实列车班次"}</span><SFChevronRight size="xs" /></button>
+                <button type="button" className="composer-tool" disabled={Boolean(routeInputProblem(validOrigin ? origin : null, destination, date, departure)) || railSearching} onClick={() => void lookupRail()}><SFTrainSideFrontCar size="sm" /><span>{railSearching ? "正在查询列车…" : "查询真实列车班次"}</span><SFChevronRight size="xs" /></button>
                 {railResults.map(segment => <button key={segment.id} className="composer-rail-result" type="button" aria-pressed={selectedRailSegment?.service === segment.service && selectedRailSegment.departure === segment.departure} onClick={() => chooseRail(segment)}><strong>{segment.service}</strong><span>{segment.departure} → {segment.arrival}</span><small>{segment.operational?.provider} · {formatRailDuration(segment.durationMinutes)}</small></button>)}
                 {selectedRailSegment && <p className="composer-hint">已选 {selectedRailSegment.service}，保存查询返回的车站和时刻。</p>}
               </section>}

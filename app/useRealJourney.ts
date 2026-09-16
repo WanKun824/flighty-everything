@@ -15,16 +15,17 @@ export function useRealJourney(segment: JourneySegment | null, onArrive: (id: st
   useEffect(() => { setEnabled(false); setFix(null); setMessage("定位未开启"); }, [segment?.id, real]);
   useEffect(() => {
     if (!enabled || !real || !segment || segment.status === "complete") return;
-    let watch: (() => void) | null = null, disposed = false;
+    let watch: (() => void) | null = null, disposed = false, generation = 0;
     let evidence: { since: number; last: number } | null = null;
     let last: LocationFix | null = null;
-    const stop = () => { watch?.(); watch = null; evidence = null; last = null; setFix(null); };
+    const stop = () => { generation += 1; watch?.(); watch = null; evidence = null; last = null; setFix(null); };
     const start = () => {
       stop();
+      const currentGeneration = generation;
       if (document.hidden) { setMessage("已暂停定位 · 返回应用后继续"); return; }
       setMessage("正在获取位置…");
       watch = watchJourneyLocation(next => {
-        if (disposed || document.hidden) return;
+        if (disposed || currentGeneration !== generation || document.hidden) return;
         const now = Date.now();
         if (!freshLocation(next, now)) { evidence = null; last = null; setFix(null); setMessage("定位精度不足，暂不判断到达"); return; }
         last = next; setFix(next);
@@ -35,7 +36,7 @@ export function useRealJourney(segment: JourneySegment | null, onArrive: (id: st
           stop(); setEnabled(false); setMessage("已根据定位确认到达");
         }
       }, error => {
-        if (disposed) return;
+        if (disposed || currentGeneration !== generation) return;
         evidence = null; last = null; setFix(null);
         setMessage(error === 1 ? "定位权限被拒绝，可在系统设置中开启或手动确认到达" : "暂时无法定位，请稍后重试；不会自动标记到达");
         if (error === 1) { stop(); setEnabled(false); }
