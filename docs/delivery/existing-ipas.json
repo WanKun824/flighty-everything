@@ -1,0 +1,134 @@
+[
+  {
+    "file": "flighty-everything-0.3.1-build17-4c41267-unsigned.ipa",
+    "localPath": "release/flighty-everything-0.3.1-build17-4c41267-unsigned.ipa",
+    "bytes": 7899443,
+    "sha256": "41e37f46a04d6b7764efdb5a7595727b5997967eb96c27ad8848cedcdf39a3ec",
+    "displayName": "flighty Everything",
+    "version": "0.3.1",
+    "build": "17",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": {
+      "sourceCommit": "4c4126731b61792960bdeb7a3b31a521c880abf5",
+      "version": "0.3.1",
+      "buildNumber": "17",
+      "builtAt": "2026-09-03T12:38:22.321Z"
+    },
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "flighty-everything-0.3.2-build26-f739989-unsigned.ipa",
+    "localPath": "release/flighty-everything-0.3.2-build26-f739989-unsigned.ipa",
+    "bytes": 7922704,
+    "sha256": "f6b15247235cf81c0e683438fc0cc954fe98c9051213c9ae433930ce02410691",
+    "displayName": "flighty Everything",
+    "version": "0.3.2",
+    "build": "26",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": {
+      "sourceCommit": "f7399892ab000845f75182f9dc282f72a85583fd",
+      "version": "0.3.2",
+      "buildNumber": "26",
+      "builtAt": "2026-09-04T06:59:53.310Z"
+    },
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "flighty-everything-20260916-76c63fd-unsigned.ipa",
+    "localPath": "release/flighty-everything-20260916-76c63fd-unsigned.ipa",
+    "bytes": 7944648,
+    "sha256": "eb495b755570e85c0528e5ee61decf6639b53486b272e48642eb06d4e568e9d6",
+    "displayName": "flighty Everything",
+    "version": "0.3.2",
+    "build": "3",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": {
+      "sourceCommit": "76c63fda50930d027bb07548be412e2dc55f0eae",
+      "version": "0.3.2",
+      "buildNumber": "3",
+      "builtAt": "2026-09-15T22:29:52.138Z"
+    },
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "flighty-everything-ios-arm64-unsigned-20260901.ipa",
+    "localPath": "release/flighty-everything-ios-arm64-unsigned-20260901.ipa",
+    "bytes": 6493033,
+    "sha256": "bf18d09088ecbea93613dad22356780e857e7c12742500f17c5023f62dc71536",
+    "displayName": "flighty Everything",
+    "version": "0.3.0",
+    "build": "11",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": null,
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "flighty-everything-ios-arm64-unsigned-23f8ab8.ipa",
+    "localPath": "release/flighty-everything-ios-arm64-unsigned-23f8ab8.ipa",
+    "bytes": 6474525,
+    "sha256": "0d41957e0b394bc4329c470091b7a2633bb6c3cca3cbf1283bb74c1eba68c7aa",
+    "displayName": "flighty Everything",
+    "version": "0.3.0",
+    "build": "9",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": null,
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "flighty-everything-ios-arm64-unsigned-7b4c387.ipa",
+    "localPath": "release/flighty-everything-ios-arm64-unsigned-7b4c387.ipa",
+    "bytes": 6474463,
+    "sha256": "b9f26014b149611cf670c62f2220a36552ec649a5c70fe800936e2a4e76546ef",
+    "displayName": "flighty Everything",
+    "version": "0.3.0",
+    "build": "10",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": null,
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "flighty-everything-ios-arm64-unsigned.ipa",
+    "localPath": "release/flighty-everything-ios-arm64-unsigned.ipa",
+    "bytes": 625891,
+    "sha256": "1dd42dc07b7522f2a01677241cc9eb0d76275fa5db639feb874a3370a7383f1d",
+    "displayName": "flighty Everything",
+    "version": "0.2.0",
+    "build": "5",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": null,
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "fly-everything-20260920-51173f1-unsigned.ipa",
+    "localPath": "release/fly-everything-20260920-51173f1-unsigned.ipa",
+    "bytes": 8713333,
+    "sha256": "ca13b4447daf4f5bb39ffefed91d7d3cfa81add9af445881cdae79a0a9db9c48",
+    "displayName": "fly everything",
+    "version": "0.3.2",
+    "build": "5",
+    "bundleId": "com.wankun824.flightyeverything",
+    "source": {
+      "sourceCommit": "51173f1d5efa2037354d2dd056cdc3d343f50c10",
+      "version": "0.3.2",
+      "buildNumber": "5",
+      "builtAt": "2026-09-20T14:48:05.789Z"
+    },
+    "hasEmbeddedProfile": false,
+    "note": "Existing unsigned archive; not rebuilt or runtime-tested for this handoff."
+  },
+  {
+    "file": "flighty-everything-v0.3.0-ios-arm64-unsigned.ipa",
+    "localPath": "release/v0.3.0/flighty-everything-v0.3.0-ios-arm64-unsigned.ipa",
+    "bytes": 11655680,
+    "sha256": "795f535011b702436686ba9249d388a1566bdb5aeb4de11a1cae5675539716ab",
+    "source": null,
+    "note": "Not a readable ZIP/IPA archive. Historical failed or partial download; DO NOT INSTALL."
+  }
+]
