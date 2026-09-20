@@ -79,7 +79,7 @@ export default function DesktopJourney() {
   return (
     <main
       className="journey-desktop"
-      aria-label="flighty Everything 网页端旅行工作台"
+      aria-label="fly everything 网页端旅行工作台"
     >
       <aside className="desktop-sidebar">
         <div className="desktop-brand">

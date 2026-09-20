@@ -18,8 +18,8 @@ type NativeScreen =
 
 function NativeBootScreen() {
   return (
-    <main className="native-boot-screen" aria-label="flighty Everything 正在启动">
-      <span>flighty <em>Everything</em></span>
+    <main className="native-boot-screen" aria-label="fly everything 正在启动">
+      <span>fly <em>everything</em></span>
       <i />
     </main>
   );

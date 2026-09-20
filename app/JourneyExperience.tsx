@@ -185,10 +185,10 @@ export default function JourneyExperience() {
       </section>
 
       <header className="journey-glass-bar">
-        <a className="journey-wordmark" href="#top" aria-label="flighty Everything 首页">
+        <a className="journey-wordmark" href="#top" aria-label="fly everything 首页">
           <span><SFGlobeAsiaAustraliaFill size="sm" /></span>
-          <b>flighty</b>
-          <em>Everything</em>
+          <b>fly</b>
+          <em>everything</em>
         </a>
         <nav aria-label="行程内容">
           <button className={surface === "mine" ? "active" : ""} onClick={() => setSurface("mine")}>你的行程</button>

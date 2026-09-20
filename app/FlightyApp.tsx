@@ -354,7 +354,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     <main className={`flighty-page ${!overlay && mainSheet.fraction > 0.5 ? "map-controls-compact" : ""} ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
       <section
         className="flighty-device"
-        aria-label="flighty Everything flight tracker"
+        aria-label="fly everything flight tracker"
       >
         <FlightGlobe
           userLocation={selectedJourney?.travelPlan?.mode === "real" ? location.fix : null}
@@ -485,7 +485,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 className="round-button"
                 aria-label={`Share ${title}`}
                 onClick={() =>
-                  void share(title, `My ${title} in flighty Everything`)
+                  void share(title, `My ${title} in fly everything`)
                 }
               >
                 <SFSquareAndArrowUp size="md" />
@@ -548,7 +548,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               }}
               onEdit={(trip) => openJourneyNames(trip)}
               onOpenStats={() => setOverlay("journey-passport-stats")}
-              onShare={() => void share("flighty Everything 旅迹", "我的多载具旅行护照")}
+              onShare={() => void share("fly everything 旅迹", "我的多载具旅行护照")}
             />
           )}
 
@@ -665,7 +665,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             onShare={() =>
               void share(
                 "Airports",
-                "flighty Everything 机场资料与收藏",
+                "fly everything 机场资料与收藏",
               )
             }
           />
@@ -816,7 +816,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           <JourneyPassportStatsTarget
             trips={journeyStore.state.trips}
             onClose={() => setOverlay(null)}
-            onShare={() => void share("flighty Everything 旅迹统计", "我的多载具旅行统计")}
+            onShare={() => void share("fly everything 旅迹统计", "我的多载具旅行统计")}
           />
         )}
         {overlay === "delay-stats" && (
@@ -1500,7 +1500,7 @@ function AddFlightSheet(props: {
                 <SFDiceFill size="md" />
                 <span>
                   <strong>Random Flight</strong>
-                  <small>Try flighty Everything for free</small>
+                  <small>Try fly everything for free</small>
                 </span>
               </button>
             </>
@@ -2011,7 +2011,7 @@ function DelayStatsSheet({
       <div className="delay-report">
         <header>
           <SFAirplaneArrival size="lg" />
-          <b>flighty</b>
+          <b>fly everything</b>
           <strong>All-Time Delay Report</strong>
         </header>
         <b className="delay-percent">{stats.delayPercent}%</b>

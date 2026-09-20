@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">flighty Everything</string>
-    <string name="title_activity_main">flighty Everything</string>
+    <string name="app_name">fly everything</string>
+    <string name="title_activity_main">fly everything</string>
     <string name="package_name">com.wankun824.flightyeverything</string>
     <string name="custom_url_scheme">com.wankun824.flightyeverything</string>
 </resources>

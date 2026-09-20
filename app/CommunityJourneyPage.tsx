@@ -52,7 +52,7 @@ export default function CommunityJourneyPage({ journey, onBack }: { journey: Com
           event.preventDefault();
           onBack();
         }}><SFArrowLeft size="sm" /><span>社区</span></a>
-        <strong>flighty <em>Everything</em></strong>
+        <strong>fly <em>everything</em></strong>
         <span>
           <button aria-label={`切换到${appearance.resolved === "dark" ? "浅色" : "深色"}模式`} onClick={appearance.cycle}>{appearance.resolved === "dark" ? <SFSunMaxFill size="sm" /> : <SFMoonStarsFill size="sm" />}</button>
           <button aria-label="分享此行程" onClick={() => void share()}><SFSquareAndArrowUp size="sm" /></button>

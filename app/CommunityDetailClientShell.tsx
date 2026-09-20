@@ -8,7 +8,7 @@ const CommunityJourneyPage = lazy(() => import("./CommunityJourneyPage"));
 function DetailBootScreen({ title }: { title: string }) {
   return (
     <main className="journey-experience journey-27 community-boot-screen">
-      <strong>flighty <em>Everything</em></strong>
+      <strong>fly <em>everything</em></strong>
       <span>正在打开 {title}…</span>
     </main>
   );

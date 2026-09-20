@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
   appId: "com.wankun824.flightyeverything",
-  appName: "flighty Everything",
+  appName: "fly everything",
   webDir: "native-shell",
   ios: {
     scheme: "FlightyEverything",

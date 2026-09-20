@@ -171,11 +171,11 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
       </section>
 
       <header className="journey-glass-bar liquid-glass-control">
-        <a className="journey-wordmark" href="#top" aria-label="flighty Everything 首页" onClick={(event) => {
+        <a className="journey-wordmark" href="#top" aria-label="fly everything 首页" onClick={(event) => {
           if (!onHome) return;
           event.preventDefault();
           onHome();
-        }}><span><SFGlobeAsiaAustraliaFill size="sm" /></span><b>flighty</b><em>Everything</em></a>
+        }}><span><SFGlobeAsiaAustraliaFill size="sm" /></span><b>fly</b><em>everything</em></a>
         <nav aria-label="行程视图">
           <button className={surface === "mine" ? "active" : ""} onClick={() => setSurface("mine")}>我的行程</button>
           <button className={surface === "discover" ? "active" : ""} onClick={() => setSurface("discover")}>社区</button>

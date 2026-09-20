@@ -184,7 +184,7 @@ export function JourneyPassportStatsTarget({
           <div className="passport-detail-status" aria-hidden="true"><strong>{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}</strong><span><SFCellularbars size="xs" /><SFWifi size="xs" /><SFBattery100percent size="sm" /></span></div>
           <header className="passport-detail-header">
             <button aria-label="关闭旅迹统计" onClick={onClose}><SFXmark size="md" /></button>
-            <h1>flighty Everything</h1>
+            <h1>fly everything</h1>
             <button aria-label="分享旅迹统计" onClick={onShare}><SFSquareAndArrowUp size="md" /></button>
           </header>
           <div className="passport-detail-period" role="tablist" aria-label="统计时间范围">
@@ -196,7 +196,7 @@ export function JourneyPassportStatsTarget({
           </div>
           <PassportWorldMap key={period} segments={segments} />
           <div className="passport-hero-summary">
-            <small>MY FLIGHTY EVERYTHING PASSPORT</small>
+            <small>MY FLY EVERYTHING PASSPORT</small>
             <p>多载具 · MULTI-MODAL · 旅迹</p>
             <div><span><small>行程段</small><strong>{stats.segments}</strong></span><span><small>总里程</small><strong>{stats.distanceKm.toLocaleString("zh-CN")}<i> km</i></strong></span><span><small>在途时间</small><strong>{formatDuration(stats.durationMinutes)}</strong></span><span><small>地点</small><strong>{stats.places}</strong></span><span><small>载具</small><strong>{stats.modes}</strong></span></div>
           </div>

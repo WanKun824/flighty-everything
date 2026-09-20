@@ -5,14 +5,15 @@ import "./journey-refinement.css";
 import "./native-layout.css";
 
 export const metadata: Metadata = {
+  icons: { icon: "/favicon.png", apple: "/apple-touch-icon.png" },
   metadataBase: new URL(
     "https://manyou-travel-ui-demo.zvcdg28tfj.chatgpt.site",
   ),
-  title: "flighty Everything — 飞机、火车、汽车与轮船旅行规划",
+  title: "fly everything — 飞机、火车、汽车与轮船旅行规划",
   description:
     "在网页与 iOS 上统一规划飞机、火车、汽车和轮船行程，并通过实时地图查看完整路线。",
   openGraph: {
-    title: "flighty Everything",
+    title: "fly everything",
     description: "飞机、火车、汽车与轮船，一张地图规划全部旅程。",
     type: "website",
     locale: "zh_CN",
@@ -21,13 +22,13 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1672,
         height: 941,
-        alt: "flighty Everything 多交通旅行地图",
+        alt: "fly everything 多交通旅行地图",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "flighty Everything",
+    title: "fly everything",
     description: "飞机、火车、汽车与轮船，一张地图规划全部旅程。",
     images: ["/og.png"],
   },

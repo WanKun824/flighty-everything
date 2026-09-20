@@ -7,9 +7,9 @@ const FlightyApp = lazy(() => import("./FlightyApp"));
 function BootScreen() {
   return (
     <main className="flighty-page">
-      <section className="flighty-device" aria-label="flighty Everything 正在启动">
+      <section className="flighty-device" aria-label="fly everything 正在启动">
         <div className="flighty-boot-screen">
-          <strong>flighty <em>Everything</em></strong>
+          <strong>fly <em>everything</em></strong>
           <span>我的行程</span>
           <button className="visually-hidden" aria-label="打开机场资料与收藏" disabled />
         </div>
