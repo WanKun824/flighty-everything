@@ -59,7 +59,7 @@ page('26-passport-expanded', '旅记：概览', '.primary-panel[data-tab="passpo
 page('27-passport-stats', '旅记：详细统计', '.passport-detail', [navigate(tab='passport', overlay='journey-passport-stats')], '完整旅记统计页面顶部，数值取自应用当前演示状态。')
 page('28-community', '旅行社区', '.journey-experience', [navigate(tab='friends'), click('.community-button')], '原生入口中的社区页；离线示例或服务状态按实际画面记录。')
 page('29-community-publish', '社区：发布行程', '.publish-journey-dialog', [click('.journey-add-button')], '仅打开发布表单，不发布、点赞或发送任何内容。')
-page('30-community-discover', '社区：发现', '.community-status', [click('.publish-journey-dialog header button'), click('.journey-header nav button', 1)], '原生社区列表及网络状态，不将示例内容称为实时分享。')
+page('30-community-discover', '社区：发现', '.community-status', [click('.publish-journey-dialog header button'), click('.journey-glass-bar nav button', 1)], '原生社区列表及网络状态，不将示例内容称为实时分享。')
 page('31-community-detail', '社区：行程详情', '.community-detail', [click('.community-card-actions button', 1)], '实际社区详情组件，不保存或更改其他人的行程。')
 
 SNAPSHOT = '''JSON.stringify({
