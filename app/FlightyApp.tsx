@@ -186,6 +186,32 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     (trip) => trip.id === journeyStore.state.activeTripId,
   );
 
+  // Only enabled by the simulator-only native screenshot session, never normal use.
+  // Selects existing React pages; it does not synthesize page HTML or network data.
+  useEffect(() => {
+    const navigate = (event: Event) => {
+      if (document.documentElement.dataset.screenshotSession !== "true") return;
+      const target = (event as CustomEvent<{ tab?: Tab; overlay?: Overlay; height?: number; mode?: AddMode }>).detail;
+      if (target.tab) setActiveTab(target.tab);
+      setOverlay(target.overlay ?? null);
+      if (target.mode) setAddMode(target.mode);
+      if (target.overlay === "airport-detail") setSelectedAirport("HKG");
+      if (target.overlay === "journey-detail") {
+        const segment = selectedJourney ?? journeyStore.state.segments[0];
+        if (segment) journeyStore.selectSegment(segment.id);
+        setDetailInitial(target.height ?? .93);
+      }
+      if (target.overlay === "journey-names" && currentTrip) {
+        setEditingTripId(currentTrip.id); setDraftTripName(currentTrip.name);
+      }
+      if (target.height && target.overlay !== "journey-detail") {
+        (target.tab === "passport" ? passportSheet : target.tab === "friends" ? friendsSheet : flightSheet).snapTo(target.height);
+      }
+    };
+    window.addEventListener("fly-screenshot-navigate", navigate);
+    return () => window.removeEventListener("fly-screenshot-navigate", navigate);
+  });
+
   const notify = (message: string, actionLabel?: string, action?: () => void) => {
     if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
     setToast({ message, actionLabel, action });

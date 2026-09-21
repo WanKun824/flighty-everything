@@ -94,6 +94,29 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
     private lazy var backGesture = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleBackGesture(_:)))
     private var canNavigateBack = false
     private var isUIQA: Bool { ProcessInfo.processInfo.environment["FLIGHTY_UI_QA"] == "1" }
+    #if targetEnvironment(simulator)
+    private var screenshotTimer: Timer?
+    private var screenshotCommandID = ""
+    private func startScreenshotSession() {
+        guard ProcessInfo.processInfo.environment["FLY_SCREENSHOT_SESSION"] == "1", screenshotTimer == nil else { return }
+        screenshotTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
+            guard let self, UIApplication.shared.applicationState == .active else { return }
+            let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            guard let data = try? Data(contentsOf: directory.appendingPathComponent("screenshot-command.json")),
+                  let command = try? JSONSerialization.jsonObject(with: data) as? [String: String],
+                  let id = command["id"], id != self.screenshotCommandID, let script = command["script"] else { return }
+            self.screenshotCommandID = id
+            self.webView?.evaluateJavaScript("document.documentElement.dataset.screenshotSession = 'true';\n" + script) { result, error in
+                let payload: [String: Any] = ["id": id, "active": UIApplication.shared.applicationState == .active,
+                    "time": Date().timeIntervalSince1970, "result": result as? String ?? "",
+                    "error": error?.localizedDescription ?? ""]
+                if let output = try? JSONSerialization.data(withJSONObject: payload) {
+                    try? output.write(to: directory.appendingPathComponent("screenshot-response.json"), options: .atomic)
+                }
+            }
+        }
+    }
+    #endif
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         // The WKWebView is the root view. Do not add glass strips to its safe areas:
@@ -174,6 +197,9 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
         if isUIQA {
             captureLayoutAudit(attempt: 0)
         }
+        #if targetEnvironment(simulator)
+        startScreenshotSession()
+        #endif
     }
 
     @objc private func publishPresentation() {
