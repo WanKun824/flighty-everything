@@ -74,7 +74,7 @@ SNAPSHOT = '''JSON.stringify({
   nativeChrome:document.documentElement.dataset.nativeChrome
 })'''
 
-def capture(device, directory):
+def capture(device, directory, theme):
     def command(script, timeout=25):
         identifier = str(uuid.uuid4())
         pending = directory / 'screenshot-command.tmp'
@@ -98,10 +98,11 @@ def capture(device, directory):
                   method='Native simulator screenshot; page selection via gated QA navigation and real controls, not touch tests',
                   pages=[], excluded=['Legacy flight-detail/flight-stats/delay-stats/aircraft-stats have no current navigation entry',
                                      'OS permission/share/file pickers require user interaction; no private data or external writes'])
+    if (OUT / 'manifest.json').exists():
+        report['pages'] = json.loads((OUT / 'manifest.json').read_text(encoding='utf-8'))['pages']
     try:
-        for theme in ['light', 'dark']:
+        for theme in [theme]:
             run('xcrun', 'simctl', 'ui', device, 'appearance', theme)
-            subprocess.run(['xcrun', 'simctl', 'terminate', device, BUNDLE], capture_output=True)
             env = dict(os.environ, SIMCTL_CHILD_FLY_SCREENSHOT_SESSION='1')
             run('xcrun', 'simctl', 'launch', device, BUNDLE, env=env)
             time.sleep(8)
@@ -150,17 +151,20 @@ def main():
     runtime = [r['identifier'] for r in runtimes if r.get('isAvailable') and 'iOS' in r['name']][-1]
     types = json.loads(run('xcrun','simctl','list','devicetypes','-j'))['devicetypes']
     device_type = next(d['identifier'] for d in types if d['name'] == 'iPhone 17 Pro')
-    device = run('xcrun','simctl','create','fly page capture '+str(os.getpid()),device_type,runtime)
-    try:
-        run('xcrun','simctl','boot',device)
-        run('xcrun','simctl','bootstatus',device,'-b')
-        run('xcrun','simctl','install',device,str(APP))
-        directory = Path(run('xcrun','simctl','get_app_container',device,BUNDLE,'data')) / 'Documents'
-        directory.mkdir(exist_ok=True)
-        capture(device, directory)
-    finally:
-        subprocess.run(['xcrun','simctl','shutdown',device],capture_output=True)
-        subprocess.run(['xcrun','simctl','delete',device],capture_output=True)
+    # Each appearance gets a fresh Simulator and app container. This avoids a
+    # stale WKWebView/file-command channel after terminating the first session.
+    for theme in ['light', 'dark']:
+        device = run('xcrun','simctl','create','fly page capture '+theme+' '+str(os.getpid()),device_type,runtime)
+        try:
+            run('xcrun','simctl','boot',device)
+            run('xcrun','simctl','bootstatus',device,'-b')
+            run('xcrun','simctl','install',device,str(APP))
+            directory = Path(run('xcrun','simctl','get_app_container',device,BUNDLE,'data')) / 'Documents'
+            directory.mkdir(exist_ok=True)
+            capture(device, directory, theme)
+        finally:
+            subprocess.run(['xcrun','simctl','shutdown',device],capture_output=True)
+            subprocess.run(['xcrun','simctl','delete',device],capture_output=True)
 
 if __name__ == '__main__':
     main()
