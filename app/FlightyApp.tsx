@@ -377,7 +377,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   });
 
   return (
-    <main className={`flighty-page ${!overlay && mainSheet.fraction > 0.5 ? "map-controls-compact" : ""} ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
+    <main className={`flighty-page ${followVehicle && selectedJourneyId ? "is-vehicle-following" : ""} ${!overlay && mainSheet.fraction > 0.5 ? "map-controls-compact" : ""} ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
       <section
         className="flighty-device"
         aria-label="fly everything flight tracker"

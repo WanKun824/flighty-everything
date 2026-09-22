@@ -217,7 +217,9 @@ export default function FlightGlobe({
         zoom: 2.05,
         pitch: 0,
         bearing: 0,
-        antialias: true,
+        // The full-screen Retina map does not need an extra MSAA framebuffer.
+        // Keep model antialiasing separate; this reduces iOS follow GPU work.
+        antialias: !document.documentElement.hasAttribute("data-native-shell"),
         attributionControl: false,
         fadeDuration: 0,
       });
@@ -422,7 +424,16 @@ export default function FlightGlobe({
     let publishedStatusAt = 0;
     let publishedStage = "";
     let publishedTrail = "";
+    const nativeFrameInterval = document.documentElement.hasAttribute("data-native-shell") ? 1000 / 60 : 0;
+    let lastAnimationAt = -Infinity;
     const animate = (now: number) => {
+      // ProMotion can call rAF at 120 Hz. Do not invalidate the entire globe
+      // twice per display budget. Playback still uses elapsed time, not frames.
+      if (document.hidden || now - lastAnimationAt < nativeFrameInterval - .5) {
+        frame = requestAnimationFrame(animate);
+        return;
+      }
+      lastAnimationAt = now;
       const ready = riderReadyKindRef.current === segment.mode;
       const moving = playbackClock(now, duration, ready && !reduceMotion.matches && motionEnabled && !document.hidden);
       playback.progress = moving;

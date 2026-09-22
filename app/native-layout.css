@@ -310,3 +310,63 @@ html[data-native-shell] .flighty-page.map-controls-compact .map-follow-button { 
  .flighty-page { --sheet-material: #18181a; }
  .flighty-page[data-theme="light"] { --sheet-material: #fcfcfe; }
 }
+
+/* One component design, taken from dark mode. Appearance changes tokens only;
+   it must not introduce a second set of cards, shadows or form geometry. */
+.flighty-page[data-theme] {
+  --ui-field: rgba(118,118,128,.16);
+  --ui-elevated: rgba(118,118,128,.12);
+  --ui-selected: rgba(118,118,128,.24);
+  --ui-accent: #0a84ff;
+  color-scheme: dark;
+}
+.flighty-page[data-theme="light"] { color-scheme: light; }
+.flighty-page[data-theme] :is(.full-sheet,.map-sheet,.stats-sheet,.journey-composer.mobile,.journey-names-sheet) {
+  --panel: var(--sheet-material);
+  --detail-elevated: var(--ui-elevated);
+  --journey-elevated: var(--ui-elevated);
+  color: var(--sheet-text);
+  background: var(--sheet-material);
+  border-color: var(--sheet-line);
+  border-radius: 34px;
+  box-shadow: 0 -12px 42px rgba(0,0,0,.18), inset 0 1px var(--chrome-highlight);
+}
+.flighty-page[data-theme] :is(.sheet-search,.friend-code-input,.appearance-picker,.route-builder label,.route-builder select,.route-form label,.route-fields label) {
+  color: var(--sheet-text); background: var(--ui-field);
+  border-color: var(--sheet-line); box-shadow: none;
+}
+.flighty-page[data-theme] :is(.full-sheet,.map-sheet,.stats-sheet) :is(input,select,textarea) {
+  color: var(--sheet-text); background-color: var(--ui-field);
+  border-color: var(--sheet-line); border-radius: 12px; color-scheme: inherit;
+}
+.flighty-page[data-theme] .sheet-search input { background: transparent; }
+.flighty-page[data-theme] :is(.friend-card,.journey-mode-stats,.journey-time-card,.mobile-detail-route,.mobile-detail-metrics span,.weather-option) {
+  color: var(--sheet-text); background: var(--ui-elevated);
+  border: 1px solid var(--sheet-line); box-shadow: none;
+}
+.flighty-page[data-theme] :is(.sheet-header,.stats-header,.journey-names-sheet header) > button {
+  color: var(--sheet-text); background: var(--sheet-control);
+  border: 1px solid var(--sheet-line); box-shadow: none;
+}
+.flighty-page[data-theme] :is(.appearance-picker button.active,.friend-filters button.active,.region-tabs button.active) {
+  color: var(--sheet-text); background: var(--ui-selected);
+  border-color: var(--sheet-line); box-shadow: none;
+}
+.flighty-page[data-theme] .full-sheet button:disabled {
+  color: var(--sheet-muted); background: var(--ui-field); opacity: .65;
+}
+
+/* Keep translucent glass, but avoid a large-radius, multi-filter resample of
+   the moving globe on every iOS follow frame. Native Dock glass is unchanged. */
+html[data-native-shell] .flighty-page.is-vehicle-following[data-theme] :is(.flight-panel.primary-panel,.map-sheet.mobile-journey-detail-target) {
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html[data-native-shell] .flighty-page.is-vehicle-following[data-theme] :is(.flight-panel.primary-panel,.map-sheet.mobile-journey-detail-target) {
+    -webkit-backdrop-filter: none; backdrop-filter: none;
+  }
+}
+html[data-reduce-transparency="true"] .flighty-page.is-vehicle-following[data-theme] :is(.flight-panel.primary-panel,.map-sheet.mobile-journey-detail-target) {
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}

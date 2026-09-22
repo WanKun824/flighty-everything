@@ -517,11 +517,18 @@ export default function Vehicle3D({ kind, progress = 0, className = "", heading,
     const start = performance.now();
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
     let previous = 0;
+    const nativeFrameInterval = document.documentElement.hasAttribute("data-native-shell") ? 1000 / 60 : 0;
+    let renderedAt = -Infinity;
     let yawAngle: number | null = null;
     let bankRate = 0;
     yaw.rotation.z = yawFor(view, shot.rest);
 
     const render = (now: number) => {
+      if (document.hidden || now - renderedAt < nativeFrameInterval - .5) {
+        frame = requestAnimationFrame(render);
+        return;
+      }
+      renderedAt = now;
       if (!modelReady) {
         frame = requestAnimationFrame(render);
         return;
