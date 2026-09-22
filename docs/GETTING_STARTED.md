@@ -1,6 +1,6 @@
 # 开发、运行与 GitHub 打包
 
-应用源码：`51173f1`；文档更新于 2026-09-21。本次没有执行以下运行、编译和测试命令。
+已有 IPA 对应源码 `51173f1`。2026-09-23 补充 GitHub Mac/Xcode 模拟器编译与逐页截图流程；截图版本和执行结果以 [本次运行文档](runtime-20260923/README.md) 为准，不与旧 IPA 混淆。
 
 ## 获取和启动
 
@@ -40,6 +40,8 @@ npm run dev
 | `db/`、`drizzle/`、`worker/` | 数据库、迁移与后端 |
 | `build/sites-vite-plugin.ts` | 构建所需源码，不是缓存 |
 | `docs/screenshots/` | 已有运行截图、逐图说明与历史记录 |
+| `ios/qa/` | 仅限模拟器的逐页截图与文档整理工具 |
+| `docs/runtime-20260923/` | 新编译版本的原始截图、每页说明和可见问题 |
 
 ## Mac 上构建 iOS
 
@@ -63,7 +65,15 @@ Actions → `Package iOS Client` → Run workflow，选择目标分支：
 
 流程生成内嵌前端、同步 Capacitor、编译 iPhone archive，再导出 IPA。不要用旧 `native-shell` 替代新源码构建。
 
-以后如需新运行截图，可另行以 `skip_tests=false` 运行；这不是本次操作，可能消耗构建额度并失败。
+需要逐页截图时，使用下述独立工作流。仅打包 IPA 不等于取得运行截图。
+
+## GitHub Mac/Xcode 编译并逐页截图
+
+Actions → **Capture iOS Pages on Xcode** → Run workflow。选择目标分支，填写其完整 `source_sha`。版本核对后，流程从源码构建内嵌资源并编译 Release 模拟器应用，再分别启动全新的浅色、深色 iPhone 17 Pro 模拟器采集页面。
+
+下载 `fly-everything-ios-page-captures` artifact；里面有原始 PNG、`manifest.json`、Xcode/macOS 版本和编译日志。每个页面都有目标检查和截图前后应用响应记录。详情见 [采集操作说明](../ios/qa/README.md)。
+
+这是实际模拟器画面，但页面导航由采集助手驱动，不是人工触摸手势验收；不发送邀请、发布社区或确认删除。截到页面也不代表 UI 没有遮挡。请阅读每页说明及视觉问题清单。
 
 ## 安装现有 IPA
 
@@ -73,6 +83,6 @@ Release 中的 `fly-everything-20260920-51173f1-unsigned.ipa` 是未签名包，
 
 ## 本次发布方式
 
-GitHub 源码推送不等于在线网站更新。此次仅归档源码、已有 IPA、截图、说明和哈希；不部署、不编译、不测试。应用提交与文档提交分开追踪，IPA 仍为 2026-09-20 的已有构建。
+GitHub 源码推送不等于在线网站更新。2026-09-21 的交付归档使用已有 IPA；2026-09-23 另行编译模拟器版本并整理逐页截图，不部署网站，也不替换原有 IPA。应用提交、采集工具提交和文档提交分开追踪，IPA 仍为 2026-09-20 的已有构建。
 
-交付提交使用 `[skip ci]`，Release 标签不以 `v` 开头，避免触发原有自动构建。资料整理脚本只读取、归档和计算文件哈希。
+文档提交使用 `[skip ci]` 避免额外自动构建；逐页采集工作流显式手动触发。资料整理脚本核对原图哈希后生成文档，不改变截图像素。

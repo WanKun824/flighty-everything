@@ -1,0 +1,1734 @@
+{
+  "sourceCommit": "1d988b8fe3cda4d30a357b97e128f489afadf930",
+  "runID": "35631024628",
+  "device": "{\n  \"devices\" : {\n    \"com.apple.CoreSimulator.SimRuntime.watchOS-27-0\" : [\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/94548F84-EF8D-4E22-8457-B3215534974E\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/94548F84-EF8D-4E22-8457-B3215534974E\",\n        \"udid\" : \"94548F84-EF8D-4E22-8457-B3215534974E\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-Watch-Series-12-46mm\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple Watch Series 12 (46mm)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/DD9AD88F-3408-4AA0-9F1F-D33168382D38\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/DD9AD88F-3408-4AA0-9F1F-D33168382D38\",\n        \"udid\" : \"DD9AD88F-3408-4AA0-9F1F-D33168382D38\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-Watch-Series-12-42mm\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple Watch Series 12 (42mm)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/A426DADA-5079-4FA8-9724-BAF20876E175\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/A426DADA-5079-4FA8-9724-BAF20876E175\",\n        \"udid\" : \"A426DADA-5079-4FA8-9724-BAF20876E175\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-Watch-Ultra-4-49mm\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple Watch Ultra 4 (49mm)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/4EDD2CFB-9794-4B06-9F94-B90E629AB22C\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/4EDD2CFB-9794-4B06-9F94-B90E629AB22C\",\n        \"udid\" : \"4EDD2CFB-9794-4B06-9F94-B90E629AB22C\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-Watch-SE-3-44mm\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple Watch SE 3 (44mm)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/42A78597-A4FE-44D6-B595-670E4763DCCD\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/42A78597-A4FE-44D6-B595-670E4763DCCD\",\n        \"udid\" : \"42A78597-A4FE-44D6-B595-670E4763DCCD\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-Watch-SE-3-40mm\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple Watch SE 3 (40mm)\"\n      }\n    ],\n    \"com.apple.CoreSimulator.SimRuntime.tvOS-27-0\" : [\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/15F87AA6-70B5-4113-BEC8-7C8E5D7ABA1F\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/15F87AA6-70B5-4113-BEC8-7C8E5D7ABA1F\",\n        \"udid\" : \"15F87AA6-70B5-4113-BEC8-7C8E5D7ABA1F\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-4K\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple TV 4K (3rd generation)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/DD14EF86-94E2-4F26-B8E4-3B4B62B0E41B\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/DD14EF86-94E2-4F26-B8E4-3B4B62B0E41B\",\n        \"udid\" : \"DD14EF86-94E2-4F26-B8E4-3B4B62B0E41B\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-TV-4K-3rd-generation-1080p\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple TV 4K (3rd generation) (at 1080p)\"\n      }\n    ],\n    \"com.apple.CoreSimulator.SimRuntime.iOS-27-0\" : [\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/A0124FEC-82F3-4102-BFC1-F9194D9AD410\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/A0124FEC-82F3-4102-BFC1-F9194D9AD410\",\n        \"udid\" : \"A0124FEC-82F3-4102-BFC1-F9194D9AD410\",\n        \"lastUsedAt\" : \"2026-09-21T17:18:09Z\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPhone-18-Pro\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPhone 18 Pro\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/5881EA18-9E18-429F-9482-47B3D7D24078\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/5881EA18-9E18-429F-9482-47B3D7D24078\",\n        \"udid\" : \"5881EA18-9E18-429F-9482-47B3D7D24078\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPhone-18-Pro-Max\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPhone 18 Pro Max\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/5AD9B6D8-2D2E-4B26-B300-B2CDE07077F0\\/data\",\n        \"dataPathSize\" : 1309122560,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/5AD9B6D8-2D2E-4B26-B300-B2CDE07077F0\",\n        \"udid\" : \"5AD9B6D8-2D2E-4B26-B300-B2CDE07077F0\",\n        \"lastUsedAt\" : \"2026-09-21T17:18:47Z\",\n        \"isAvailable\" : true,\n        \"logPathSize\" : 245760,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro\",\n        \"state\" : \"Booted\",\n        \"name\" : \"fly page capture 29532\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/303E3136-E4FA-423B-B0DC-641526524195\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/303E3136-E4FA-423B-B0DC-641526524195\",\n        \"udid\" : \"303E3136-E4FA-423B-B0DC-641526524195\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPhone-17e\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPhone 17e\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/121B0BC1-8E9C-475D-9A5D-06FBAA5A206A\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/121B0BC1-8E9C-475D-9A5D-06FBAA5A206A\",\n        \"udid\" : \"121B0BC1-8E9C-475D-9A5D-06FBAA5A206A\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPhone-Air\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPhone Air\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/2E8C7D0D-FFCE-4627-AB65-FD15D11FCD73\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/2E8C7D0D-FFCE-4627-AB65-FD15D11FCD73\",\n        \"udid\" : \"2E8C7D0D-FFCE-4627-AB65-FD15D11FCD73\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPhone-17\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPhone 17\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/7BB2CA02-E7BB-4598-A7E3-FD2929EF1A32\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/7BB2CA02-E7BB-4598-A7E3-FD2929EF1A32\",\n        \"udid\" : \"7BB2CA02-E7BB-4598-A7E3-FD2929EF1A32\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-13-inch-M5-12GB\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPad Pro 13-inch (M5)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/098E9FE6-2627-4761-B635-2E21974E84BA\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/098E9FE6-2627-4761-B635-2E21974E84BA\",\n        \"udid\" : \"098E9FE6-2627-4761-B635-2E21974E84BA\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPad-Pro-11-inch-M5-12GB\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPad Pro 11-inch (M5)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/FA4E2F7A-87DE-46BF-82D5-AF1EF61F7869\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/FA4E2F7A-87DE-46BF-82D5-AF1EF61F7869\",\n        \"udid\" : \"FA4E2F7A-87DE-46BF-82D5-AF1EF61F7869\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPad-mini-A17-Pro\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPad mini (A17 Pro)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/F8A5B787-2F67-4CD8-B80B-F80F85C30B7D\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/F8A5B787-2F67-4CD8-B80B-F80F85C30B7D\",\n        \"udid\" : \"F8A5B787-2F67-4CD8-B80B-F80F85C30B7D\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPad-Air-13-inch-M4\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPad Air 13-inch (M4)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/E925AF7C-3C6A-4F04-B25D-86AA78493C78\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/E925AF7C-3C6A-4F04-B25D-86AA78493C78\",\n        \"udid\" : \"E925AF7C-3C6A-4F04-B25D-86AA78493C78\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPad-Air-11-inch-M4\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPad Air 11-inch (M4)\"\n      },\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/3C47A05E-809E-4330-9247-83C839B51CD3\\/data\",\n        \"dataPathSize\" : 18337792,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/3C47A05E-809E-4330-9247-83C839B51CD3\",\n        \"udid\" : \"3C47A05E-809E-4330-9247-83C839B51CD3\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.iPad-A16\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"iPad (A16)\"\n      }\n    ],\n    \"com.apple.CoreSimulator.SimRuntime.xrOS-27-0\" : [\n      {\n        \"dataPath\" : \"\\/Users\\/runner\\/Library\\/Developer\\/CoreSimulator\\/Devices\\/2CCDB70A-584D-4986-AC05-4A1093D5840A\\/data\",\n        \"dataPathSize\" : 4096,\n        \"logPath\" : \"\\/Users\\/runner\\/Library\\/Logs\\/CoreSimulator\\/2CCDB70A-584D-4986-AC05-4A1093D5840A\",\n        \"udid\" : \"2CCDB70A-584D-4986-AC05-4A1093D5840A\",\n        \"isAvailable\" : true,\n        \"deviceTypeIdentifier\" : \"com.apple.CoreSimulator.SimDeviceType.Apple-Vision-Pro-4K\",\n        \"state\" : \"Shutdown\",\n        \"name\" : \"Apple Vision Pro\"\n      }\n    ]\n  }\n}",
+  "method": "Native simulator screenshot; page selection via gated QA navigation and real controls, not touch tests",
+  "pages": [
+    {
+      "key": "01-flights-compact",
+      "title": "行程：最小面板",
+      "selector": ".primary-panel[data-tab=\"flights\"]",
+      "description": "地图背景、旅程摘要、底部 Dock；使用应用自带演示行程。",
+      "theme": "light",
+      "status": "captured",
+      "file": "01-flights-compact-light.png",
+      "sha256": "c0faeccdbd2426a3fb5c47074f0ce711a7a501ce47b77d6479a7ca3fbff4df72",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights"
+        ],
+        "dialogs": [],
+        "tab": "flights",
+        "mapReady": "false",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights"
+        ],
+        "dialogs": [],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "02-flights-expanded",
+      "title": "行程：展开列表",
+      "selector": ".primary-panel[data-tab=\"flights\"]",
+      "description": "展开当前旅程的路段列表；展示现有布局，不证明真实交通状态。",
+      "theme": "light",
+      "status": "captured",
+      "file": "02-flights-expanded-light.png",
+      "sha256": "efcef290229f43895489cbbbba7665d30f9ca9b76c83eae7336594b3d2a0df32",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights"
+        ],
+        "dialogs": [],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights"
+        ],
+        "dialogs": [],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "03-detail-compact",
+      "title": "路段详情：最小档",
+      "selector": ".mobile-journey-detail-target",
+      "description": "最小详情摘要；不是拖动手势测试。",
+      "theme": "light",
+      "status": "captured",
+      "file": "03-detail-compact-light.png",
+      "sha256": "006b72de01eb5dcd402db0a8e3f0ba8f01bd95e580c3389c8230ff78eff79aac",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [],
+        "dialogs": [
+          {
+            "label": "东海道新干线详情",
+            "className": "map-sheet mobile-journey-detail mobile-journey-detail-target mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nNOZOMI 215 · 9月20日 周日\n东京到京都\n模拟预览\n模拟 不代表实时位置\nTYO 09:10 → KYO 11:22",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [],
+        "dialogs": [
+          {
+            "label": "东海道新干线详情",
+            "className": "map-sheet mobile-journey-detail mobile-journey-detail-target mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nNOZOMI 215 · 9月20日 周日\n东京到京都\n模拟预览\n模拟 不代表实时位置\nTYO 09:10 → KYO 11:22",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "04-detail-expanded",
+      "title": "路段详情：展开",
+      "selector": ".mobile-journey-detail-target",
+      "description": "选中路段的出发、到达、状态和数据来源。",
+      "theme": "light",
+      "status": "captured",
+      "file": "04-detail-expanded-light.png",
+      "sha256": "13999e99c5153ed8ee18380c00d7fc83035b51a03e32a1406067929321291830",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [],
+        "dialogs": [
+          {
+            "label": "东海道新干线详情",
+            "className": "map-sheet mobile-journey-detail mobile-journey-detail-target mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nNOZOMI 215 · 9月20日 周日\n东京到京都\n模拟预览\n模拟 不代表实时位置\nTYO 09:10 → KYO 11:22\n模拟预览\n真实行程\n\n地图播放的是模拟路线，不会自动标记真实到达。\n\n模拟预览\n仅用于预览路线，不代表载具或你的实时位置\nTYO · 东京站 · 丸之内口\n14 号站台\n09:10\n模拟时刻\n9月20日 · 周日 · 东京\n2小时12分 · 476 km\nKYO · 京都站 · 八条口\n12 号站台\n11:22\n模拟时刻\n京都 · 14号站台 · 7号车厢 12A\n已核验时刻 · Transitous / JR 时刻表\n当前没有实时更新时间\n线路示意 · 暂无铁路轨迹，请查询有线路覆盖的真实列车 · 数据来源\n行程信息\n\n14号站台 · 7号车厢 12A\n\n手动确认真实已到达\n删除这段行程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [],
+        "dialogs": [
+          {
+            "label": "东海道新干线详情",
+            "className": "map-sheet mobile-journey-detail mobile-journey-detail-target mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nNOZOMI 215 · 9月20日 周日\n东京到京都\n模拟预览\n模拟 不代表实时位置\nTYO 09:10 → KYO 11:22\n模拟预览\n真实行程\n\n地图播放的是模拟路线，不会自动标记真实到达。\n\n模拟预览\n仅用于预览路线，不代表载具或你的实时位置\nTYO · 东京站 · 丸之内口\n14 号站台\n09:10\n模拟时刻\n9月20日 · 周日 · 东京\n2小时12分 · 476 km\nKYO · 京都站 · 八条口\n12 号站台\n11:22\n模拟时刻\n京都 · 14号站台 · 7号车厢 12A\n已核验时刻 · Transitous / JR 时刻表\n当前没有实时更新时间\n线路示意 · 暂无铁路轨迹，请查询有线路覆盖的真实列车 · 数据来源\n行程信息\n\n14号站台 · 7号车厢 12A\n\n手动确认真实已到达\n删除这段行程",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "04b-real-time-editor",
+      "title": "路段详情：真实时刻编辑",
+      "selector": ".real-plan-editor",
+      "description": "编辑真实出发、到达和时区，不保存计划或请求定位。",
+      "theme": "light",
+      "status": "captured",
+      "file": "04b-real-time-editor-light.png",
+      "sha256": "565cba64691aeba790b512e5766a46f869003a56f7c9a8be8212ba32a04035e7",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "真实行程时刻"
+        ],
+        "dialogs": [
+          {
+            "label": "东海道新干线详情",
+            "className": "map-sheet mobile-journey-detail mobile-journey-detail-target mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nNOZOMI 215 · 9月20日 周日\n东京到京都\n模拟预览\n模拟 不代表实时位置\nTYO 09:10 → KYO 11:22\n模拟预览\n真实行程\n真实行程时刻\n出发日期\n出发时间\n到达日期\n到达时间\n时间基准\n\n出发和到达均按 UTC 显示。跨时区旅行请先换算；计划时间不代表承运方实时状态。\n\n取消\n保存真实时刻\n\n地图播放的是模拟路线，不会自动标记真实到达。\n\n模拟预览\n仅用于预览路线，不代表载具或你的实时位置\nTYO · 东京站 · 丸之内口\n14 号站台\n09:10\n模拟时刻\n9月20日 · 周日 · 东京\n2小时12分 · 476 km\nKYO · 京都站 · 八条口\n12 号站台\n11:22\n模拟时刻\n京都 · 14号站台 · 7号车厢 12A\n已核验时刻 · Transitous / JR 时刻表\n当前没有实时更新时间\n线路示意 · 暂无铁路轨迹，请查询有线路覆盖的真实列车 · 数据来源\n行程信息\n\n14号站台 · 7号车厢 12A\n\n手动确认真实已到达\n删除这段行程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "真实行程时刻"
+        ],
+        "dialogs": [
+          {
+            "label": "东海道新干线详情",
+            "className": "map-sheet mobile-journey-detail mobile-journey-detail-target mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nNOZOMI 215 · 9月20日 周日\n东京到京都\n模拟预览\n模拟 不代表实时位置\nTYO 09:10 → KYO 11:22\n模拟预览\n真实行程\n真实行程时刻\n出发日期\n出发时间\n到达日期\n到达时间\n时间基准\n\n出发和到达均按 UTC 显示。跨时区旅行请先换算；计划时间不代表承运方实时状态。\n\n取消\n保存真实时刻\n\n地图播放的是模拟路线，不会自动标记真实到达。\n\n模拟预览\n仅用于预览路线，不代表载具或你的实时位置\nTYO · 东京站 · 丸之内口\n14 号站台\n09:10\n模拟时刻\n9月20日 · 周日 · 东京\n2小时12分 · 476 km\nKYO · 京都站 · 八条口\n12 号站台\n11:22\n模拟时刻\n京都 · 14号站台 · 7号车厢 12A\n已核验时刻 · Transitous / JR 时刻表\n当前没有实时更新时间\n线路示意 · 暂无铁路轨迹，请查询有线路覆盖的真实列车 · 数据来源\n行程信息\n\n14号站台 · 7号车厢 12A\n\n手动确认真实已到达\n删除这段行程",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "05-trip-edit",
+      "title": "旅程编辑",
+      "selector": ".journey-names-sheet",
+      "description": "旅程名称编辑及删除入口，不提交修改。",
+      "theme": "light",
+      "status": "captured",
+      "file": "05-trip-edit-light.png",
+      "sha256": "af23462964c757770f19d156c8608f085b7f742c2de8bfdb263e85278bf9ddf9",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "编辑旅程"
+        ],
+        "dialogs": [
+          {
+            "label": "编辑旅程",
+            "className": "map-sheet journey-names-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n编辑旅程\n旅程名称\n保存名称删除这趟旅程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "编辑旅程"
+        ],
+        "dialogs": [
+          {
+            "label": "编辑旅程",
+            "className": "map-sheet journey-names-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n编辑旅程\n旅程名称\n保存名称删除这趟旅程",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "06-trip-delete-confirm",
+      "title": "删除旅程确认",
+      "selector": ".journey-delete-confirm",
+      "description": "仅展开确认提示，不执行删除。",
+      "theme": "light",
+      "status": "captured",
+      "file": "06-trip-delete-confirm-light.png",
+      "sha256": "2d3907c1604c2c6e76d19becaceb8abea92e32349dc74920bb4595598da08577",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "编辑旅程"
+        ],
+        "dialogs": [
+          {
+            "label": "编辑旅程",
+            "className": "map-sheet journey-names-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n编辑旅程\n旅程名称\n保存名称\n删除“东京与濑户内 · 八日”？\n\n其中的全部路段会移除，旅记统计也会同步更新。\n\n取消确认删除旅程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "编辑旅程"
+        ],
+        "dialogs": [
+          {
+            "label": "编辑旅程",
+            "className": "map-sheet journey-names-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n编辑旅程\n旅程名称\n保存名称\n删除“东京与濑户内 · 八日”？\n\n其中的全部路段会移除，旅记统计也会同步更新。\n\n取消确认删除旅程",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "07-compose",
+      "title": "添加行程：模拟模式",
+      "selector": ".composer-v2",
+      "description": "所属旅程、载具、起终点、日期时间及保存入口。",
+      "theme": "light",
+      "status": "captured",
+      "file": "07-compose-light.png",
+      "sha256": "83666cd40f568d6b683d0e2ec247e3d9d46f3641275ab2f235bbbe43aab3a0a9",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "添加行程"
+        ],
+        "dialogs": [
+          {
+            "label": "添加行程",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n添加行程\n模拟预览\n真实行程\n\n快速预览路线，不代表真实位置，也不会自动记为到达。\n\n所属旅程\n飞机\n火车\n汽车\n轮船\n起点\n从哪里出发\n终点\n去哪里\n交换起终点\n出发日期\n出发时间\n通过航班号或日历添加\n名称与备注选填\n\n请选择起点\n\n创建旅程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "添加行程"
+        ],
+        "dialogs": [
+          {
+            "label": "添加行程",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n添加行程\n模拟预览\n真实行程\n\n快速预览路线，不代表真实位置，也不会自动记为到达。\n\n所属旅程\n飞机\n火车\n汽车\n轮船\n起点\n从哪里出发\n终点\n去哪里\n交换起终点\n出发日期\n出发时间\n通过航班号或日历添加\n名称与备注选填\n\n请选择起点\n\n创建旅程",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "08-compose-real",
+      "title": "添加行程：真实模式",
+      "selector": ".composer-v2",
+      "description": "真实行程的到达时间与计划时区；不申请用户定位权限。",
+      "theme": "light",
+      "status": "captured",
+      "file": "08-compose-real-light.png",
+      "sha256": "b816b0d469f608c63de1ef98012a850188b5acc3cc5e33be31a89e0970f19ae6",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "添加行程"
+        ],
+        "dialogs": [
+          {
+            "label": "添加行程",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n添加行程\n模拟预览\n真实行程\n\n按你的真实时间规划，开启定位后可确认到达。\n\n所属旅程\n飞机\n火车\n汽车\n轮船\n起点\n从哪里出发\n终点\n去哪里\n交换起终点\n出发日期\n出发时间\n到达日期\n到达时间\n时间基准\n\n出发和到达均按 UTC 填写，跨时区旅行请换算为此时区。\n\n通过航班号或日历添加\n名称与备注选填\n\n请选择起点\n\n创建旅程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "添加行程"
+        ],
+        "dialogs": [
+          {
+            "label": "添加行程",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n添加行程\n模拟预览\n真实行程\n\n按你的真实时间规划，开启定位后可确认到达。\n\n所属旅程\n飞机\n火车\n汽车\n轮船\n起点\n从哪里出发\n终点\n去哪里\n交换起终点\n出发日期\n出发时间\n到达日期\n到达时间\n时间基准\n\n出发和到达均按 UTC 填写，跨时区旅行请换算为此时区。\n\n通过航班号或日历添加\n名称与备注选填\n\n请选择起点\n\n创建旅程",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "09-origin-search",
+      "title": "搜索与选择起点",
+      "selector": ".composer-place-list",
+      "description": "应用真实地点选择器，包含收藏和常用地点；网络加载情况如实保留。",
+      "theme": "light",
+      "status": "captured",
+      "file": "09-origin-search-light.png",
+      "sha256": "c4a4be141143a4fc6254901daa82c0899b40bc03222c9b8aecf4910acdb5315e",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "选择起点",
+          "收藏机场",
+          "最近行程地点"
+        ],
+        "dialogs": [
+          {
+            "label": "选择起点",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n选择起点\n收藏机场\n\n在机场页面点星标，或收藏搜索结果，即可在这里使用。\n\n最近行程地点\n宫浦港 · 直岛\nNAO · 直岛\n宇野港 · 1号码头\nUNO · 宇野\n京都站 · 八条口\nKYO · 京都",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "选择起点",
+          "收藏机场",
+          "最近行程地点"
+        ],
+        "dialogs": [
+          {
+            "label": "选择起点",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n选择起点\n收藏机场\n\n在机场页面点星标，或收藏搜索结果，即可在这里使用。\n\n最近行程地点\n宫浦港 · 直岛\nNAO · 直岛\n宇野港 · 1号码头\nUNO · 宇野\n京都站 · 八条口\nKYO · 京都",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "10-destination-search",
+      "title": "搜索与选择终点",
+      "selector": ".composer-place-list",
+      "description": "选择终点页面；不提交新行程。",
+      "theme": "light",
+      "status": "captured",
+      "file": "10-destination-search-light.png",
+      "sha256": "b576031797ef39c1e310725df19293f6d2053b1a235c0e9cd5e993494de68bae",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "选择终点",
+          "收藏机场",
+          "最近行程地点"
+        ],
+        "dialogs": [
+          {
+            "label": "选择终点",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n选择终点\n收藏机场\n\n在机场页面点星标，或收藏搜索结果，即可在这里使用。\n\n最近行程地点\n宫浦港 · 直岛\nNAO · 直岛\n宇野港 · 1号码头\nUNO · 宇野\n京都站 · 八条口\nKYO · 京都",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "选择终点",
+          "收藏机场",
+          "最近行程地点"
+        ],
+        "dialogs": [
+          {
+            "label": "选择终点",
+            "className": "journey-composer mobile composer-v2 mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n选择终点\n收藏机场\n\n在机场页面点星标，或收藏搜索结果，即可在这里使用。\n\n最近行程地点\n宫浦港 · 直岛\nNAO · 直岛\n宇野港 · 1号码头\nUNO · 宇野\n京都站 · 八条口\nKYO · 京都",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "11-flight-search",
+      "title": "航班添加工具",
+      "selector": "[aria-label=\"Add Flight\"]",
+      "description": "常用航空公司、机场及其他航班查询方式。",
+      "theme": "light",
+      "status": "captured",
+      "file": "11-flight-search-light.png",
+      "sha256": "f5ad7c59972d70f7293a61ea8f1a1d7f96118fee0f1436a6175d3160082a3455",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Add Flight",
+          "SUGGESTED",
+          "MORE"
+        ],
+        "dialogs": [
+          {
+            "label": "Add Flight",
+            "className": "full-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nAdd Flight\n\nEnter airline, airport, or flight\n\nFind by Route\nChoose departure and arrival airports\nFind by Flight Number\nSearch any airline flight code\nSUGGESTED\nC\nCathay Pacific\nCX · CPA\nU\nHK Express\nUO · HKE\n✹\nHong Kong Intl.\nHKG · VHHH · Hong Kong\n✹\nGuangzhou Baiyun Intl.\nCAN · ZGGG · Guangzhou\nMORE\nSync from Calendar\nImport flights securely from an .ics file\nRandom Flight\nTry fly everything for free",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Add Flight",
+          "SUGGESTED",
+          "MORE"
+        ],
+        "dialogs": [
+          {
+            "label": "Add Flight",
+            "className": "full-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nAdd Flight\n\nEnter airline, airport, or flight\n\nFind by Route\nChoose departure and arrival airports\nFind by Flight Number\nSearch any airline flight code\nSUGGESTED\nC\nCathay Pacific\nCX · CPA\nU\nHK Express\nUO · HKE\n✹\nHong Kong Intl.\nHKG · VHHH · Hong Kong\n✹\nGuangzhou Baiyun Intl.\nCAN · ZGGG · Guangzhou\nMORE\nSync from Calendar\nImport flights securely from an .ics file\nRandom Flight\nTry fly everything for free",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "12-flight-number",
+      "title": "按航班号查询",
+      "selector": "[aria-label=\"Add Flight\"]",
+      "description": "航班号输入界面；不伪造查询成功或实时数据。",
+      "theme": "light",
+      "status": "captured",
+      "file": "12-flight-number-light.png",
+      "sha256": "92ee620b7a88149fb03d601b05d4fe2fcfe808aac5459b9cf824f041ef4a4563",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Add Flight",
+          "SUGGESTED",
+          "MORE"
+        ],
+        "dialogs": [
+          {
+            "label": "Add Flight",
+            "className": "full-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nAdd Flight\n\nEnter airline, airport, or flight\n\nFind by Route\nChoose departure and arrival airports\nFind by Flight Number\nSearch any airline flight code\n\n输入航班号，例如 CX548。系统会先核验真实航线，再尝试连接 ADS-B 实时位置。\n\n出发日期\n计划时间\nSUGGESTED\nC\nCathay Pacific\nCX · CPA\nU\nHK Express\nUO · HKE\n✹\nHong Kong Intl.\nHKG · VHHH · Hong Kong\n✹\nGuangzhou Baiyun Intl.\nCAN · ZGGG · Guangzhou\nMORE\nSync from Calendar\nImport flights securely from an .ics file\nRandom Flight\nTry fly everything for free",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Add Flight",
+          "SUGGESTED",
+          "MORE"
+        ],
+        "dialogs": [
+          {
+            "label": "Add Flight",
+            "className": "full-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nAdd Flight\n\nEnter airline, airport, or flight\n\nFind by Route\nChoose departure and arrival airports\nFind by Flight Number\nSearch any airline flight code\n\n输入航班号，例如 CX548。系统会先核验真实航线，再尝试连接 ADS-B 实时位置。\n\n出发日期\n计划时间\nSUGGESTED\nC\nCathay Pacific\nCX · CPA\nU\nHK Express\nUO · HKE\n✹\nHong Kong Intl.\nHKG · VHHH · Hong Kong\n✹\nGuangzhou Baiyun Intl.\nCAN · ZGGG · Guangzhou\nMORE\nSync from Calendar\nImport flights securely from an .ics file\nRandom Flight\nTry fly everything for free",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "13-flight-route",
+      "title": "按航线查询",
+      "selector": "[aria-label=\"Add Flight\"]",
+      "description": "出发、到达机场及日期选择。",
+      "theme": "light",
+      "status": "captured",
+      "file": "13-flight-route-light.png",
+      "sha256": "cc8293e51a90310cb70089234f377c78662d666c42738f336e59e4b39f0cf4b0",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Add Flight"
+        ],
+        "dialogs": [
+          {
+            "label": "Add Flight",
+            "className": "full-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nAdd Flight\n\nEnter airline, airport, or flight\n\nFROM\nTO\nDATE\nAdd Route\nBack to suggestions",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Add Flight"
+        ],
+        "dialogs": [
+          {
+            "label": "Add Flight",
+            "className": "full-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nAdd Flight\n\nEnter airline, airport, or flight\n\nFROM\nTO\nDATE\nAdd Route\nBack to suggestions",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "14-airports",
+      "title": "机场目录与收藏",
+      "selector": ".airports-sheet",
+      "description": "机场目录、地区筛选及收藏。目录不是实时运营状态。",
+      "theme": "light",
+      "status": "captured",
+      "file": "14-airports-light.png",
+      "sha256": "b5b66c72c7af0ab0242a86366bdb7dd44c5698ba837b6a5ed43b93f37f5189d2",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "机场",
+          "收藏与行程",
+          "机场"
+        ],
+        "dialogs": [
+          {
+            "label": "机场资料与收藏",
+            "className": "map-sheet airports-sheet coordinated-airport-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n机场\n全部\n亚洲\n北美洲\n欧洲\n收藏与行程\n\n收藏与当前旅程途经的机场\n\nHong Kong International Airport\nVHHH · Hong Kong, HK\nHKG\nTokyo Haneda International Airport\nRJTT · Tokyo, JP\nHND\n机场\n\n按名称、城市或代码查找机场。\n\n(Duplicate)YEG\nCA-1291 · Edmonton, CA\nCA-1291\nA.N.R. Robinson International Airport\nTTCP · Scarborough, TT\nTAB\nAalborg Airport\nEKYT · Aalborg, DK\nAAL\nAarhus Airport\nEKAH · Aarhus, DK\nAAR\nAba Tenna Dejazmach Yilma International Airport\nHADR · Dire Dawa, ET\nDIR\nAbadan Ayatollah Jami International Airport\nOIAA · Abadan, IR\nABD\nAbakan International Airport\nUNAA · Abakan, RU\nABA\nAbeid Amani Karume International Airport\nHTZA · Zanzibar, TZ\nZNZ\nAbel Santamaria International Airport\nMUSC · Santa Clara, CU\nSNU\nAberdeen International Airport\nEGPD · Aberdeen, GB\nABZ\nAbha International Airport\nOEAB · Abha, SA\nAHB\nAbraham González International Airport\nMMCS · Ciudad Juárez, MX\nCJS\nAbruzzo Airport\nLIBP · Pescara, IT\nPSR\nAddis Ababa Bole International Airport\nHAAB · Addis Ababa, ET\nADD\nAdelaide International Airport\nYPAD · Adelaide, AU\nADL\nAden Adde International Airport\nHCMM · Mogadishu, SO\nMGQ\nAden International Airport\nOYAA · Aden, YE\nADE\nAdisoemarmo International Airport\nWAHQ · Surakarta, ID\nSOC\nAdnan Menderes International Airport\nLTBJ · Gaziemir, TR\nADB\nAdolfo López Mateos International Airport\nMMTO · Toluca, MX\nTLC\nAdolfo Suárez Madrid–Barajas Airport\nLEMD · Madrid, ES\nMAD\nAeroparque Jorge Newbery\nSABE · Buenos Aires, AR\nAEP\nAguascalientes International Airport\nMMAS · Aguascalientes, MX\nAGU\nAguenar – Hadj Bey Akhamok Airport\nDAAT · Tamanrasset, DZ\nTMR\nAhmad Shah Baba International Airport\nOAKN · Kandahar, AF\nKDH\nAhmed Sékou Touré International Airport\nGUCY · Conakry, GN\nCKY\nAkanu Ibiam International Airport\nDNEN · Enegu, NG\nENU\nAkhmat Kadyrov Grozny International Airport\nURMG · Grozny, RU\nGRV\nAktau International Airport\nUATE · Aktau, KZ\nSCO\nAktobe International Airport\nUATT · Aktobe, KZ\nAKX\nAkureyri International Airport\nBIAR · Akureyri, IS\nAEY\nAl Abraq International Airport\nHLLQ · Al Albraq, LY\nLAQ\nAl Ain International Airport\nOMAL · Al Ain, AE\nAAN\nAl Bateen Executive Airport\nOMAD · Abu Dhabi, AE\nAZI\nAl Maktoum International Airport\nOMDW · Dubai(Jebel Ali), AE\nDWC\nAl Massira Airport\nGMAD · Agadir (Temsia), MA\nAGA\nAl Najaf International Airport\nORNI · Najaf, IQ\nNJF\nAl-Ahsa International Airport\nOEAH · Hofuf, SA\nHOF\nAl-Jawf International Airport\nOESK · Al-Jawf, SA\nAJF\nAl-Ula International Airport\nOEAO · Al-Ula, SA\nULH\nAlbany International Airport\nKALB · Albany, US\nALB\nAlbuquerque International Sunport\nKABQ · Albuquerque, US\nABQ\nAlcantarí International Airport\nSLAL · Sucre, BO\nSRE\nAlejandro Velasco Astete International Airport\nSPZO · Cusco, PE\nCUZ\nAleppo International Airport\nOSAP · Aleppo, SY\nALP\nÅlesund Airport\nENAL · Ålesund, NO\nAES\nAlexander Kartveli Batumi International Airport\nUGSB · Batumi, GE\nBUS\nAlexandria International Airport\nHEAX · Alexandria, EG\nHBE\nAlexei Leonov Kemerovo International Airport\nUNEE · Kemerovo, RU\nKEJ\nAlfonso Bonilla Aragon International Airport\nSKCL · Cali, CO\nCLO\nAlicante-Elche Miguel Hernández Airport\nLEAL · Alicante, ES\nALC\nAllama Iqbal International Airport\nOPLA · Lahore, PK\nLHE\nAlluri Sitarama Raju International Airport (Vizag)\nVOVI · Visakhapatnam, IN\nVTZ\nAlmaty International Airport\nUAAA · Almaty, KZ\nALA\nAlykel International Airport\nUOOO · Norilsk, RU\nNSK\nAmborovy Airport\nFMNM · Mahajanga, MG\nMJN\nAmílcar Cabral International Airport\nGVAC · Espargos, CV\nSID\nAmsterdam Airport Schiphol\nEHAM · Amsterdam, NL\nAMS\nAndrés Sabella Gálvez International Airport\nSCFA · Antofagasta, CL\nANF\nAnnaba Rabah Bitat Airport\nDABB · Annaba, DZ\nAAE\n\n更多机场可在地图上点选，或通过名称、代码搜索。",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "机场",
+          "收藏与行程",
+          "机场"
+        ],
+        "dialogs": [
+          {
+            "label": "机场资料与收藏",
+            "className": "map-sheet airports-sheet coordinated-airport-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n机场\n全部\n亚洲\n北美洲\n欧洲\n收藏与行程\n\n收藏与当前旅程途经的机场\n\nHong Kong International Airport\nVHHH · Hong Kong, HK\nHKG\nTokyo Haneda International Airport\nRJTT · Tokyo, JP\nHND\n机场\n\n按名称、城市或代码查找机场。\n\n(Duplicate)YEG\nCA-1291 · Edmonton, CA\nCA-1291\nA.N.R. Robinson International Airport\nTTCP · Scarborough, TT\nTAB\nAalborg Airport\nEKYT · Aalborg, DK\nAAL\nAarhus Airport\nEKAH · Aarhus, DK\nAAR\nAba Tenna Dejazmach Yilma International Airport\nHADR · Dire Dawa, ET\nDIR\nAbadan Ayatollah Jami International Airport\nOIAA · Abadan, IR\nABD\nAbakan International Airport\nUNAA · Abakan, RU\nABA\nAbeid Amani Karume International Airport\nHTZA · Zanzibar, TZ\nZNZ\nAbel Santamaria International Airport\nMUSC · Santa Clara, CU\nSNU\nAberdeen International Airport\nEGPD · Aberdeen, GB\nABZ\nAbha International Airport\nOEAB · Abha, SA\nAHB\nAbraham González International Airport\nMMCS · Ciudad Juárez, MX\nCJS\nAbruzzo Airport\nLIBP · Pescara, IT\nPSR\nAddis Ababa Bole International Airport\nHAAB · Addis Ababa, ET\nADD\nAdelaide International Airport\nYPAD · Adelaide, AU\nADL\nAden Adde International Airport\nHCMM · Mogadishu, SO\nMGQ\nAden International Airport\nOYAA · Aden, YE\nADE\nAdisoemarmo International Airport\nWAHQ · Surakarta, ID\nSOC\nAdnan Menderes International Airport\nLTBJ · Gaziemir, TR\nADB\nAdolfo López Mateos International Airport\nMMTO · Toluca, MX\nTLC\nAdolfo Suárez Madrid–Barajas Airport\nLEMD · Madrid, ES\nMAD\nAeroparque Jorge Newbery\nSABE · Buenos Aires, AR\nAEP\nAguascalientes International Airport\nMMAS · Aguascalientes, MX\nAGU\nAguenar – Hadj Bey Akhamok Airport\nDAAT · Tamanrasset, DZ\nTMR\nAhmad Shah Baba International Airport\nOAKN · Kandahar, AF\nKDH\nAhmed Sékou Touré International Airport\nGUCY · Conakry, GN\nCKY\nAkanu Ibiam International Airport\nDNEN · Enegu, NG\nENU\nAkhmat Kadyrov Grozny International Airport\nURMG · Grozny, RU\nGRV\nAktau International Airport\nUATE · Aktau, KZ\nSCO\nAktobe International Airport\nUATT · Aktobe, KZ\nAKX\nAkureyri International Airport\nBIAR · Akureyri, IS\nAEY\nAl Abraq International Airport\nHLLQ · Al Albraq, LY\nLAQ\nAl Ain International Airport\nOMAL · Al Ain, AE\nAAN\nAl Bateen Executive Airport\nOMAD · Abu Dhabi, AE\nAZI\nAl Maktoum International Airport\nOMDW · Dubai(Jebel Ali), AE\nDWC\nAl Massira Airport\nGMAD · Agadir (Temsia), MA\nAGA\nAl Najaf International Airport\nORNI · Najaf, IQ\nNJF\nAl-Ahsa International Airport\nOEAH · Hofuf, SA\nHOF\nAl-Jawf International Airport\nOESK · Al-Jawf, SA\nAJF\nAl-Ula International Airport\nOEAO · Al-Ula, SA\nULH\nAlbany International Airport\nKALB · Albany, US\nALB\nAlbuquerque International Sunport\nKABQ · Albuquerque, US\nABQ\nAlcantarí International Airport\nSLAL · Sucre, BO\nSRE\nAlejandro Velasco Astete International Airport\nSPZO · Cusco, PE\nCUZ\nAleppo International Airport\nOSAP · Aleppo, SY\nALP\nÅlesund Airport\nENAL · Ålesund, NO\nAES\nAlexander Kartveli Batumi International Airport\nUGSB · Batumi, GE\nBUS\nAlexandria International Airport\nHEAX · Alexandria, EG\nHBE\nAlexei Leonov Kemerovo International Airport\nUNEE · Kemerovo, RU\nKEJ\nAlfonso Bonilla Aragon International Airport\nSKCL · Cali, CO\nCLO\nAlicante-Elche Miguel Hernández Airport\nLEAL · Alicante, ES\nALC\nAllama Iqbal International Airport\nOPLA · Lahore, PK\nLHE\nAlluri Sitarama Raju International Airport (Vizag)\nVOVI · Visakhapatnam, IN\nVTZ\nAlmaty International Airport\nUAAA · Almaty, KZ\nALA\nAlykel International Airport\nUOOO · Norilsk, RU\nNSK\nAmborovy Airport\nFMNM · Mahajanga, MG\nMJN\nAmílcar Cabral International Airport\nGVAC · Espargos, CV\nSID\nAmsterdam Airport Schiphol\nEHAM · Amsterdam, NL\nAMS\nAndrés Sabella Gálvez International Airport\nSCFA · Antofagasta, CL\nANF\nAnnaba Rabah Bitat Airport\nDABB · Annaba, DZ\nAAE\n\n更多机场可在地图上点选，或通过名称、代码搜索。",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "15-airport-search",
+      "title": "机场搜索",
+      "selector": ".airport-search-field",
+      "description": "展开所有机场搜索输入；原生键盘不包含在覆盖承诺中。",
+      "theme": "light",
+      "status": "captured",
+      "file": "15-airport-search-light.png",
+      "sha256": "bd63664db72dac8d5e535d3fc544a5a309b7a4a3c37e3791d2b501af6074919a",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "机场",
+          "收藏与行程",
+          "机场"
+        ],
+        "dialogs": [
+          {
+            "label": "机场资料与收藏",
+            "className": "map-sheet airports-sheet coordinated-airport-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n机场\n全部\n亚洲\n北美洲\n欧洲\n收藏与行程\n\n收藏与当前旅程途经的机场\n\nHong Kong International Airport\nVHHH · Hong Kong, HK\nHKG\nTokyo Haneda International Airport\nRJTT · Tokyo, JP\nHND\n机场\n\n按名称、城市或代码查找机场。\n\n(Duplicate)YEG\nCA-1291 · Edmonton, CA\nCA-1291\nA.N.R. Robinson International Airport\nTTCP · Scarborough, TT\nTAB\nAalborg Airport\nEKYT · Aalborg, DK\nAAL\nAarhus Airport\nEKAH · Aarhus, DK\nAAR\nAba Tenna Dejazmach Yilma International Airport\nHADR · Dire Dawa, ET\nDIR\nAbadan Ayatollah Jami International Airport\nOIAA · Abadan, IR\nABD\nAbakan International Airport\nUNAA · Abakan, RU\nABA\nAbeid Amani Karume International Airport\nHTZA · Zanzibar, TZ\nZNZ\nAbel Santamaria International Airport\nMUSC · Santa Clara, CU\nSNU\nAberdeen International Airport\nEGPD · Aberdeen, GB\nABZ\nAbha International Airport\nOEAB · Abha, SA\nAHB\nAbraham González International Airport\nMMCS · Ciudad Juárez, MX\nCJS\nAbruzzo Airport\nLIBP · Pescara, IT\nPSR\nAddis Ababa Bole International Airport\nHAAB · Addis Ababa, ET\nADD\nAdelaide International Airport\nYPAD · Adelaide, AU\nADL\nAden Adde International Airport\nHCMM · Mogadishu, SO\nMGQ\nAden International Airport\nOYAA · Aden, YE\nADE\nAdisoemarmo International Airport\nWAHQ · Surakarta, ID\nSOC\nAdnan Menderes International Airport\nLTBJ · Gaziemir, TR\nADB\nAdolfo López Mateos International Airport\nMMTO · Toluca, MX\nTLC\nAdolfo Suárez Madrid–Barajas Airport\nLEMD · Madrid, ES\nMAD\nAeroparque Jorge Newbery\nSABE · Buenos Aires, AR\nAEP\nAguascalientes International Airport\nMMAS · Aguascalientes, MX\nAGU\nAguenar – Hadj Bey Akhamok Airport\nDAAT · Tamanrasset, DZ\nTMR\nAhmad Shah Baba International Airport\nOAKN · Kandahar, AF\nKDH\nAhmed Sékou Touré International Airport\nGUCY · Conakry, GN\nCKY\nAkanu Ibiam International Airport\nDNEN · Enegu, NG\nENU\nAkhmat Kadyrov Grozny International Airport\nURMG · Grozny, RU\nGRV\nAktau International Airport\nUATE · Aktau, KZ\nSCO\nAktobe International Airport\nUATT · Aktobe, KZ\nAKX\nAkureyri International Airport\nBIAR · Akureyri, IS\nAEY\nAl Abraq International Airport\nHLLQ · Al Albraq, LY\nLAQ\nAl Ain International Airport\nOMAL · Al Ain, AE\nAAN\nAl Bateen Executive Airport\nOMAD · Abu Dhabi, AE\nAZI\nAl Maktoum International Airport\nOMDW · Dubai(Jebel Ali), AE\nDWC\nAl Massira Airport\nGMAD · Agadir (Temsia), MA\nAGA\nAl Najaf International Airport\nORNI · Najaf, IQ\nNJF\nAl-Ahsa International Airport\nOEAH · Hofuf, SA\nHOF\nAl-Jawf International Airport\nOESK · Al-Jawf, SA\nAJF\nAl-Ula International Airport\nOEAO · Al-Ula, SA\nULH\nAlbany International Airport\nKALB · Albany, US\nALB\nAlbuquerque International Sunport\nKABQ · Albuquerque, US\nABQ\nAlcantarí International Airport\nSLAL · Sucre, BO\nSRE\nAlejandro Velasco Astete International Airport\nSPZO · Cusco, PE\nCUZ\nAleppo International Airport\nOSAP · Aleppo, SY\nALP\nÅlesund Airport\nENAL · Ålesund, NO\nAES\nAlexander Kartveli Batumi International Airport\nUGSB · Batumi, GE\nBUS\nAlexandria International Airport\nHEAX · Alexandria, EG\nHBE\nAlexei Leonov Kemerovo International Airport\nUNEE · Kemerovo, RU\nKEJ\nAlfonso Bonilla Aragon International Airport\nSKCL · Cali, CO\nCLO\nAlicante-Elche Miguel Hernández Airport\nLEAL · Alicante, ES\nALC\nAllama Iqbal International Airport\nOPLA · Lahore, PK\nLHE\nAlluri Sitarama Raju International Airport (Vizag)\nVOVI · Visakhapatnam, IN\nVTZ\nAlmaty International Airport\nUAAA · Almaty, KZ\nALA\nAlykel International Airport\nUOOO · Norilsk, RU\nNSK\nAmborovy Airport\nFMNM · Mahajanga, MG\nMJN\nAmílcar Cabral International Airport\nGVAC · Espargos, CV\nSID\nAmsterdam Airport Schiphol\nEHAM · Amsterdam, NL\nAMS\nAndrés Sabella Gálvez International Airport\nSCFA · Antofagasta, CL\nANF\nAnnaba Rabah Bitat Airport\nDABB · Annaba, DZ\nAAE\n\n更多机场可在地图上点选，或通过名称、代码搜索。",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "机场",
+          "收藏与行程",
+          "机场"
+        ],
+        "dialogs": [
+          {
+            "label": "机场资料与收藏",
+            "className": "map-sheet airports-sheet coordinated-airport-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n机场\n全部\n亚洲\n北美洲\n欧洲\n收藏与行程\n\n收藏与当前旅程途经的机场\n\nHong Kong International Airport\nVHHH · Hong Kong, HK\nHKG\nTokyo Haneda International Airport\nRJTT · Tokyo, JP\nHND\n机场\n\n按名称、城市或代码查找机场。\n\n(Duplicate)YEG\nCA-1291 · Edmonton, CA\nCA-1291\nA.N.R. Robinson International Airport\nTTCP · Scarborough, TT\nTAB\nAalborg Airport\nEKYT · Aalborg, DK\nAAL\nAarhus Airport\nEKAH · Aarhus, DK\nAAR\nAba Tenna Dejazmach Yilma International Airport\nHADR · Dire Dawa, ET\nDIR\nAbadan Ayatollah Jami International Airport\nOIAA · Abadan, IR\nABD\nAbakan International Airport\nUNAA · Abakan, RU\nABA\nAbeid Amani Karume International Airport\nHTZA · Zanzibar, TZ\nZNZ\nAbel Santamaria International Airport\nMUSC · Santa Clara, CU\nSNU\nAberdeen International Airport\nEGPD · Aberdeen, GB\nABZ\nAbha International Airport\nOEAB · Abha, SA\nAHB\nAbraham González International Airport\nMMCS · Ciudad Juárez, MX\nCJS\nAbruzzo Airport\nLIBP · Pescara, IT\nPSR\nAddis Ababa Bole International Airport\nHAAB · Addis Ababa, ET\nADD\nAdelaide International Airport\nYPAD · Adelaide, AU\nADL\nAden Adde International Airport\nHCMM · Mogadishu, SO\nMGQ\nAden International Airport\nOYAA · Aden, YE\nADE\nAdisoemarmo International Airport\nWAHQ · Surakarta, ID\nSOC\nAdnan Menderes International Airport\nLTBJ · Gaziemir, TR\nADB\nAdolfo López Mateos International Airport\nMMTO · Toluca, MX\nTLC\nAdolfo Suárez Madrid–Barajas Airport\nLEMD · Madrid, ES\nMAD\nAeroparque Jorge Newbery\nSABE · Buenos Aires, AR\nAEP\nAguascalientes International Airport\nMMAS · Aguascalientes, MX\nAGU\nAguenar – Hadj Bey Akhamok Airport\nDAAT · Tamanrasset, DZ\nTMR\nAhmad Shah Baba International Airport\nOAKN · Kandahar, AF\nKDH\nAhmed Sékou Touré International Airport\nGUCY · Conakry, GN\nCKY\nAkanu Ibiam International Airport\nDNEN · Enegu, NG\nENU\nAkhmat Kadyrov Grozny International Airport\nURMG · Grozny, RU\nGRV\nAktau International Airport\nUATE · Aktau, KZ\nSCO\nAktobe International Airport\nUATT · Aktobe, KZ\nAKX\nAkureyri International Airport\nBIAR · Akureyri, IS\nAEY\nAl Abraq International Airport\nHLLQ · Al Albraq, LY\nLAQ\nAl Ain International Airport\nOMAL · Al Ain, AE\nAAN\nAl Bateen Executive Airport\nOMAD · Abu Dhabi, AE\nAZI\nAl Maktoum International Airport\nOMDW · Dubai(Jebel Ali), AE\nDWC\nAl Massira Airport\nGMAD · Agadir (Temsia), MA\nAGA\nAl Najaf International Airport\nORNI · Najaf, IQ\nNJF\nAl-Ahsa International Airport\nOEAH · Hofuf, SA\nHOF\nAl-Jawf International Airport\nOESK · Al-Jawf, SA\nAJF\nAl-Ula International Airport\nOEAO · Al-Ula, SA\nULH\nAlbany International Airport\nKALB · Albany, US\nALB\nAlbuquerque International Sunport\nKABQ · Albuquerque, US\nABQ\nAlcantarí International Airport\nSLAL · Sucre, BO\nSRE\nAlejandro Velasco Astete International Airport\nSPZO · Cusco, PE\nCUZ\nAleppo International Airport\nOSAP · Aleppo, SY\nALP\nÅlesund Airport\nENAL · Ålesund, NO\nAES\nAlexander Kartveli Batumi International Airport\nUGSB · Batumi, GE\nBUS\nAlexandria International Airport\nHEAX · Alexandria, EG\nHBE\nAlexei Leonov Kemerovo International Airport\nUNEE · Kemerovo, RU\nKEJ\nAlfonso Bonilla Aragon International Airport\nSKCL · Cali, CO\nCLO\nAlicante-Elche Miguel Hernández Airport\nLEAL · Alicante, ES\nALC\nAllama Iqbal International Airport\nOPLA · Lahore, PK\nLHE\nAlluri Sitarama Raju International Airport (Vizag)\nVOVI · Visakhapatnam, IN\nVTZ\nAlmaty International Airport\nUAAA · Almaty, KZ\nALA\nAlykel International Airport\nUOOO · Norilsk, RU\nNSK\nAmborovy Airport\nFMNM · Mahajanga, MG\nMJN\nAmílcar Cabral International Airport\nGVAC · Espargos, CV\nSID\nAmsterdam Airport Schiphol\nEHAM · Amsterdam, NL\nAMS\nAndrés Sabella Gálvez International Airport\nSCFA · Antofagasta, CL\nANF\nAnnaba Rabah Bitat Airport\nDABB · Annaba, DZ\nAAE\n\n更多机场可在地图上点选，或通过名称、代码搜索。",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "16-airport-detail",
+      "title": "香港机场资料",
+      "selector": ".airport-detail-sheet",
+      "description": "使用项目实际 HKG 机场资料组件，不伪造运营状态。",
+      "theme": "light",
+      "status": "captured",
+      "file": "16-airport-detail-light.png",
+      "sha256": "9d67db1c144874baeb653cae084ff4768dce18ef082a8897920061c635e8e88a",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "Hong Kong International Airport"
+        ],
+        "dialogs": [
+          {
+            "label": "HKG 机场详情",
+            "className": "map-sheet airport-detail-sheet coordinated-airport-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nHKG · VHHH\nHong Kong International Airport\n\nHong Kong · HK\n\nIATA\nHKG\nICAO\nVHHH\n纬度\n22.3118°\n经度\n113.9149°\n从这里出发\n前往这里\n\n机场基础资料 · OurAirports",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "Hong Kong International Airport"
+        ],
+        "dialogs": [
+          {
+            "label": "HKG 机场详情",
+            "className": "map-sheet airport-detail-sheet coordinated-airport-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nHKG · VHHH\nHong Kong International Airport\n\nHong Kong · HK\n\nIATA\nHKG\nICAO\nVHHH\n纬度\n22.3118°\n经度\n113.9149°\n从这里出发\n前往这里\n\n机场基础资料 · OurAirports",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "17-weather",
+      "title": "天气与地球图层",
+      "selector": ".weather-sheet",
+      "description": "天气显示和地图图层选项，网络图层的加载状态原样记录。",
+      "theme": "light",
+      "status": "captured",
+      "file": "17-weather-light.png",
+      "sha256": "e2c8380e83909e7eb2d0c3082c74d759df4b6508eb6b6c637bdf18da290ba85f",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "天气图层"
+        ],
+        "dialogs": [
+          {
+            "label": "天气图层",
+            "className": "map-sheet weather-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n天气图层\n\n查看全球降雨与降雪变化，天气图层会自动刷新。\n\n美国雷达\n美国区域高清实时雷达\n全球天气\n当前全球综合天气雷达\n关闭天气\n仅显示所选地球底图\n地球图层\n切换底图，不改变当前缩放与视角\n卫星\n标准\n卫星\n地形\n导航\n路况\n实时雷达数据由 RainViewer 提供",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "天气图层"
+        ],
+        "dialogs": [
+          {
+            "label": "天气图层",
+            "className": "map-sheet weather-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n天气图层\n\n查看全球降雨与降雪变化，天气图层会自动刷新。\n\n美国雷达\n美国区域高清实时雷达\n全球天气\n当前全球综合天气雷达\n关闭天气\n仅显示所选地球底图\n地球图层\n切换底图，不改变当前缩放与视角\n卫星\n标准\n卫星\n地形\n导航\n路况\n实时雷达数据由 RainViewer 提供",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "18-friends-intro",
+      "title": "同行：介绍",
+      "selector": ".onboarding-sheet",
+      "description": "同行引导页。文案不代表云共享服务已验证。",
+      "theme": "light",
+      "status": "captured",
+      "file": "18-friends-intro-light.png",
+      "sha256": "f6e422c7e8a129613804bdc4cf2ea0bb191421ab373d1740d633ea7478776545",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Flighty Friends"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈MIKE✈DELAYEDLANDED\nFlighty Friends\n\nAdd friends and family to automatically share upcoming flights, see each other fly on the map, and get live updates when flights take off, land, or change.\n\nIt’s free, and saves you from ever hearing “Send me your flight info!” again.\n\nInvites expire after 48 hours and can only be used a limited number of times. You can remove friends at any time.\nContinue",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Flighty Friends"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈MIKE✈DELAYEDLANDED\nFlighty Friends\n\nAdd friends and family to automatically share upcoming flights, see each other fly on the map, and get live updates when flights take off, land, or change.\n\nIt’s free, and saves you from ever hearing “Send me your flight info!” again.\n\nInvites expire after 48 hours and can only be used a limited number of times. You can remove friends at any time.\nContinue",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "19-profile-name",
+      "title": "同行：填写姓名",
+      "selector": ".profile-name-input",
+      "description": "姓名设置页面，未填写真实个人信息。",
+      "theme": "light",
+      "status": "captured",
+      "file": "19-profile-name-light.png",
+      "sha256": "ed7fc8790ea0ab467d307cb1d795c60ed16cb2dbf303727e276104334dbd7204",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Set Up Your Profile"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈VI✈DELAYEDLANDED\nSet Up Your Profile\n\nAdd your name and photo to continue. Your friends will see this when you share flights.\n\n\nContinue",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Set Up Your Profile"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈VI✈DELAYEDLANDED\nSet Up Your Profile\n\nAdd your name and photo to continue. Your friends will see this when you share flights.\n\n\nContinue",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "20-profile-avatar",
+      "title": "同行：选择头像",
+      "selector": ".avatar-builder",
+      "description": "头像颜色选择；保留默认示例资料。",
+      "theme": "light",
+      "status": "captured",
+      "file": "20-profile-avatar-light.png",
+      "sha256": "14c68812475690607ed61bb67a8a7b67ad18c5852339b6cc5a7063772ef03baa",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈VI✈DELAYEDLANDED\nVI\nVincent\nCustomize Avatar\nSave Avatar",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈VI✈DELAYEDLANDED\nVI\nVincent\nCustomize Avatar\nSave Avatar",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "21-friends-ready",
+      "title": "同行：完成引导",
+      "selector": ".onboarding-sheet",
+      "description": "引导完成页面的实际组件，不发送邀请。",
+      "theme": "light",
+      "status": "captured",
+      "file": "21-friends-ready-light.png",
+      "sha256": "e48da267bf1b5adc28848eab25e7610ca31b9990c5e58a5702ab77ce5fe2c10c",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Flighty Friends"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈MIKE✈DELAYEDLANDED\nFlighty Friends\n\nAdd friends and family to automatically share upcoming flights, see each other fly on the map, and get live updates when flights take off, land, or change.\n\nIt’s free, and saves you from ever hearing “Send me your flight info!” again.\n\nInvites expire after 48 hours and can only be used a limited number of times. You can remove friends at any time.\nContinue",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Flighty Friends"
+        ],
+        "dialogs": [
+          {
+            "label": "Flighty Friends setup",
+            "className": "full-sheet onboarding-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nMOM✈JENNY✈MIKE✈DELAYEDLANDED\nFlighty Friends\n\nAdd friends and family to automatically share upcoming flights, see each other fly on the map, and get live updates when flights take off, land, or change.\n\nIt’s free, and saves you from ever hearing “Send me your flight info!” again.\n\nInvites expire after 48 hours and can only be used a limited number of times. You can remove friends at any time.\nContinue",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "22-friends-list",
+      "title": "同行列表",
+      "selector": ".primary-panel[data-tab=\"friends\"]",
+      "description": "同行列表或当前空状态，不创建外部关系。",
+      "theme": "light",
+      "status": "captured",
+      "file": "22-friends-list-light.png",
+      "sha256": "9a35024f8f5df0a0c65b50455cd55e1c229c48a6c7f261f3d2ea11f263f95af4",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "同行"
+        ],
+        "dialogs": [],
+        "tab": "friends",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n同行\nV\n全部\n今天\n添加同行人\n添加同行人的行程\n输入邀请码后，就能自动看到对方共享的行程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "同行"
+        ],
+        "dialogs": [],
+        "tab": "friends",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n同行\nV\n全部\n今天\n添加同行人\n添加同行人的行程\n输入邀请码后，就能自动看到对方共享的行程",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "23-add-friend",
+      "title": "添加同行者",
+      "selector": ".add-friend-hero",
+      "description": "同行邀请输入界面，不提交邀请码。",
+      "theme": "light",
+      "status": "captured",
+      "file": "23-add-friend-light.png",
+      "sha256": "aba15c05e89464876f258d0dc144a741b6daa26bda90cd2478072abb90a3e7f7",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "添加同行人",
+          "同行信息，自动更新"
+        ],
+        "dialogs": [
+          {
+            "label": "添加同行人",
+            "className": "full-sheet compact-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n添加同行人\n\n输入邀请码，即可自动共享彼此的行程。\n\n同行信息，自动更新\n\n对方始终掌控自己的信息，也可以随时停止共享。\n\n添加同行人",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "添加同行人",
+          "同行信息，自动更新"
+        ],
+        "dialogs": [
+          {
+            "label": "添加同行人",
+            "className": "full-sheet compact-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\n添加同行人\n\n输入邀请码，即可自动共享彼此的行程。\n\n同行信息，自动更新\n\n对方始终掌控自己的信息，也可以随时停止共享。\n\n添加同行人",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "24-profile",
+      "title": "个人资料与外观",
+      "selector": ".profile-sheet",
+      "description": "当前个人资料和浅色、深色、系统外观选项，不清空数据。",
+      "theme": "light",
+      "status": "captured",
+      "file": "24-profile-light.png",
+      "sha256": "0f128bbd91b1a0c15a11da9e927e651d0debafe25a0fc49be4814d96b69e35c2",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Your Profile"
+        ],
+        "dialogs": [
+          {
+            "label": "Profile",
+            "className": "full-sheet compact-sheet profile-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nYour Profile\n\nCreate a profile to use Flighty Friends.\n\nVI\n外观\n深色、浅色或跟随系统\nSystem\nLight\nDark\nSave Profile\nClear local demo data",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "My Flights",
+          "Your Profile"
+        ],
+        "dialogs": [
+          {
+            "label": "Profile",
+            "className": "full-sheet compact-sheet profile-sheet mobile-back-surface"
+          }
+        ],
+        "tab": "flights",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nMy Flights\nV\n旅程\n东京与濑户内 · 八日\n5 段 · 4 种交通 · 3,619 km\n回放\n路段\n添加路段\n模拟\nCX548\n模拟预览\n飞往东京\nHKG\n08:45\nHND\n14:00\n模拟\n专车\n模拟预览\n前往东京站\nHND\n14:25\nTYO\n15:10\n模拟\nNOZOMI 215\n模拟预览\n东海道新干线\nTYO\n09:10\nKYO\n11:22\n模拟\nJR 快速\n模拟预览\n京都到宇野港\nKYO\n07:12\nUNO\n10:20\n模拟\n四国汽船\n模拟预览\n濑户内海航线\nUNO\n10:40\nNAO\n11:00\nYour Profile\n\nCreate a profile to use Flighty Friends.\n\nVI\n外观\n深色、浅色或跟随系统\nSystem\nLight\nDark\nSave Profile\nClear local demo data",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "25-passport-compact",
+      "title": "旅记：最小面板",
+      "selector": ".primary-panel[data-tab=\"passport\"]",
+      "description": "最小旅记摘要与 ALL-TIME 护照信息。",
+      "theme": "light",
+      "status": "captured",
+      "file": "25-passport-compact-light.png",
+      "sha256": "a0cb333d4dfce48862513ce03a0f01d3888d20626f47e177b87235ab67a147ef",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "旅迹",
+          "留下足迹的旅程",
+          "最常用载具",
+          "过往行程"
+        ],
+        "dialogs": [],
+        "tab": "passport",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nALL-TIME FLIGHTY PASSPORT\n行程段\n0\n总里程\n0 km",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "旅迹",
+          "留下足迹的旅程",
+          "最常用载具",
+          "过往行程"
+        ],
+        "dialogs": [],
+        "tab": "passport",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nALL-TIME FLIGHTY PASSPORT\n行程段\n0\n总里程\n0 km",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "26-passport-expanded",
+      "title": "旅记：概览",
+      "selector": ".primary-panel[data-tab=\"passport\"]",
+      "description": "累计里程、载具和旅程列表；示例数据不是用户真实足迹。",
+      "theme": "light",
+      "status": "captured",
+      "file": "26-passport-expanded-light.png",
+      "sha256": "c19c8b542a61884c8c23772e4e070671e845b1015dcbcf6f023304f82fd329ab",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "旅迹",
+          "留下足迹的旅程",
+          "最常用载具",
+          "过往行程"
+        ],
+        "dialogs": [],
+        "tab": "passport",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n旅迹\nV\n全部\nALL-TIME FLIGHTY PASSPORT\n\n护照 · PASSPORT · 旅迹\n\n行程段\n0\n0 种交通方式\n总里程\n0 km\n0.00x 环绕地球\n在途时间\n0分钟\n到访地点\n0\n城市\n0\n全部旅迹统计\n0\n留下足迹的旅程\n\n0 段已完成 · 计划和回放不计入统计\n\n查看旅行记录\n最常用载具\n暂无记录\n\n0 段 · 飞行\n\n全部载具统计\n过往行程\n按旅行日期\n\n这个时间段还没有完成的路段。完成行程后会自动出现在这里。",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "旅迹",
+          "留下足迹的旅程",
+          "最常用载具",
+          "过往行程"
+        ],
+        "dialogs": [],
+        "tab": "passport",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n旅迹\nV\n全部\nALL-TIME FLIGHTY PASSPORT\n\n护照 · PASSPORT · 旅迹\n\n行程段\n0\n0 种交通方式\n总里程\n0 km\n0.00x 环绕地球\n在途时间\n0分钟\n到访地点\n0\n城市\n0\n全部旅迹统计\n0\n留下足迹的旅程\n\n0 段已完成 · 计划和回放不计入统计\n\n查看旅行记录\n最常用载具\n暂无记录\n\n0 段 · 飞行\n\n全部载具统计\n过往行程\n按旅行日期\n\n这个时间段还没有完成的路段。完成行程后会自动出现在这里。",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "27-passport-stats",
+      "title": "旅记：详细统计",
+      "selector": ".passport-detail",
+      "description": "完整旅记统计页面顶部，数值取自应用当前演示状态。",
+      "theme": "light",
+      "status": "captured",
+      "file": "27-passport-stats-light.png",
+      "sha256": "9c248a2f910e11897d2cf2fc12a5a40f642457fb3f4ca9fb0bf38356d36734ca",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "旅迹",
+          "留下足迹的旅程",
+          "最常用载具",
+          "过往行程",
+          "fly everything",
+          "行程频率",
+          "旅行距离",
+          "在途时间",
+          "常用载具",
+          "热门路线",
+          "到访城市"
+        ],
+        "dialogs": [
+          {
+            "label": "完整旅迹统计",
+            "className": "passport-detail mobile-back-surface"
+          }
+        ],
+        "tab": "passport",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n旅迹\nV\n全部\nALL-TIME FLIGHTY PASSPORT\n\n护照 · PASSPORT · 旅迹\n\n行程段\n0\n0 种交通方式\n总里程\n0 km\n0.00x 环绕地球\n在途时间\n0分钟\n到访地点\n0\n城市\n0\n全部旅迹统计\n0\n留下足迹的旅程\n\n0 段已完成 · 计划和回放不计入统计\n\n查看旅行记录\n最常用载具\n暂无记录\n\n0 段 · 飞行\n\n全部载具统计\n过往行程\n按旅行日期\n\n这个时间段还没有完成的路段。完成行程后会自动出现在这里。\n\nfly everything\n全部\nMY FLY EVERYTHING PASSPORT\n\n多载具 · MULTI-MODAL · 旅迹\n\n行程段\n0\n总里程\n0 km\n在途时间\n0分钟\n地点\n0\n载具\n0\n行程频率\n分享\n\n0 本旅迹 · 0 段行程\n\n星期\n月份\n日\n一\n二\n三\n四\n五\n六\n旅行距离\n分享\n0 km\n\n平均每段：0 km\n\n🌍\n0.00x 环绕地球\n🌕\n0.000x 到月球\n☀️\n0.00000x 到太阳\n在途时间\n分享\n0分钟\n天\n0.0\n周\n0.00\n月\n0.00\n年\n0.000\n常用载具\n分享\n0 种\n飞机\n0\n火车\n0\n汽车\n0\n轮船\n0\n热门路线\n分享\n0 条\n到访城市\n分享\n0 个",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "旅迹",
+          "留下足迹的旅程",
+          "最常用载具",
+          "过往行程",
+          "fly everything",
+          "行程频率",
+          "旅行距离",
+          "在途时间",
+          "常用载具",
+          "热门路线",
+          "到访城市"
+        ],
+        "dialogs": [
+          {
+            "label": "完整旅迹统计",
+            "className": "passport-detail mobile-back-surface"
+          }
+        ],
+        "tab": "passport",
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\n旅迹\nV\n全部\nALL-TIME FLIGHTY PASSPORT\n\n护照 · PASSPORT · 旅迹\n\n行程段\n0\n0 种交通方式\n总里程\n0 km\n0.00x 环绕地球\n在途时间\n0分钟\n到访地点\n0\n城市\n0\n全部旅迹统计\n0\n留下足迹的旅程\n\n0 段已完成 · 计划和回放不计入统计\n\n查看旅行记录\n最常用载具\n暂无记录\n\n0 段 · 飞行\n\n全部载具统计\n过往行程\n按旅行日期\n\n这个时间段还没有完成的路段。完成行程后会自动出现在这里。\n\nfly everything\n全部\nMY FLY EVERYTHING PASSPORT\n\n多载具 · MULTI-MODAL · 旅迹\n\n行程段\n0\n总里程\n0 km\n在途时间\n0分钟\n地点\n0\n载具\n0\n行程频率\n分享\n\n0 本旅迹 · 0 段行程\n\n星期\n月份\n日\n一\n二\n三\n四\n五\n六\n旅行距离\n分享\n0 km\n\n平均每段：0 km\n\n🌍\n0.00x 环绕地球\n🌕\n0.000x 到月球\n☀️\n0.00000x 到太阳\n在途时间\n分享\n0分钟\n天\n0.0\n周\n0.00\n月\n0.00\n年\n0.000\n常用载具\n分享\n0 种\n飞机\n0\n火车\n0\n汽车\n0\n轮船\n0\n热门路线\n分享\n0 条\n到访城市\n分享\n0 个",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "28-community",
+      "title": "旅行社区",
+      "selector": ".journey-experience",
+      "description": "原生入口中的社区页；离线示例或服务状态按实际画面记录。",
+      "theme": "light",
+      "status": "captured",
+      "file": "28-community-light.png",
+      "sha256": "ef148be803bf804e6d2ba68e1fb383e260a5584c8ba14cd2d8af8a3bbffe11ac",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "东京与濑户内 · 八日"
+        ],
+        "dialogs": [],
+        "mapReady": "false",
+        "bodyText": "正在载入实时地球…\nfly\n我的行程\n社区\n发布行程\n正在播放你的旅程\n东京与濑户内 · 八日\nLIVE 3D JOURNEY\n东海道新干线\nTYO\nKYO\nTRIP PASSPORT\n东京与濑户内 · 八日\n5 段\n5 城\n3,619 km\nTRIP PASSPORT\n香港周末 · 海与城\n0 段\n0 城\n0 km\n新行程\n管理\nYOUR JOURNEYS\n我的行程\n5 条路线\nHKG\n→\nHND\n飞机\n飞往东京\nCX548\n香港国际机场 · T1 → 羽田机场 · T3\nTICKET\nCX548\n08:45\n14:00\n航班票务\n登机口 24 · 经济舱 32A\nHND\n→\nTYO\n汽车\n前往东京站\n专车\n羽田机场 · T3 → 东京站 · 丸之内口\nTICKET\n专车\n14:25\n15:10\n实时路况顺畅\n司机将在 T3 到达层等候\nTYO\n→\nKYO\n火车\n东海道新干线\nNOZOMI 215\n东京站 · 丸之内口 → 京都站 · 八条口\nTICKET\nNOZOMI 215\n09:10\n11:22\n计划车次 · 可接入运营方 GTFS-RT\n14号站台 · 7号车厢 12A\nKYO\n→\nUNO\n火车\n京都到宇野港\nJR 快速\n京都站 · 八条口 → 宇野港 · 1号码头\nTICKET\nJR 快速\n07:12\n10:20\n计划车次 · 可接入运营方 GTFS-RT\n冈山站换乘一次\nUNO\n→\nNAO\n轮船\n濑户内海航线\n四国汽船\n宇野港 · 1号码头 → 宫浦港 · 直岛\nTICKET\n四国汽船\n10:40\n11:00\n船票信息\n1号码头 · 建议提前 15 分钟登船",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "东京与濑户内 · 八日"
+        ],
+        "dialogs": [],
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nfly\n我的行程\n社区\n发布行程\n正在播放你的旅程\n东京与濑户内 · 八日\nLIVE 3D JOURNEY\n东海道新干线\nTYO\nKYO\nTRIP PASSPORT\n东京与濑户内 · 八日\n5 段\n5 城\n3,619 km\nTRIP PASSPORT\n香港周末 · 海与城\n0 段\n0 城\n0 km\n新行程\n管理\nYOUR JOURNEYS\n我的行程\n5 条路线\nHKG\n→\nHND\n飞机\n飞往东京\nCX548\n香港国际机场 · T1 → 羽田机场 · T3\nTICKET\nCX548\n08:45\n14:00\n航班票务\n登机口 24 · 经济舱 32A\nHND\n→\nTYO\n汽车\n前往东京站\n专车\n羽田机场 · T3 → 东京站 · 丸之内口\nTICKET\n专车\n14:25\n15:10\n实时路况顺畅\n司机将在 T3 到达层等候\nTYO\n→\nKYO\n火车\n东海道新干线\nNOZOMI 215\n东京站 · 丸之内口 → 京都站 · 八条口\nTICKET\nNOZOMI 215\n09:10\n11:22\n计划车次 · 可接入运营方 GTFS-RT\n14号站台 · 7号车厢 12A\nKYO\n→\nUNO\n火车\n京都到宇野港\nJR 快速\n京都站 · 八条口 → 宇野港 · 1号码头\nTICKET\nJR 快速\n07:12\n10:20\n计划车次 · 可接入运营方 GTFS-RT\n冈山站换乘一次\nUNO\n→\nNAO\n轮船\n濑户内海航线\n四国汽船\n宇野港 · 1号码头 → 宫浦港 · 直岛\nTICKET\n四国汽船\n10:40\n11:00\n船票信息\n1号码头 · 建议提前 15 分钟登船",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "29-community-publish",
+      "title": "社区：发布行程",
+      "selector": ".publish-journey-dialog",
+      "description": "仅打开发布表单，不发布、点赞或发送任何内容。",
+      "theme": "light",
+      "status": "captured",
+      "file": "29-community-publish-light.png",
+      "sha256": "94826703b2f70f721e7c23dbbc651d677fb8eaab8719ae3a9717f8f40a0abb77",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "东京与濑户内 · 八日",
+          "发布你的行程"
+        ],
+        "dialogs": [
+          {
+            "label": "发布行程",
+            "className": "publish-journey-dialog"
+          }
+        ],
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nfly\n我的行程\n社区\n发布行程\n正在播放你的旅程\n东京与濑户内 · 八日\nLIVE 3D JOURNEY\n东海道新干线\nTYO\nKYO\nTRIP PASSPORT\n东京与濑户内 · 八日\n5 段\n5 城\n3,619 km\nTRIP PASSPORT\n香港周末 · 海与城\n0 段\n0 城\n0 km\n新行程\n管理\nYOUR JOURNEYS\n我的行程\n5 条路线\nHKG\n→\nHND\n飞机\n飞往东京\nCX548\n香港国际机场 · T1 → 羽田机场 · T3\nTICKET\nCX548\n08:45\n14:00\n航班票务\n登机口 24 · 经济舱 32A\nHND\n→\nTYO\n汽车\n前往东京站\n专车\n羽田机场 · T3 → 东京站 · 丸之内口\nTICKET\n专车\n14:25\n15:10\n实时路况顺畅\n司机将在 T3 到达层等候\nTYO\n→\nKYO\n火车\n东海道新干线\nNOZOMI 215\n东京站 · 丸之内口 → 京都站 · 八条口\nTICKET\nNOZOMI 215\n09:10\n11:22\n计划车次 · 可接入运营方 GTFS-RT\n14号站台 · 7号车厢 12A\nKYO\n→\nUNO\n火车\n京都到宇野港\nJR 快速\n京都站 · 八条口 → 宇野港 · 1号码头\nTICKET\nJR 快速\n07:12\n10:20\n计划车次 · 可接入运营方 GTFS-RT\n冈山站换乘一次\nUNO\n→\nNAO\n轮船\n濑户内海航线\n四国汽船\n宇野港 · 1号码头 → 宫浦港 · 直岛\nTICKET\n四国汽船\n10:40\n11:00\n船票信息\n1号码头 · 建议提前 15 分钟登船\nCOMMUNITY\n发布你的行程\n\n社区会显示载具、班次和起终站，不发布座位号或证件信息。\n\n选择行程\n发布者名称\n分享说明\n只发布行程内容\n座位号、证件和精确住址不会进入社区。\n发布到社区",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "东京与濑户内 · 八日",
+          "发布你的行程"
+        ],
+        "dialogs": [
+          {
+            "label": "发布行程",
+            "className": "publish-journey-dialog"
+          }
+        ],
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nfly\n我的行程\n社区\n发布行程\n正在播放你的旅程\n东京与濑户内 · 八日\nLIVE 3D JOURNEY\n东海道新干线\nTYO\nKYO\nTRIP PASSPORT\n东京与濑户内 · 八日\n5 段\n5 城\n3,619 km\nTRIP PASSPORT\n香港周末 · 海与城\n0 段\n0 城\n0 km\n新行程\n管理\nYOUR JOURNEYS\n我的行程\n5 条路线\nHKG\n→\nHND\n飞机\n飞往东京\nCX548\n香港国际机场 · T1 → 羽田机场 · T3\nTICKET\nCX548\n08:45\n14:00\n航班票务\n登机口 24 · 经济舱 32A\nHND\n→\nTYO\n汽车\n前往东京站\n专车\n羽田机场 · T3 → 东京站 · 丸之内口\nTICKET\n专车\n14:25\n15:10\n实时路况顺畅\n司机将在 T3 到达层等候\nTYO\n→\nKYO\n火车\n东海道新干线\nNOZOMI 215\n东京站 · 丸之内口 → 京都站 · 八条口\nTICKET\nNOZOMI 215\n09:10\n11:22\n计划车次 · 可接入运营方 GTFS-RT\n14号站台 · 7号车厢 12A\nKYO\n→\nUNO\n火车\n京都到宇野港\nJR 快速\n京都站 · 八条口 → 宇野港 · 1号码头\nTICKET\nJR 快速\n07:12\n10:20\n计划车次 · 可接入运营方 GTFS-RT\n冈山站换乘一次\nUNO\n→\nNAO\n轮船\n濑户内海航线\n四国汽船\n宇野港 · 1号码头 → 宫浦港 · 直岛\nTICKET\n四国汽船\n10:40\n11:00\n船票信息\n1号码头 · 建议提前 15 分钟登船\nCOMMUNITY\n发布你的行程\n\n社区会显示载具、班次和起终站，不发布座位号或证件信息。\n\n选择行程\n发布者名称\n分享说明\n只发布行程内容\n座位号、证件和精确住址不会进入社区。\n发布到社区",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "30-community-discover",
+      "title": "社区：发现",
+      "selector": ".community-status",
+      "description": "原生社区列表及网络状态，不将示例内容称为实时分享。",
+      "theme": "light",
+      "status": "captured",
+      "file": "30-community-discover-light.png",
+      "sha256": "28f4cce36fc0753d8b460403c964e26063f61b38d71c872973580fd4ad98bc48",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "看看大家如何抵达远方"
+        ],
+        "dialogs": [],
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nfly\n我的行程\n社区\n发布行程\n公开社区 · 实时路线\n看看大家如何抵达远方\n社区已同步\nMina 分享\n飞往东京\nHKG\nHND\nCOMMUNITY\n社区分享\n4 条路线\nHKG\n→\nHND\n飞机\n飞往东京\nCX548\n香港国际机场 · T1 → 羽田机场 · T3\nMina · 第一次从云层上看到富士山。\n284\n详情\n保存\nHND\n→\nTYO\n汽车\n前往东京站\n专车\n羽田机场 · T3 → 东京站 · 丸之内口\nRiku · 把转乘、座位和沿途的小店都放进一条路线。\n196\n详情\n保存\nTYO\n→\nKYO\n火车\n东海道新干线\nNOZOMI 215\n东京站 · 丸之内口 → 京都站 · 八条口\nNoah · 适合周末复刻的海岸路线。\n143\n详情\n保存\nKYO\n→\nUNO\n火车\n京都到宇野港\nJR 快速\n京都站 · 八条口 → 宇野港 · 1号码头\nSora · 慢一点，才看见瀬户内海的颜色。\n118\n详情\n保存",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "看看大家如何抵达远方"
+        ],
+        "dialogs": [],
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nfly\n我的行程\n社区\n发布行程\n公开社区 · 实时路线\n看看大家如何抵达远方\n社区已同步\nMina 分享\n飞往东京\nHKG\nHND\nCOMMUNITY\n社区分享\n4 条路线\nHKG\n→\nHND\n飞机\n飞往东京\nCX548\n香港国际机场 · T1 → 羽田机场 · T3\nMina · 第一次从云层上看到富士山。\n284\n详情\n保存\nHND\n→\nTYO\n汽车\n前往东京站\n专车\n羽田机场 · T3 → 东京站 · 丸之内口\nRiku · 把转乘、座位和沿途的小店都放进一条路线。\n196\n详情\n保存\nTYO\n→\nKYO\n火车\n东海道新干线\nNOZOMI 215\n东京站 · 丸之内口 → 京都站 · 八条口\nNoah · 适合周末复刻的海岸路线。\n143\n详情\n保存\nKYO\n→\nUNO\n火车\n京都到宇野港\nJR 快速\n京都站 · 八条口 → 宇野港 · 1号码头\nSora · 慢一点，才看见瀬户内海的颜色。\n118\n详情\n保存",
+        "nativeChrome": "true"
+      }
+    },
+    {
+      "key": "31-community-detail",
+      "title": "社区：行程详情",
+      "selector": ".community-detail",
+      "description": "实际社区详情组件，不保存或更改其他人的行程。",
+      "theme": "light",
+      "status": "captured",
+      "file": "31-community-detail-light.png",
+      "sha256": "9c80d60d93627a92096f0042cd4c07652347578a30f53ce509b8541313f55df2",
+      "before": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "飞往东京"
+        ],
+        "dialogs": [],
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nfly\n飞机 · CX548\n\nMina 分享 · 284 人喜欢\n\n飞往东京\n\n第一次从云层上看到富士山。\n\n出发站\nHKG\n香港国际机场 · T1\n香港\n→\n4小时15分\n到达站\nHND\n羽田机场 · T3\n东京\n日期\n9月18日 · 周五\n时间\n08:45—14:00\n距离\n2,888 km\n载具\n飞机\n保存到我的行程",
+        "nativeChrome": "true"
+      },
+      "after": {
+        "title": "fly everything",
+        "url": "capacitor://localhost",
+        "viewport": {
+          "width": 402,
+          "height": 874,
+          "scale": 1
+        },
+        "headings": [
+          "飞往东京"
+        ],
+        "dialogs": [],
+        "mapReady": "true",
+        "bodyText": "正在载入实时地球…\nfly\n飞机 · CX548\n\nMina 分享 · 284 人喜欢\n\n飞往东京\n\n第一次从云层上看到富士山。\n\n出发站\nHKG\n香港国际机场 · T1\n香港\n→\n4小时15分\n到达站\nHND\n羽田机场 · T3\n东京\n日期\n9月18日 · 周五\n时间\n08:45—14:00\n距离\n2,888 km\n载具\n飞机\n保存到我的行程",
+        "nativeChrome": "true"
+      }
+    }
+  ],
+  "excluded": [
+    "Legacy flight-detail/flight-stats/delay-stats/aircraft-stats have no current navigation entry",
+    "OS permission/share/file pickers require user interaction; no private data or external writes"
+  ]
+}
