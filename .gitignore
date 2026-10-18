@@ -43,3 +43,5 @@ yarn-error.log*
 /work/
 /model-previews/
 *.tsbuildinfo
+__pycache__/
+*.pyc

@@ -55,7 +55,8 @@ for document in root.glob('*.md'):
         if not target.exists():
             errors.append(f'Broken link: {document.name} -> {link}')
 print(json.dumps(dict(source=manifest['sourceCommit'], runID=manifest['runID'],
-                     pageStates=len(keys), screenshots=len(seen),
+                     pageStates=len(keys), appearanceStates=len(seen),
+                     screenshots=sum(page['status'] == 'captured' for page in pages),
                      dimensions=sorted(dimensions), errors=errors), ensure_ascii=False, indent=2))
 if errors:
     raise SystemExit(1)

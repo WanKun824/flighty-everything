@@ -189,6 +189,7 @@ def capture(device, directory, theme):
 
 def main(theme):
     OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / 'manifest.json').unlink(missing_ok=True)
     build = json.loads((APP / 'public/build-info.json').read_text())
     if build['sourceCommit'] != run('git', 'rev-parse', 'HEAD'):
         raise RuntimeError('Simulator build source does not match checkout')
@@ -206,8 +207,11 @@ def main(theme):
         directory.mkdir(exist_ok=True)
         capture(device, directory, theme)
     finally:
-        subprocess.run(['xcrun', 'simctl', 'shutdown', device], capture_output=True, timeout=30)
-        subprocess.run(['xcrun', 'simctl', 'delete', device], capture_output=True, timeout=30)
+        for operation in ['shutdown', 'delete']:
+            try:
+                subprocess.run(['xcrun', 'simctl', operation, device], capture_output=True, timeout=30)
+            except subprocess.TimeoutExpired:
+                print('Simulator cleanup timed out: ' + operation + '; preserving capture result', flush=True)
 
 
 if __name__ == '__main__':
@@ -224,4 +228,15 @@ if __name__ == '__main__':
             if not keys.issubset({page['key'] for page in PAGES}):
                 parser.error('Unknown capture key')
             PAGES[:] = [page for page in PAGES if page['key'] in keys]
-        main(args.theme)
+        try:
+            main(args.theme)
+        except Exception as error:
+            OUT.mkdir(parents=True, exist_ok=True)
+            if not (OUT / 'manifest.json').exists():
+                report = dict(sourceCommit=run('git', 'rev-parse', 'HEAD'), runID=os.environ.get('GITHUB_RUN_ID'),
+                              repository=os.environ.get('GITHUB_REPOSITORY'), capturedAt=datetime.now(timezone.utc).isoformat(),
+                              method='Simulator startup/capture attempt failed; no image substituted', startupError=str(error),
+                              pages=[{**{k: v for k, v in spec.items() if k != 'actions'},
+                                      'theme': args.theme, 'status': 'failed', 'error': str(error)} for spec in PAGES])
+                (OUT / 'manifest.json').write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
+            raise

@@ -2,6 +2,8 @@
 
 验收日期：2026-10-18。对应方案：[UI-UX-改进计划](../UI-UX-改进计划.md)。
 
+> **时点说明：本页记录较早的本地网页阶段，152/33 测试及未生成安装包的描述保留其历史含义。** 用户随后追加了 GitHub 交付和截图要求；后续验证扩充到 155/36，并已执行原生构建及实际 iOS 采集。最新结果请看 [本轮 iOS 图册](../runtime-20261018/README.md)、[视觉备注](../runtime-20261018/VISUAL_NOTES.md) 和根目录 `PACKAGE-VERIFICATION.json`。
+
 > **本记录仅为 Windows Chrome 网页验收，不是 iOS 模拟器/真机验收。**
 > 本轮未生成 IPA / APK、未触发 GitHub Actions 或 iOS 截图工作流。`native:build` 只构建 Capacitor 使用的 Web 资源。
 
