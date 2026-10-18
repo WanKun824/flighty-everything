@@ -3,6 +3,7 @@ import "./globals.css";
 import "./journey-theme.css";
 import "./journey-refinement.css";
 import "./native-layout.css";
+import "./ios-ui.css";
 
 export const metadata: Metadata = {
   icons: { icon: "/favicon.png", apple: "/apple-touch-icon.png" },

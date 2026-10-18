@@ -5,6 +5,7 @@ import "../app/globals.css";
 import "../app/journey-theme.css";
 import "../app/journey-refinement.css";
 import "../app/native-layout.css";
+import "../app/ios-ui.css";
 import "./transportBridge";
 
 const FlightyApp = lazy(() => import("../app/FlightyApp"));
@@ -45,7 +46,7 @@ function NativeApp() {
   return (
     <Suspense fallback={<NativeBootScreen />}>
       {screen.name === "home" && (
-        <FlightyApp onOpenCommunity={() => setScreen({ name: "community" })} />
+        <FlightyApp />
       )}
       {screen.name === "community" && (
         <JourneyExperience27

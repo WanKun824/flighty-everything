@@ -71,7 +71,7 @@ test('undated completed routes are retained without inventing a year; removal up
 });
 test('active detail has no grab bar; entire section owns gesture arbitration and preserves clicks',async()=>{
   const mobile=await read('../app/MobileJourney.tsx');
-  const detail=mobile.slice(mobile.indexOf('export function MobileJourneyDetail('),mobile.indexOf('export function MobileJourneyDetailLegacy'));
+  const detail=mobile.slice(mobile.indexOf('export function MobileJourneyDetail('),mobile.indexOf('function endpointBadge'));
   assert.match(detail,/\.\.\.detailSheet.sheetProps/);
   assert.doesNotMatch(detail,/sheet-drag-handle|handleProps|surfaceProps/);
   const hook=await read('../app/useSheetDetents.ts');
@@ -104,6 +104,9 @@ test('editing removes the unused collection name and confirms whole-trip deletio
   const editor=app.slice(app.indexOf('function JourneyNamesSheet('),app.indexOf('function StatusBar('));
   assert.doesNotMatch(editor,/collectionName|sheet-drag-handle|onSaveToPassport/);
   assert.match(editor,/sheet.sheetProps/);
-  assert.match(editor,/role="alertdialog"/);
+  assert.match(editor,/await confirmDestructive/);
+  const interactions=await read('../app/nativeInteractions.ts');
+  assert.match(interactions,/ActionSheetButtonStyle.Destructive/);
+  assert.match(interactions,/setAttribute\("role", "alertdialog"\)/);
   assert.match(app,/operational\?\.actualArrivalAt \? "已到达" : "待确认到达"/);
 });

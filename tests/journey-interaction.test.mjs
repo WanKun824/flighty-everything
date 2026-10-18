@@ -14,7 +14,7 @@ test("journey selection has one source of truth and separates map focus from det
   assert.doesNotMatch(app, /setSelectedJourneyId/);
   assert.match(app, /onSelect=\{\(segment\) => selectJourneySegment\(segment\.id\)\}/);
   assert.match(app, /onOpenDetails=\{\(segment\) => openJourneyDetails\(segment\.id\)\}/);
-  assert.match(mobile, /className="mobile-segment-select"[\s\S]*?onClick=\{\(\) => selected \? onOpenDetails\(segment\) : onSelect\(segment\)\}/);
+  assert.match(mobile, /className="mobile-segment-select"[\s\S]*?onClick=\{\(\) => isSelected \? onOpenDetails\(segment\) : onSelect\(segment\)\}/);
   assert.match(mobile, /className="mobile-segment-detail-button"[\s\S]*?onClick=\{\(\) => onOpenDetails\(segment\)\}/);
   assert.match(mobile, /onClick=\{onToggleOverview\}[\s\S]*?aria-expanded=\{overviewExpanded\}/);
   assert.match(app, /onToggleOverview=\{\(\) => setOverviewExpanded\(value => !value\)\}/);

@@ -11,7 +11,7 @@
 .journey-mode-control { margin: 12px 0 18px; padding: 14px; background: var(--sheet-control); border: 1px solid var(--sheet-line); border-radius: 20px; }
 .journey-mode-control > div[role="group"], .composer-plan-mode { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 14px; background: var(--sheet-control); }
 .journey-mode-control button, .flighty-page .composer-plan-mode button { min-height: 44px; border: 0; border-radius: 11px; background: transparent; color: var(--sheet-text); font-size: 15px; font-weight: 600; }
-.journey-mode-control > div[role="group"] button[aria-pressed="true"], .flighty-page .composer-plan-mode button[aria-pressed="true"] { color: var(--blue); background: var(--sheet-material); box-shadow: 0 2px 8px #0001; }
+.journey-mode-control > div[role="group"] button[aria-pressed="true"], .flighty-page .composer-plan-mode button[aria-pressed="true"] { color: var(--blue); background: var(--sheet-material); box-shadow: 0 2px 8px var(--c-00000011); }
 .journey-mode-control p, .journey-location-control small, .real-plan-editor p { display: block; font-size: 14px; line-height: 1.5; color: var(--sheet-muted); margin: 10px 0; }
 .journey-location-control > button { display: block; width: 100%; color: var(--blue); }
 .journey-location-control > button:first-of-type { background: var(--blue); color: white; margin-block: 10px; }
@@ -21,7 +21,7 @@
 .real-plan-editor > div { display: flex; justify-content: space-between; gap: 8px; }
 .real-plan-editor > div button { flex: 1; color: var(--blue); }
 .real-plan-editor button:disabled { opacity: .4; }
-.real-user-location { width: 19px; height: 19px; border: 3px solid white; border-radius: 50%; background: #087dff; box-shadow: 0 0 0 7px #087dff28, 0 2px 6px #0005; }
+.real-user-location { width: 19px; height: 19px; border: 3px solid white; border-radius: 50%; background: var(--c-087dff); box-shadow: 0 0 0 7px var(--c-087dff28), 0 2px 6px var(--c-00000055); }
 .flighty-page[data-theme] .journey-composer.composer-v2 { top: auto; bottom: 8px; height: var(--composer-height,93%); max-height: calc(100% - var(--mobile-safe-top,0px) - 12px); transition: height .28s cubic-bezier(.2,.8,.2,1); }
 .flighty-page[data-theme] .journey-composer.composer-v2.is-dragging { transition: none; }
 .flighty-page .composer-v2 .composer-grabber { flex: 0 0 20px; display: grid; place-items: center; width: 100%; min-height: 20px; padding: 0; background: var(--chrome-material); border-radius: 0; touch-action: none; }

@@ -126,6 +126,8 @@ export default function FlightGlobe({
     onFollowInterrupted,
   });
   const [loaded, setLoaded] = useState(false);
+  const [mapError, setMapError] = useState(false);
+  const [mapRetry, setMapRetry] = useState(0);
   const [styleRevision, setStyleRevision] = useState(0);
   const [radarUpdated, setRadarUpdated] = useState<string | null>(null);
   const [roadTraffic, setRoadTraffic] = useState<Record<string, RoadTrafficRoute>>({});
@@ -238,10 +240,12 @@ export default function FlightGlobe({
         if (hostRef.current) hostRef.current.dataset.mapReady = "false";
         configureBasemap(map, basemapRef.current, basemapThemeRef.current);
         installProductLayers(map, liveDataRef.current, basemapRef.current);
+        setMapError(false);
         setLoaded(true);
         setStyleRevision((value) => value + 1);
       });
 
+      map.on("error", () => { if (!disposed && !map.isStyleLoaded()) setMapError(true); });
       map.on("idle", () => {
         if (!disposed && hostRef.current) hostRef.current.dataset.mapReady = "true";
       });
@@ -260,7 +264,7 @@ export default function FlightGlobe({
       map.on("mouseleave", "flighty-airport-dots", () => {
         map.getCanvas().style.cursor = "";
       });
-    });
+    }).catch(() => { if (!disposed) setMapError(true); });
 
     return () => {
       disposed = true;
@@ -268,7 +272,7 @@ export default function FlightGlobe({
       mapboxRef.current = null;
       instance?.remove();
     };
-  }, []);
+  }, [mapRetry]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -667,7 +671,7 @@ export default function FlightGlobe({
         />,
         riderPortal.host,
       )}
-      <div className="globe-loading">正在载入实时地球…</div>
+      {mapError ? <div className="globe-error" role="status"><span>地图暂不可用，已保存的行程仍可查看</span><button onClick={() => { setMapError(false); setLoaded(false); setMapRetry(value => value + 1); }}>重新加载地图</button></div> : <div className="globe-loading">正在载入实时地球…</div>}
       {weatherMode !== "none" && (
         <div className="weather-legend">
           <span>雨</span><i className="green" /><i className="yellow" /><i className="orange" /><i className="red" /><i className="pink" />

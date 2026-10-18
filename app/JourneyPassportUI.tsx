@@ -33,7 +33,7 @@ export function TripPassportStrip({ trips, activeTripId, onSelect, onCreate, onM
               onClick={() => onSelect(trip.id)}
             >
               <span className="passport-landmark" aria-hidden="true"><i /><b /><em /></span>
-              <small>TRIP PASSPORT</small>
+              <small>我的旅迹</small>
               <strong>{trip.name}</strong>
               <span className="passport-metrics"><b>{stats.segments} 段</b><b>{stats.cities} 城</b><b>{stats.distanceKm.toLocaleString()} km</b></span>
             </button>
@@ -63,7 +63,7 @@ export function TripManagerDialog({ trip, tripCount, onClose, onRename, onAppear
   const [newName, setNewName] = useState("");
   return (
     <section className="trip-manager-dialog" role="dialog" aria-modal="true" aria-label="行程管理">
-      <header><div><small>PASSPORT</small><h2>行程管理</h2><p>命名、配色并用地标剪影区分不同旅行。</p></div><button aria-label="关闭" onClick={onClose}><SFXmark size="sm" /></button></header>
+      <header><div><small>旅程</small><h2>行程管理</h2><p>命名、配色并用地标剪影区分不同旅行。</p></div><button aria-label="关闭" onClick={onClose}><SFXmark size="sm" /></button></header>
       <label><span>当前行程名称</span><input value={name} onChange={(event) => setName(event.target.value)} onBlur={() => onRename(name)} /></label>
       <div className="trip-style-picker"><span>护照颜色</span><div>{TRIP_COLORS.map((color) => <button key={color} aria-label={`选择 ${color}`} className={trip.color === color ? "active" : ""} style={{ background: color }} onClick={() => onAppearance(color, trip.motif)} />)}</div></div>
       <div className="trip-motif-picker"><span>地标剪影</span><div>{TRIP_MOTIFS.map((motif) => <button key={motif} className={trip.motif === motif ? "active" : ""} onClick={() => onAppearance(trip.color, motif)}><i className={`mini-landmark motif-${motif}`} />{{ torii: "鸟居", mountain: "山岳", skyline: "天际线", pagoda: "古塔" }[motif]}</button>)}</div></div>

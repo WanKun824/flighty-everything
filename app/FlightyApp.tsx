@@ -6,32 +6,32 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useRef,
   useState,
   type CSSProperties,
   type ChangeEvent,
   type ElementType,
 } from "react";
-import SFAirplaneArrival from "sf-symbols-lib/monochrome/SFAirplaneArrival";
 import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
 import SFAirplaneCircleFill from "sf-symbols-lib/monochrome/SFAirplaneCircleFill";
-import SFAirplaneDeparture from "sf-symbols-lib/monochrome/SFAirplaneDeparture";
 import SFBattery100percent from "sf-symbols-lib/monochrome/SFBattery100percent";
 import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
 import SFBookClosedFill from "sf-symbols-lib/monochrome/SFBookClosedFill";
 import SFCalendarBadgePlus from "sf-symbols-lib/monochrome/SFCalendarBadgePlus";
 import SFCellularbars from "sf-symbols-lib/monochrome/SFCellularbars";
 import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
-import SFChevronDown from "sf-symbols-lib/monochrome/SFChevronDown";
+import SheetHeader from "./SheetHeader";
+import CommunityPanel from "./CommunityPanel";
+import { SHEET_DETENTS } from "./sheetLayout";
+import { confirmDestructive, shareContent, connectNativeKeyboard, toggleFeedback } from "./nativeInteractions";
+import { resultHaptic } from "./nativeHaptics";
+import { useSheetAccessibility } from "./useSheetAccessibility";
 import SFChevronRight from "sf-symbols-lib/monochrome/SFChevronRight";
 import SFCloudFill from "sf-symbols-lib/monochrome/SFCloudFill";
 import SFDiceFill from "sf-symbols-lib/monochrome/SFDiceFill";
 import SFDocument from "sf-symbols-lib/monochrome/SFDocument";
 import SFEllipsis from "sf-symbols-lib/monochrome/SFEllipsis";
 import SFGlobe from "sf-symbols-lib/monochrome/SFGlobe";
-import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
-import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
 import SFLocationFill from "sf-symbols-lib/monochrome/SFLocationFill";
 import SFMapFill from "sf-symbols-lib/monochrome/SFMapFill";
 import SFMagnifyingglass from "sf-symbols-lib/monochrome/SFMagnifyingglass";
@@ -40,8 +40,6 @@ import SFPerson2Fill from "sf-symbols-lib/monochrome/SFPerson2Fill";
 import SFPersonBadgePlus from "sf-symbols-lib/monochrome/SFPersonBadgePlus";
 import SFPlusCircleFill from "sf-symbols-lib/monochrome/SFPlusCircleFill";
 import SFSquareAndArrowUp from "sf-symbols-lib/monochrome/SFSquareAndArrowUp";
-import SFStar from "sf-symbols-lib/monochrome/SFStar";
-import SFStarFill from "sf-symbols-lib/monochrome/SFStarFill";
 import SFTrash from "sf-symbols-lib/monochrome/SFTrash";
 import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import SFWifi from "sf-symbols-lib/monochrome/SFWifi";
@@ -64,10 +62,8 @@ import {
   airportByCode,
   calendarFlightNumbers,
   flightFromRoute,
-  formatDuration,
   makeFriend,
   searchCatalog,
-  statsForFlights,
   type Flight,
   type Region,
 } from "./flightyData";
@@ -82,6 +78,7 @@ import { journeyPhase } from "./realJourney";
 import { useSheetDetents } from "./useSheetDetents";
 import { useMobileViewport } from "./useMobileViewport";
 import { useNativeChrome } from "./useNativeChrome";
+import { useMapControlLayout } from "./useMapControlLayout";
 import { useMobileNavigation } from "./useMobileNavigation";
 import {
   useFlightyStore,
@@ -89,7 +86,7 @@ import {
   type WeatherMode,
 } from "./flightyStorage";
 
-type Tab = "flights" | "friends" | "passport";
+type Tab = "flights" | "friends" | "passport" | "community";
 type Overlay =
   | null
   | "add-flight"
@@ -97,7 +94,6 @@ type Overlay =
   | "airports"
   | "airport-detail"
   | "weather"
-  | "flight-detail"
   | "journey-detail"
   | "journey-names"
   | "friends-intro"
@@ -106,10 +102,7 @@ type Overlay =
   | "friends-ready"
   | "add-friend"
   | "profile"
-  | "journey-passport-stats"
-  | "flight-stats"
-  | "delay-stats"
-  | "aircraft-stats";
+  | "journey-passport-stats";
 type AddMode = "suggested" | "route" | "number";
 type AppToast = {
   message: string;
@@ -121,13 +114,14 @@ const tabs: Array<{ id: Tab; label: string; icon: ElementType }> = [
   { id: "flights", label: "行程", icon: SFAirplane },
   { id: "friends", label: "同行", icon: SFPerson2Fill },
   { id: "passport", label: "旅迹", icon: SFBookClosedFill },
+  { id: "community", label: "社区", icon: SFGlobe },
 ];
 
-export default function FlightyApp({ onOpenCommunity }: { onOpenCommunity?: () => void } = {}) {
-  return <MobileFlighty onOpenCommunity={onOpenCommunity} />;
+export default function FlightyApp() {
+  return <MobileFlighty />;
 }
 
-function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
+function MobileFlighty() {
   const store = useFlightyStore();
   const journeyStore = useJourneyStore();
   const appearance = useAppearance();
@@ -135,7 +129,6 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [activeTab, setActiveTab] = useState<Tab>("flights");
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [selectedAirport, setSelectedAirport] = useState<string | null>(null);
-  const [selectedFlight] = useState<Flight | null>(null);
   const [journeyFocusToken, setJourneyFocusToken] = useState(0);
   const [resetToken, setResetToken] = useState(0);
   const [followVehicle, setFollowVehicle] = useState(false);
@@ -149,21 +142,24 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [addMode, setAddMode] = useState<AddMode>("suggested");
   const [routeFrom, setRouteFrom] = useState("HKG");
   const [routeTo, setRouteTo] = useState("NRT");
-  const [routeDate, setRouteDate] = useState("2026-09-18");
+  const [routeDate, setRouteDate] = useState(() => new Date().toLocaleDateString("en-CA"));
+  const [communityPreview, setCommunityPreview] = useState<JourneySegment | null>(null);
+  const [communityPage, setCommunityPage] = useState<"feed" | "detail" | "publish">("feed");
   const [airportRegion, setAirportRegion] = useState<"All" | Region>("All");
   const [friendFilter, setFriendFilter] = useState<"Everyone" | "Today">(
     "Everyone",
   );
   const [friendCode, setFriendCode] = useState("");
-  const [draftName, setDraftName] = useState("Vincent");
+  const [draftName, setDraftName] = useState("旅行者");
   const [draftTripName, setDraftTripName] = useState("");
   const [editingTripId, setEditingTripId] = useState<string | null>(null);
   const [avatarColor, setAvatarColor] = useState("#ec6f9a");
   const [randomIndex, setRandomIndex] = useState(0);
-  const flightSheet = useSheetDetents({ detents: [.28, .57, .93], initial: .28, minimumHeight: 232 });
-  const friendsSheet = useSheetDetents({ detents: [.33, .57, .93], initial: .33, minimumHeight: 256 });
-  const passportSheet = useSheetDetents({ detents: [.3, .57, .93], initial: .93, minimumHeight: 248 });
+  const flightSheet = useSheetDetents({ detents: SHEET_DETENTS, initial: .3, minimumHeight: 256 });
+  const friendsSheet = useSheetDetents({ detents: SHEET_DETENTS, initial: .57, minimumHeight: 256 });
+  const passportSheet = useSheetDetents({ detents: SHEET_DETENTS, initial: .57, minimumHeight: 256 });
   const mainSheet = activeTab === "passport" ? passportSheet : activeTab === "friends" ? friendsSheet : flightSheet;
+  const mapControls = useMapControlLayout(mainSheet.fraction);
   const tabScrollPositions = useRef<Partial<Record<Tab, number>>>({});
   useLayoutEffect(() => {
     const scroll = document.querySelector<HTMLElement>(".primary-panel .panel-scroll, .primary-panel .passport-target-scroll, .primary-panel .friends-body");
@@ -174,8 +170,14 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   const [detailInitial, setDetailInitial] = useState(.33);
   const [composerContextTripId, setComposerContextTripId] = useState<string | null>(null);
   useMobileViewport();
+  useEffect(() => {
+    let disposed = false;
+    let cleanup: (() => void) | undefined;
+    void connectNativeKeyboard().then(remove => { if (disposed) remove(); else cleanup = remove; }).catch(() => {});
+    return () => { disposed = true; cleanup?.(); };
+  }, []);
+  useEffect(() => () => { if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current); }, []);
   const calendarRef = useRef<HTMLInputElement>(null);
-  const stats = useMemo(() => statsForFlights(state.flights), [state.flights]);
   const selectedJourneyId = journeyStore.state.selectedSegmentId || null;
   const selectedJourney =
     journeyStore.state.segments.find(
@@ -233,10 +235,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
   };
 
   const chooseTab = (tab: Tab) => {
-    if (tab === "friends" && !state.profile) {
-      setOverlay("friends-intro");
-      return;
-    }
+    toggleFeedback();
+    if (tab === "community") flightSheet.snapTo(.57);
     setOverlay(null);
     setSelectedAirport(null);
     setActiveTab(tab);
@@ -320,8 +320,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
 
   const share = async (title: string, text: string) => {
     try {
-      if (navigator.share) await navigator.share({ title, text });
-      else await navigator.clipboard.writeText(text);
+      await shareContent(title, text);
       notify("分享内容已准备好");
     } catch {
       /* The native share sheet can be dismissed without an error state. */
@@ -355,32 +354,29 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
     event.target.value = "";
   };
 
-  const legacyTitle =
-    activeTab === "flights"
-      ? "My Flights"
-      : activeTab === "friends"
-        ? "同行"
-        : "旅行护照";
-  const title = activeTab === "passport" ? "旅迹" : legacyTitle;
-  const initials = state.profile?.initials ?? "V";
+  const title =
+    activeTab === "flights" ? "行程" : activeTab === "friends" ? "同行" : activeTab === "community" ? "社区" : "旅迹";
+  const initials = state.profile?.initials ?? "旅";
   const profileColor = state.profile?.color ?? "#ec6f9a";
   const mapOverlayOpen = overlay === "airports" || overlay === "airport-detail";
   const airportsOnMap = mapOverlayOpen || overlay === "add-journey";
-  useNativeChrome(`${activeTab}:${overlay}:${followVehicle}:${Boolean(selectedJourneyId)}:${mainSheet.fraction > .5}:${appearance.resolved}`, Boolean(overlay));
-  useMobileNavigation(overlay, () => {
+  useNativeChrome(`${activeTab}:${overlay}:${communityPage}:${followVehicle}:${Boolean(selectedJourneyId)}:${mainSheet.fraction > .5}:${appearance.resolved}`, Boolean(overlay) || (activeTab === "community" && communityPage !== "feed"));
+  const backFromSheet = () => {
     if (overlay === "add-journey") composerCloseRequestRef.current?.();
     else if (overlay === "add-flight") setOverlay("add-journey");
     else if (overlay === "airport-detail") { setSelectedAirport(null); setOverlay("airports"); }
     else if (overlay === "profile-avatar") setOverlay("profile-name");
     else if (overlay === "profile-name") setOverlay("friends-intro");
     else setOverlay(null);
-  });
+  };
+  useMobileNavigation(overlay, backFromSheet);
+  useSheetAccessibility(overlay, backFromSheet);
 
   return (
-    <main className={`flighty-page ${followVehicle && selectedJourneyId ? "is-vehicle-following" : ""} ${!overlay && mainSheet.fraction > 0.5 ? "map-controls-compact" : ""} ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
+    <main style={{ "--active-sheet-fraction": mainSheet.fraction, "--map-controls-top": `${mapControls.top}px` } as CSSProperties} className={`flighty-page ${mapControls.hidden || Boolean(overlay) ? "map-controls-hidden" : ""} ${mainSheet.fraction > .85 ? "sheet-expanded" : ""}  ${followVehicle && selectedJourneyId ? "is-vehicle-following" : ""} ${!overlay && mainSheet.fraction > 0.5 ? "map-controls-compact" : ""} ${overlay === "add-journey" || overlay === "add-flight" ? "search-open" : ""} ${overlay ? `overlay-${overlay}` : ""}`} data-theme={appearance.resolved}>
       <section
         className="flighty-device"
-        aria-label="fly everything flight tracker"
+        aria-label="fly everything 旅行地图"
       >
         <FlightGlobe
           userLocation={selectedJourney?.travelPlan?.mode === "real" ? location.fix : null}
@@ -390,8 +386,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           selectedAirport={selectedAirport}
           weatherMode={state.weatherMode}
           resetToken={resetToken}
-          journeySegments={airportsOnMap ? [] : journeyStore.state.segments}
-          selectedJourneySegmentId={selectedJourneyId}
+          journeySegments={airportsOnMap ? [] : activeTab === "community" ? (communityPreview ? [communityPreview] : []) : journeyStore.state.segments}
+          selectedJourneySegmentId={activeTab === "community" ? communityPreview?.id ?? null : selectedJourneyId}
           journeySelectionToken={journeyFocusToken}
           onJourneySegmentSelect={(id) => {
             selectJourneySegment(id);
@@ -423,9 +419,6 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           ![
             "add-flight",
             "add-journey",
-            "flight-stats",
-            "delay-stats",
-            "aircraft-stats",
             "friends-intro",
             "profile-name",
             "profile-avatar",
@@ -470,6 +463,8 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         <section
           className={`flight-panel primary-panel ${activeTab === "flights" ? "journey-panel" : ""} ${activeTab === "passport" ? "passport-panel" : ""} ${mainSheet.dragging ? "is-dragging" : ""}`}
           {...mainSheet.sheetProps}
+          hidden={Boolean(overlay)}
+          inert={Boolean(overlay)}
           aria-label={`${title}，上下拖动调整高度`}
           data-tab={activeTab}
           data-minimum={mainSheet.atMinimum}
@@ -479,10 +474,11 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
           }}
           style={{ "--sheet-height": `${mainSheet.fraction * 100}%` } as CSSProperties}
         >
+          <button className="ios-sheet-grabber" aria-label="展开或收起面板" onClick={mainSheet.toggleExpanded}><span /></button>
           <header className="panel-titlebar">
             <div className="panel-title-copy">
               <h1>{title}</h1>
-
+              {activeTab === "flights" && journeyStore.state.segments.length > 0 && <span className="journey-mode-badge">{journeyStore.state.segments.some(segment => segment.travelPlan?.mode !== "real") ? "模拟预览" : "真实行程"}</span>}
             </div>
             <div>
               {activeTab === "friends" && (
@@ -494,24 +490,11 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                   <SFEllipsis size="md" />
                 </button>
               )}
-              {activeTab === "friends" && <a
-                className="round-button community-button"
-                href="/community"
-                aria-label="打开旅行社区"
-                title="旅行社区"
-                onClick={(event) => {
-                  if (!onOpenCommunity) return;
-                  event.preventDefault();
-                  onOpenCommunity();
-                }}
-              >
-                <SFGlobe size="md" />
-              </a>}
               <button
                 className="round-button"
-                aria-label={`Share ${title}`}
+                aria-label={`分享${title}`}
                 onClick={() =>
-                  void share(title, `My ${title} in fly everything`)
+                  void share(title, `我在 fly everything 的${title}`)
                 }
               >
                 <SFSquareAndArrowUp size="md" />
@@ -521,7 +504,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
                 style={{ background: profileColor }}
                 aria-label="打开个人资料"
                 onClick={() => {
-                  setDraftName(state.profile?.name ?? "Vincent");
+                  setDraftName(state.profile?.name ?? "旅行者");
                   setAvatarColor(profileColor);
                   setOverlay("profile");
                 }}
@@ -557,10 +540,11 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               filter={friendFilter}
               setFilter={setFriendFilter}
               friends={state.friends}
-              onAdd={() => setOverlay("add-friend")}
+              onAdd={() => setOverlay(state.profile ? "add-friend" : "friends-intro")}
               onRemove={store.removeFriend}
             />
           )}
+          {activeTab === "community" && <CommunityPanel onPageChange={setCommunityPage} segments={journeyStore.state.segments} onSave={journeyStore.addSegment} onPreview={segment => { setCommunityPreview(segment); setJourneyFocusToken(value => value + 1); }} notify={notify} />}
           {activeTab === "passport" && (
             <JourneyPassportTarget
               compact={mainSheet.atMinimum}
@@ -589,7 +573,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
         )}
 
         {overlay === "add-flight" && (
-          <AddFlightSheet
+          <FlightSearchStep
             query={query}
             setQuery={setQuery}
             mode={addMode}
@@ -621,9 +605,10 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             }}
           />
         )}
-        {overlay === "add-journey" && (
+        {(overlay === "add-journey" || overlay === "add-flight") && (
           <JourneyComposer
             variant="mobile"
+            suspended={overlay === "add-flight"}
             tripName={journeyStore.state.tripName}
             initialOrigin={composerContextTripId ? journeyStore.state.segments.at(-1)?.destination : undefined}
             trips={journeyStore.state.trips}
@@ -644,6 +629,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               setOverviewExpanded(true);
               flightSheet.snapTo(.57);
               setJourneyFocusToken(value => value + 1);
+              void resultHaptic();
               notify("行程已保存");
             }}
             onFlightTools={() => setOverlay("add-flight")}
@@ -656,10 +642,14 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             tripName={draftTripName}
             setTripName={setDraftTripName}
             onDelete={journeyStore.state.trips.length > 1 && editingTripId ? () => {
+              const index = journeyStore.state.trips.findIndex(trip => trip.id === editingTripId);
+              const snapshot = journeyStore.state.trips[index];
+              const wasActive = journeyStore.state.activeTripId === editingTripId;
               journeyStore.deleteTrip(editingTripId);
+              void resultHaptic(false);
               setOverlay(null);
               setFollowVehicle(false);
-              notify("已删除旅程，旅记已同步更新");
+              notify("已删除旅程，旅迹已同步更新", "撤销", () => { if (snapshot) journeyStore.restoreTrip(snapshot, index, wasActive); });
             } : undefined}
             onClose={() => setOverlay(null)}
             onSave={() => {
@@ -690,7 +680,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             onClose={() => setOverlay(null)}
             onShare={() =>
               void share(
-                "Airports",
+                "机场",
                 "fly everything 机场资料与收藏",
               )
             }
@@ -719,22 +709,12 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             value={state.weatherMode}
             basemap={state.basemap}
             onChange={(value) => {
+              toggleFeedback();
               store.setWeatherMode(value);
               setResetToken((token) => token + 1);
             }}
-            onBasemapChange={store.setBasemap}
+            onBasemapChange={value => { toggleFeedback(); store.setBasemap(value); }}
             onClose={() => setOverlay(null)}
-          />
-        )}
-        {overlay === "flight-detail" && selectedFlight && (
-          <FlightDetailSheet
-            flight={selectedFlight}
-            onClose={() => setOverlay(null)}
-            onDelete={() => {
-              store.removeFlight(selectedFlight.id);
-              setOverlay(null);
-              notify(`${selectedFlight.number} removed`);
-            }}
           />
         )}
         {overlay === "journey-detail" && selectedJourney && (
@@ -748,13 +728,16 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               const wasComplete = selectedJourney.status === "complete";
               const tripId = journeyStore.state.activeTripId;
               journeyStore.toggleComplete(selectedJourney.id);
+              void resultHaptic();
               notify(
                 wasComplete ? "已恢复为待出发" : "已标记为完成",
                 "撤销",
                 () => journeyStore.restoreSegment(tripId, selectedJourney),
               );
             }}
-            onDelete={() => {
+            onDelete={async () => {
+              if (!await confirmDestructive("删除这段行程？", `${selectedJourney.title} 将从当前旅程移除，可在提示中撤销。`, "删除路段")) return;
+              void resultHaptic(false);
               const snapshot = [...journeyStore.state.segments];
               const tripId = journeyStore.state.activeTripId;
               const deletedId = selectedJourney.id;
@@ -807,7 +790,7 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
               setFriendCode("");
               setActiveTab("friends");
               setOverlay(null);
-              notify(`${friend.name} 已开始与你共享行程`);
+              notify(`${friend.name} 已添加到本地同行示例`);
             }}
           />
         )}
@@ -822,37 +805,30 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
             onSave={() => {
               store.saveProfile(profileFrom(draftName, avatarColor));
               setOverlay(null);
-              notify("Profile updated");
+              notify("资料已更新");
             }}
-            onReset={() => {
+            onReset={async () => {
+              if (!await confirmDestructive("清除本地数据？", "将移除本机的行程、同行、资料、收藏与规划草稿。此操作不可撤销。", "清除本地数据")) return;
               store.reset();
+              journeyStore.clear();
+              for (const storage of [window.localStorage, window.sessionStorage]) {
+                storage.removeItem("flighty-everything:journey-composer-draft:v1");
+              }
+              void resultHaptic(false);
               setOverlay(null);
               setActiveTab("flights");
-              notify("Local demo data cleared");
+              notify("本地数据已清除");
             }}
             appearance={appearance.mode}
-            onAppearanceChange={appearance.setMode}
+            onAppearanceChange={value => { toggleFeedback(); appearance.setMode(value); }}
           />
         )}
 
-        {overlay === "flight-stats" && (
-          <FlightStatsSheet stats={stats} onClose={() => setOverlay(null)} />
-        )}
         {overlay === "journey-passport-stats" && (
           <JourneyPassportStatsTarget
             trips={journeyStore.state.trips}
             onClose={() => setOverlay(null)}
             onShare={() => void share("fly everything 旅迹统计", "我的多载具旅行统计")}
-          />
-        )}
-        {overlay === "delay-stats" && (
-          <DelayStatsSheet stats={stats} onClose={() => setOverlay(null)} />
-        )}
-        {overlay === "aircraft-stats" && (
-          <AircraftStatsSheet
-            flights={state.flights}
-            stats={stats}
-            onClose={() => setOverlay(null)}
           />
         )}
         {toast && (
@@ -880,16 +856,14 @@ function MobileFlighty({ onOpenCommunity }: { onOpenCommunity?: () => void }) {
 function JourneyNamesSheet({ tripName, setTripName, onClose, onSave, onDelete }: {
   tripName: string; setTripName: (value: string) => void; onClose: () => void; onSave: () => void; onDelete?: () => void;
 }) {
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const sheet = useSheetDetents({ detents: [.33, .57, .93], initial: .57, minimumHeight: 256 });
+  const sheet = useSheetDetents({ detents: SHEET_DETENTS, initial: .57, minimumHeight: 256 });
   return (
     <section {...sheet.sheetProps} className={`map-sheet journey-names-sheet ${sheet.dragging ? "is-dragging" : ""}`} style={{ "--sheet-height": `${sheet.fraction * 100}%` } as CSSProperties} role="dialog" aria-modal="true" aria-label="编辑旅程">
-      <header><h2>编辑旅程</h2><button aria-label="关闭编辑旅程" onClick={onClose}><SFXmark size="sm" /></button></header>
+      <SheetHeader title="编辑旅程" back onClose={onClose} />
       <div className="map-sheet-scroll">
         <label><span>旅程名称</span><input value={tripName} maxLength={48} onChange={event => setTripName(event.target.value)} /></label>
         <button className="journey-name-save" disabled={!tripName.trim()} onClick={onSave}>保存名称</button>
-        {onDelete && !confirmDelete && <button className="journey-delete-trip" onClick={() => setConfirmDelete(true)}>删除这趟旅程</button>}
-        {confirmDelete && <div className="journey-delete-confirm" role="alertdialog" aria-label="确认删除旅程"><strong>删除“{tripName}”？</strong><p>其中的全部路段会移除，旅记统计也会同步更新。</p><button onClick={() => setConfirmDelete(false)}>取消</button><button className="journey-delete-trip" onClick={onDelete}>确认删除旅程</button></div>}
+        {onDelete && <button className="journey-delete-trip" onClick={async () => { if (await confirmDestructive(`删除“${tripName}”？`, "这趟旅程的全部路段会移除，旅迹统计也会同步更新。")) onDelete(); }}>删除这趟旅程</button>}
       </div>
     </section>
   );
@@ -959,11 +933,13 @@ function BottomBar({
 }) {
   return (
     <footer className="flight-tabbar">
-      <nav aria-label="Primary navigation">
+      <nav aria-label="主要导航">
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             className={activeTab === id ? "active" : ""}
+            aria-current={activeTab === id ? "page" : undefined}
+            aria-label={id === "community" ? "打开旅行社区" : label}
             onClick={() => chooseTab(id)}
           >
             <Icon size="lg" />
@@ -975,69 +951,6 @@ function BottomBar({
         <SFMagnifyingglass size="xl" />
       </button>
     </footer>
-  );
-}
-
-export function FlightsPanel({
-  flights,
-  onOpen,
-  onAdd,
-}: {
-  flights: Flight[];
-  onOpen: (flight: Flight) => void;
-  onAdd: () => void;
-}) {
-  if (!flights.length)
-    return (
-      <button className="empty-state empty-button" onClick={onAdd}>
-        <strong>Let’s Fly Somewhere</strong>
-        <span>Tap Search to add your next flight</span>
-      </button>
-    );
-  return (
-    <div className="panel-scroll flight-list">
-      <div className="timeline-label">UPCOMING</div>
-      {flights.map((flight) => (
-        <button
-          className="flight-card"
-          key={flight.id}
-          onClick={() => onOpen(flight)}
-        >
-          <span
-            className={`status-dot ${flight.status === "Delayed" ? "delayed" : ""}`}
-          />
-          <div className="flight-card-head">
-            <span>
-              <b>{flight.number}</b>
-              <small>{flight.airline}</small>
-            </span>
-            <em>{flight.status}</em>
-          </div>
-          <div className="route-line">
-            <strong>{flight.from}</strong>
-            <i />
-            <SFAirplaneCircleFill size="md" />
-            <i />
-            <strong>{flight.to}</strong>
-          </div>
-          <div className="flight-times">
-            <span>
-              {flight.departure}
-              <small>{airportByCode(flight.from)?.city}</small>
-            </span>
-            <b>{formatDuration(flight.durationMinutes)}</b>
-            <span>
-              {flight.arrival}
-              <small>{airportByCode(flight.to)?.city}</small>
-            </span>
-          </div>
-          <footer>
-            <span>{flight.date}</span>
-            <SFChevronRight size="xs" />
-          </footer>
-        </button>
-      ))}
-    </div>
   );
 }
 
@@ -1079,14 +992,16 @@ function FriendsPanel({
       </div>
       {!visible.length ? (
         <div className="empty-state">
+          <SFPerson2Fill size="xl" aria-hidden="true" />
           <strong>
             {filter === "Today" ? "今天没有行程" : "添加同行人的行程"}
           </strong>
           <span>
             {filter === "Today"
               ? "接下来 24 小时很安静"
-              : "输入邀请码后，就能自动看到对方共享的行程"}
+              : "同行目前为本地演示，邀请码不会连接真实共享服务"}
           </span>
+          <button className="blue-button" onClick={onAdd}>添加同行人</button>
         </div>
       ) : (
         <div className="panel-scroll friend-list">
@@ -1129,126 +1044,7 @@ function FriendsPanel({
   );
 }
 
-export function PassportPanel({
-  flights,
-  stats,
-  onStats,
-}: {
-  flights: Flight[];
-  stats: ReturnType<typeof statsForFlights>;
-  onStats: (overlay: Overlay) => void;
-}) {
-  const [sort, setSort] = useState<"Date" | "Airline">("Date");
-  const rows = [...flights].sort((a, b) =>
-    sort === "Airline"
-      ? a.airline.localeCompare(b.airline)
-      : b.date.localeCompare(a.date),
-  );
-  return (
-    <div className="passport-scroll">
-      <span className="time-pill">All-Time</span>
-      <section className="passport-card">
-        <div>
-          <small>ALL-TIME FLIGHT PASSPORT</small>
-          <b>{stats.flights}</b>
-          <span>FLIGHTS</span>
-        </div>
-        <div>
-          <b>{stats.distanceKm.toLocaleString()} km</b>
-          <span>DISTANCE</span>
-        </div>
-        <div>
-          <b>{formatDuration(stats.totalMinutes)}</b>
-          <span>FLIGHT TIME</span>
-        </div>
-        <div>
-          <b>{stats.airports}</b>
-          <span>AIRPORTS</span>
-        </div>
-        <button onClick={() => onStats("flight-stats")}>
-          All Flight Stats <SFChevronRight size="sm" />
-        </button>
-      </section>
-      <section className="delay-card">
-        <SFAirplaneArrival size="xl" />
-        <div>
-          <b>{stats.delayMinutes}</b>
-          <strong>minutes lost from delays</strong>
-          <span>Delayed flights averaged {stats.averageDelay}m late</span>
-        </div>
-        <button onClick={() => onStats("delay-stats")}>
-          All Delay Stats <SFChevronRight size="sm" />
-        </button>
-      </section>
-      <section className="aircraft-card">
-        <SFAirplaneCircleFill size={94} />
-        <div>
-          <strong>Most flown aircraft</strong>
-          <b>{stats.mostFlownAircraft}</b>
-          <span>
-            {flights.length
-              ? `${stats.flights} tracked flight${stats.flights === 1 ? "" : "s"}`
-              : "No flights with a real plane yet."}
-          </span>
-        </div>
-        <button onClick={() => onStats("aircraft-stats")}>
-          All Aircraft Stats <SFChevronRight size="sm" />
-        </button>
-      </section>
-      <button className="pro-card" onClick={() => onStats("flight-stats")}>
-        <span>
-          完整旅行地图与统计
-        </span>
-        <small>查看路线、里程与旅行时间。</small>
-        <SFChevronRight size="sm" />
-      </button>
-      <section className="past-flights">
-        <header>
-          <h2>Past Flights</h2>
-          <span>
-            <button className="active">
-              <SFLine3Horizontal size="sm" />
-            </button>
-            <button>
-              <SFListBullet size="sm" />
-            </button>
-          </span>
-        </header>
-        <div className="sort-row">
-          <button
-            className={sort === "Date" ? "active" : ""}
-            onClick={() => setSort("Date")}
-          >
-            Date ↓
-          </button>
-          <button>From</button>
-          <button>To</button>
-          <button
-            className={sort === "Airline" ? "active" : ""}
-            onClick={() => setSort("Airline")}
-          >
-            Airline ↑
-          </button>
-        </div>
-        {rows.length ? (
-          rows.map((flight) => (
-            <div className="past-flight-row" key={flight.id}>
-              <span>{flight.date}</span>
-              <b>{flight.from}</b>
-              <i>→</i>
-              <b>{flight.to}</b>
-              <small>{flight.airline}</small>
-            </div>
-          ))
-        ) : (
-          <p>No past flights yet. Added flights will appear here.</p>
-        )}
-      </section>
-    </div>
-  );
-}
-
-function AddFlightSheet(props: {
+function FlightSearchStep(props: {
   query: string;
   setQuery: (value: string) => void;
   mode: AddMode;
@@ -1296,12 +1092,13 @@ function AddFlightSheet(props: {
       className="full-sheet"
       role="dialog"
       aria-modal="true"
-      aria-label="Add Flight"
+      aria-label="航班工具"
     >
       <SheetHeader
-        title="Add Flight"
-        subtitle="Enter airline, airport, or flight"
+        title="航班工具"
+        subtitle="输入航司、机场或航班号"
         onClose={props.onClose}
+        back
       />
       <label className="sheet-search">
         <SFMagnifyingglass size="sm" />
@@ -1312,13 +1109,13 @@ function AddFlightSheet(props: {
             setVerifiedFlight(null);
             setLookupError(null);
           }}
-          placeholder="Cathay Pacific, HKG, or CX123"
+          placeholder="国泰航空、HKG 或 CX123"
         />
       </label>
       {props.mode === "route" ? (
         <div className="route-builder">
           <label>
-            <span>FROM</span>
+            <span>出发地</span>
             <select
               value={props.routeFrom}
               onChange={(event) => props.setRouteFrom(event.target.value)}
@@ -1332,7 +1129,7 @@ function AddFlightSheet(props: {
           </label>
           <SFArrowLeftArrowRight size="md" />
           <label>
-            <span>TO</span>
+            <span>目的地</span>
             <select
               value={props.routeTo}
               onChange={(event) => props.setRouteTo(event.target.value)}
@@ -1345,7 +1142,7 @@ function AddFlightSheet(props: {
             </select>
           </label>
           <label className="route-date">
-            <span>DATE</span>
+            <span>日期</span>
             <input
               type="date"
               value={props.routeDate}
@@ -1365,13 +1162,13 @@ function AddFlightSheet(props: {
               )
             }
           >
-            Add Route
+            添加航线
           </button>
           <button
             className="text-button"
             onClick={() => props.setMode("suggested")}
           >
-            Back to suggestions
+            返回推荐
           </button>
         </div>
       ) : (
@@ -1382,8 +1179,8 @@ function AddFlightSheet(props: {
           >
             <SFArrowLeftArrowRight size="md" />
             <span>
-              <strong>Find by Route</strong>
-              <small>Choose departure and arrival airports</small>
+              <strong>按航线查找</strong>
+              <small>选择出发与到达机场</small>
             </span>
             <SFChevronRight size="sm" />
           </button>
@@ -1393,8 +1190,8 @@ function AddFlightSheet(props: {
           >
             <SFDocument size="md" />
             <span>
-              <strong>Find by Flight Number</strong>
-              <small>Search any airline flight code</small>
+              <strong>按航班号查找</strong>
+              <small>搜索任意航司的航班号</small>
             </span>
             <SFChevronRight size="sm" />
           </button>
@@ -1411,7 +1208,7 @@ function AddFlightSheet(props: {
           )}
           {props.query && (
             <>
-              <h3>RESULTS</h3>
+              <h3>搜索结果</h3>
               {results.length ? (
                 results.map((result) => (
                   <button
@@ -1472,7 +1269,7 @@ function AddFlightSheet(props: {
           )}
           {!props.query && (
             <>
-              <h3>SUGGESTED</h3>
+              <h3>推荐</h3>
               {AIRLINES.slice(0, 2).map((airline) => (
                 <button
                   className="add-row"
@@ -1514,19 +1311,19 @@ function AddFlightSheet(props: {
                   </span>
                 </button>
               ))}
-              <h3>MORE</h3>
+              <h3>更多</h3>
               <button className="add-row" onClick={props.onCalendar}>
                 <SFCalendarBadgePlus size="md" />
                 <span>
-                  <strong>Sync from Calendar</strong>
-                  <small>Import flights securely from an .ics file</small>
+                  <strong>从日历导入</strong>
+                  <small>从 .ics 文件安全导入航班</small>
                 </span>
               </button>
               <button className="add-row" onClick={props.onRandom}>
                 <SFDiceFill size="md" />
                 <span>
-                  <strong>Random Flight</strong>
-                  <small>Try fly everything for free</small>
+                  <strong>随机航班</strong>
+                  <small>生成一段示例行程，体验完整功能</small>
                 </span>
               </button>
             </>
@@ -1550,9 +1347,12 @@ function WeatherSheet({
   onBasemapChange: (mode: BasemapMode) => void;
   onClose: () => void;
 }) {
+  const sheet = useSheetDetents({ detents: SHEET_DETENTS, initial: .57, minimumHeight: 256 });
   return (
     <section
-      className="map-sheet weather-sheet"
+      className={`map-sheet weather-sheet ${sheet.dragging ? "is-dragging" : ""}`}
+      {...sheet.sheetProps}
+      style={{ "--sheet-height": `${sheet.fraction * 100}%` } as CSSProperties}
       role="dialog"
       aria-label="天气图层"
     >
@@ -1625,73 +1425,6 @@ function WeatherSheet({
   );
 }
 
-function FlightDetailSheet({
-  flight,
-  onClose,
-  onDelete,
-}: {
-  flight: Flight;
-  onClose: () => void;
-  onDelete: () => void;
-}) {
-  return (
-    <section
-      className="map-sheet flight-detail-sheet"
-      role="dialog"
-      aria-label={`${flight.number} details`}
-    >
-      <SheetHeader
-        title={flight.number}
-        subtitle={`${flight.airline} · ${flight.date}`}
-        onClose={onClose}
-      />
-      <span
-        className={`flight-status-pill ${flight.status === "Delayed" ? "delayed" : ""}`}
-      >
-        {flight.status}
-      </span>
-      <div className="detail-route">
-        <span>
-          <b>{flight.departure}</b>
-          <strong>{flight.from}</strong>
-          <small>{airportByCode(flight.from)?.name}</small>
-        </span>
-        <i />
-        <SFAirplaneCircleFill size="xl" />
-        <i />
-        <span>
-          <b>{flight.arrival}</b>
-          <strong>{flight.to}</strong>
-          <small>{airportByCode(flight.to)?.name}</small>
-        </span>
-      </div>
-      <div className="detail-grid">
-        <span>
-          <small>DURATION</small>
-          <b>{formatDuration(flight.durationMinutes)}</b>
-        </span>
-        <span>
-          <small>DISTANCE</small>
-          <b>{flight.distanceKm.toLocaleString()} km</b>
-        </span>
-        <span>
-          <small>AIRCRAFT</small>
-          <b>{flight.aircraftFamily}</b>
-        </span>
-        <span>
-          <small>SEAT</small>
-          <b>
-            {flight.seatClass} · {flight.seat}
-          </b>
-        </span>
-      </div>
-      <button className="delete-flight" onClick={onDelete}>
-        <SFTrash size="sm" /> Remove Flight
-      </button>
-    </section>
-  );
-}
-
 function OnboardingSheet({
   step,
   name,
@@ -1715,9 +1448,9 @@ function OnboardingSheet({
       className="full-sheet onboarding-sheet"
       role="dialog"
       aria-modal="true"
-      aria-label="Flighty Friends setup"
+      aria-label="同行设置"
     >
-      <button className="sheet-close" aria-label="Close" onClick={onClose}>
+      <button className="sheet-close" aria-label="关闭" onClick={onClose}>
         <SFXmark size="lg" />
       </button>
       <FriendGlobeArt
@@ -1732,41 +1465,37 @@ function OnboardingSheet({
       {intro ? (
         <>
           <div className="onboarding-copy">
-            <h2>Flighty Friends</h2>
+            <h2>同行</h2>
             <p>
-              Add friends and family to automatically share upcoming flights,
-              see each other fly on the map, and get live updates when flights
-              take off, land, or change.
+              添加家人和朋友后，会自动共享彼此的行程，在地图上看到对方的
+              载具，并在起飞、到达或变更时收到实时更新。
             </p>
             <p>
-              It’s free, and saves you from ever hearing “Send me your flight
-              info!” again.
+              完全免费，再也不用手动把行程信息发给关心你的人。
             </p>
             <small>
-              Invites expire after 48 hours and can only be used a limited
-              number of times. You can remove friends at any time.
+              邀请码 48 小时后过期，且有使用次数限制。你可以随时移除同行人。
             </small>
           </div>
           <button
             className="blue-button onboarding-continue"
             onClick={onContinue}
           >
-            Continue
+            继续
           </button>
         </>
       ) : step === "profile-name" ? (
         <>
           <div className="onboarding-copy">
-            <h2>Set Up Your Profile</h2>
+            <h2>设置个人资料</h2>
             <p>
-              Add your name and photo to continue. Your friends will see this
-              when you share flights.
+              填写你的名字和头像后继续。共享行程时，同行伙伴会看到它们。
             </p>
             <input
               className="profile-name-input"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="Full Name"
+              placeholder="姓名"
             />
           </div>
           <button
@@ -1774,7 +1503,7 @@ function OnboardingSheet({
             disabled={!name.trim()}
             onClick={onContinue}
           >
-            Continue
+            继续
           </button>
         </>
       ) : (
@@ -1783,13 +1512,13 @@ function OnboardingSheet({
             <span className="avatar-preview" style={{ background: color }}>
               {initialsOf(name)}
             </span>
-            <strong>{name || "You"}</strong>
+            <strong>{name || "我"}</strong>
             <div>
               {["#ec6f9a", "#58a6ff", "#8e7dff", "#38cfa0", "#ff9f4a"].map(
                 (item) => (
                   <button
                     key={item}
-                    aria-label={`Use ${item} avatar color`}
+                    aria-label={`使用 ${item} 头像颜色`}
                     className={color === item ? "active" : ""}
                     style={{ background: item }}
                     onClick={() => setColor(item)}
@@ -1798,14 +1527,14 @@ function OnboardingSheet({
               )}
             </div>
             <small>
-              <SFPencil size="xs" /> Customize Avatar
+              <SFPencil size="xs" /> 自定义头像
             </small>
           </div>
           <button
             className="blue-button onboarding-continue"
             onClick={onContinue}
           >
-            Save Avatar
+            保存头像
           </button>
         </>
       )}
@@ -1826,17 +1555,17 @@ function FriendGlobeArt({
     <div className={`friend-globe-art ${compact ? "compact" : ""}`}>
       <span className="orbit" />
       <span className="friend-bubble mom">
-        MOM<i>✈</i>
+        妈妈<i>✈</i>
       </span>
       <span className="friend-bubble jenny">
-        JENNY<i>✈</i>
+        珍妮<i>✈</i>
       </span>
       <span className="friend-bubble you" style={{ background: color }}>
-        {name ? initialsOf(name) : "MIKE"}
+        {name ? initialsOf(name) : "我"}
         <i>✈</i>
       </span>
-      <em>DELAYED</em>
-      <b>LANDED</b>
+      <em>延误</em>
+      <b>已到达</b>
     </div>
   );
 }
@@ -1861,13 +1590,13 @@ function AddFriendSheet({
     >
       <SheetHeader
         title="添加同行人"
-        subtitle="输入邀请码，即可自动共享彼此的行程。"
+        subtitle="本地同行演示：输入示例邀请码，不会连接真实用户。"
         onClose={onClose}
       />
       <div className="add-friend-hero">
         <SFPersonBadgePlus size={74} />
-        <h3>同行信息，自动更新</h3>
-        <p>对方始终掌控自己的信息，也可以随时停止共享。</p>
+        <h3>和在意的人，一起出发</h3>
+        <p>当前为本地体验，真实共享尚未接入，不会发送或上传行程。</p>
       </div>
       <input
         className="friend-code-input"
@@ -1914,14 +1643,14 @@ function ProfileSheet({
       className="full-sheet compact-sheet profile-sheet"
       role="dialog"
       aria-modal="true"
-      aria-label="Profile"
+      aria-label="个人资料"
     >
       <SheetHeader
-        title="Your Profile"
+        title="个人资料"
         subtitle={
           profile
-            ? "Visible to friends you share flights with."
-            : "Create a profile to use Flighty Friends."
+            ? "资料保存在本机，不会上传或自动共享。"
+            : "创建本地资料，体验同行功能。"
         }
         onClose={onClose}
       />
@@ -1932,13 +1661,14 @@ function ProfileSheet({
         className="friend-code-input"
         value={name}
         onChange={(event) => setName(event.target.value)}
-        placeholder="Full Name"
+        placeholder="姓名"
       />
       <div className="avatar-colors">
         {["#ec6f9a", "#58a6ff", "#8e7dff", "#38cfa0", "#ff9f4a"].map((item) => (
           <button
             key={item}
             className={color === item ? "active" : ""}
+            aria-label={`使用 ${item} 头像颜色`}
             style={{ background: item }}
             onClick={() => setColor(item)}
           />
@@ -1964,239 +1694,17 @@ function ProfileSheet({
         </div>
       </section>
       <button className="blue-button" disabled={!name.trim()} onClick={onSave}>
-        Save Profile
+        保存资料
       </button>
       <button className="reset-demo" onClick={onReset}>
-        <SFTrash size="sm" /> Clear local demo data
+        <SFTrash size="sm" /> 清除本地数据
       </button>
     </section>
-  );
-}
-
-function FlightStatsSheet({
-  stats,
-  onClose,
-}: {
-  stats: ReturnType<typeof statsForFlights>;
-  onClose: () => void;
-}) {
-  return (
-    <section className="stats-sheet" role="dialog" aria-label="Flight Stats">
-      <StatsHeader title="Flight Stats" onClose={onClose} />
-      <span className="time-pill">ALL-TIME</span>
-      <div className="blueprint-hero">
-        <SFAirplaneCircleFill size={90} />
-        <b>{stats.flights}</b>
-        <span>flights tracked</span>
-      </div>
-      <div className="stats-content">
-        <h2>All-Time Flight Passport</h2>
-        <div className="stats-grid">
-          <span>
-            <b>{stats.distanceKm.toLocaleString()}</b>
-            <small>kilometres</small>
-          </span>
-          <span>
-            <b>{formatDuration(stats.totalMinutes)}</b>
-            <small>in the air</small>
-          </span>
-          <span>
-            <b>{stats.airports}</b>
-            <small>airports</small>
-          </span>
-          <span>
-            <b>{stats.airlines}</b>
-            <small>airlines</small>
-          </span>
-        </div>
-        <h3>Travel Footprint</h3>
-        <p>
-          Your passport updates instantly whenever a flight is added, imported,
-          or removed.
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function DelayStatsSheet({
-  stats,
-  onClose,
-}: {
-  stats: ReturnType<typeof statsForFlights>;
-  onClose: () => void;
-}) {
-  return (
-    <section
-      className="stats-sheet delay-stats-sheet"
-      role="dialog"
-      aria-label="Delay Report"
-    >
-      <StatsHeader title="Delay Report" onClose={onClose} />
-      <span className="time-pill">ALL-TIME</span>
-      <div className="delay-report">
-        <header>
-          <SFAirplaneArrival size="lg" />
-          <b>fly everything</b>
-          <strong>All-Time Delay Report</strong>
-        </header>
-        <b className="delay-percent">{stats.delayPercent}%</b>
-        <h2>My flights delayed</h2>
-        <p>
-          {stats.delayedFlights} of my {stats.flights} flights arrived later
-          than scheduled
-        </p>
-        <div className="flip-minutes">
-          {String(stats.delayMinutes)
-            .padStart(5, "0MIN-")
-            .slice(-5)
-            .split("")
-            .map((character, index) => (
-              <span key={`${character}-${index}`}>{character}</span>
-            ))}
-        </div>
-        <h2>Lost to Delays</h2>
-        <p>Delayed flights averaged {stats.averageDelay}m late</p>
-        <h2>Worst Delay</h2>
-        <strong className="worst-delay">
-          {stats.delayMinutes
-            ? `${Math.max(...[stats.averageDelay, stats.delayMinutes])} MINUTES`
-            : "NONE"}
-        </strong>
-      </div>
-    </section>
-  );
-}
-
-function AircraftStatsSheet({
-  flights,
-  stats,
-  onClose,
-}: {
-  flights: Flight[];
-  stats: ReturnType<typeof statsForFlights>;
-  onClose: () => void;
-}) {
-  const classes = [
-    "Economy",
-    "Premium Economy",
-    "Business",
-    "First Class",
-  ] as const;
-  return (
-    <section
-      className="stats-sheet aircraft-stats-sheet"
-      role="dialog"
-      aria-label="Aircraft Stats"
-    >
-      <StatsHeader title="Aircraft Stats" onClose={onClose} />
-      <span className="time-pill">ALL-TIME</span>
-      <div className="aircraft-blueprint">
-        <SFAirplaneCircleFill size={94} />
-        <strong>{stats.mostFlownAircraft}</strong>
-      </div>
-      <div className="stats-content aircraft-content">
-        <h2>Aircraft Types</h2>
-        <b className="big-total">
-          {stats.aircraft}
-          <span> total aircraft</span>
-        </b>
-        <p>Including sub-type variants according to ICAO</p>
-        <div className="metric-tabs">
-          <button className="active">Flights</button>
-          <button>Time</button>
-          <button>Distance</button>
-        </div>
-        <h2>Class and Seat</h2>
-        {classes.map((seatClass, index) => {
-          const count = flights.filter(
-            (flight) => flight.seatClass === seatClass,
-          ).length;
-          return (
-            <div className="class-row" key={seatClass}>
-              <i
-                style={{
-                  background: ["#9cdcff", "#5dc8ef", "#169ed6", "#2769dc"][
-                    index
-                  ],
-                }}
-              />
-              <span>{seatClass}</span>
-              <b>{count}</b>
-              <small>
-                {flights.length
-                  ? Math.round((count / flights.length) * 100)
-                  : 0}
-                %
-              </small>
-            </div>
-          );
-        })}
-        <h2>Most Frequent Tails</h2>
-        <b className="big-total small">{flights[0]?.aircraft ?? "None"}</b>
-        <p>
-          {flights.length
-            ? "Most frequently logged aircraft registration"
-            : "No repeat planes yet."}
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function SheetHeader({
-  title,
-  subtitle,
-  onClose,
-  onShare,
-}: {
-  title: string;
-  subtitle?: string;
-  onClose: () => void;
-  onShare?: () => void;
-}) {
-  return (
-    <header className="sheet-header">
-      <div>
-        <h2>{title}</h2>
-        {subtitle && <p>{subtitle}</p>}
-      </div>
-      <span>
-        {onShare && (
-          <button aria-label="分享" onClick={onShare}>
-            <SFSquareAndArrowUp size="md" />
-          </button>
-        )}
-        <button aria-label="关闭" onClick={onClose}>
-          <SFXmark size="md" />
-        </button>
-      </span>
-    </header>
-  );
-}
-
-function StatsHeader({
-  title,
-  onClose,
-}: {
-  title: string;
-  onClose: () => void;
-}) {
-  return (
-    <header className="stats-header">
-      <button aria-label="Close" onClick={onClose}>
-        <SFXmark size="lg" />
-      </button>
-      <h1>{title}</h1>
-      <button aria-label="Share">
-        <SFSquareAndArrowUp size="md" />
-      </button>
-    </header>
   );
 }
 
 function profileFrom(name: string, color: string): Profile {
-  return { name: name.trim() || "Vincent", color, initials: initialsOf(name) };
+  return { name: name.trim() || "旅行者", color, initials: initialsOf(name) };
 }
 
 function initialsOf(name: string) {
@@ -2204,6 +1712,6 @@ function initialsOf(name: string) {
   return (
     parts.length > 1
       ? `${parts[0][0]}${parts.at(-1)?.[0] ?? ""}`
-      : (parts[0]?.slice(0, 2) ?? "V")
+      : (parts[0]?.slice(0, 2) ?? "旅")
   ).toUpperCase();
 }

@@ -3,21 +3,20 @@
 import { sameJourneyPlace } from "./journeyLifecycle";
 import { loadAirportCatalog } from "./airportCatalog";
 import { localInputDate, recentJourneyPlaces, routeInputProblem, suggestedJourneyName } from "./composerLogic";
-import SFChevronLeft from "sf-symbols-lib/monochrome/SFChevronLeft";
 import SFStar from "sf-symbols-lib/monochrome/SFStar";
 import SFStarFill from "sf-symbols-lib/monochrome/SFStarFill";
 import "./composer.css";
 import { useSheetDetents } from "./useSheetDetents";
+import { SHEET_DETENTS } from "./sheetLayout";
+import { toggleFeedback } from "./nativeInteractions";
+import SheetHeader from "./SheetHeader";
 import { realScheduleProblem, zonedPlanTime } from "./realJourney";
 import { useEffect, useRef, useState, type CSSProperties, type ElementType } from "react";
 import SFAirplane from "sf-symbols-lib/monochrome/SFAirplane";
 import SFArrowLeftArrowRight from "sf-symbols-lib/monochrome/SFArrowLeftArrowRight";
-import SFCalendarBadgePlus from "sf-symbols-lib/monochrome/SFCalendarBadgePlus";
 import SFCarFill from "sf-symbols-lib/monochrome/SFCarFill";
-import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
 import SFChevronRight from "sf-symbols-lib/monochrome/SFChevronRight";
 import SFFerryFill from "sf-symbols-lib/monochrome/SFFerryFill";
-import SFDiceFill from "sf-symbols-lib/monochrome/SFDiceFill";
 import SFLocationFill from "sf-symbols-lib/monochrome/SFLocationFill";
 import SFMagnifyingglass from "sf-symbols-lib/monochrome/SFMagnifyingglass";
 import SFPlus from "sf-symbols-lib/monochrome/SFPlus";
@@ -89,6 +88,7 @@ const ICONS: Record<JourneyMode, ElementType> = {
 
 export default function JourneyComposer({
   variant,
+  suspended = false,
   onClose,
   onAdd,
   onAddMany,
@@ -108,6 +108,7 @@ export default function JourneyComposer({
   onMapSelectionConsumed,
 }: {
   variant: "desktop" | "mobile";
+  suspended?: boolean;
   favoriteCodes?: string[];
   onFavorite?: (code: string) => void;
   onMapSelectionConsumed?: () => void;
@@ -128,7 +129,7 @@ export default function JourneyComposer({
 }) {
   const [restoredDraft] = useState(() => variant === "mobile" ? readComposerDraft() : null);
   const [initialImportedSegments] = useState(importedSegments);
-  const importedConsumedRef = useRef(false);
+  const importedConsumedRef = useRef(new Set(importedSegments.map(segment => segment.id)));
   const importedLast = initialImportedSegments.at(-1);
   const fallbackOrigin = importedLast?.destination ?? initialOrigin ?? JOURNEY_PLACES[0];
   const restoredSegments = restoredDraft?.drafts ?? [];
@@ -149,7 +150,7 @@ export default function JourneyComposer({
   const [searching, setSearching] = useState(false);
   const [date, setDate] = useState(restoredDraft?.date ?? localInputDate());
   const [departure, setDeparture] = useState(restoredDraft?.departure ?? "09:00");
-  const composerSheet = useSheetDetents({ detents: [.4, .67, .93], initial: .93 });
+  const composerSheet = useSheetDetents({ detents: SHEET_DETENTS, initial: .93 });
   const [travelMode, setTravelMode] = useState<"simulation" | "real">(restoredDraft?.travelMode ?? "simulation");
   const [arrivalDate, setArrivalDate] = useState(restoredDraft?.arrivalDate ?? localInputDate());
   const [arrivalTime, setArrivalTime] = useState(restoredDraft?.arrivalTime ?? "12:00");
@@ -341,10 +342,12 @@ export default function JourneyComposer({
   }, [mode, name, origin, originQuery, destination, query, date, departure, note, title, drafts, planning, saveTarget, targetTripId, variant, travelMode, arrivalDate, arrivalTime, timeZone]);
 
   useEffect(() => {
-    if (!initialImportedSegments.length || importedConsumedRef.current) return;
-    importedConsumedRef.current = true;
+    if (!importedSegments.length) return;
+    const incoming = importedSegments.filter(segment => !importedConsumedRef.current.has(segment.id));
+    incoming.forEach(segment => importedConsumedRef.current.add(segment.id));
+    if (incoming.length) setDrafts(current => [...current, ...incoming]);
     onImportedSegmentsConsumed?.();
-  }, [initialImportedSegments, onImportedSegmentsConsumed]);
+  }, [importedSegments, onImportedSegmentsConsumed]);
 
   useEffect(() => {
     if (variant === "mobile") return;
@@ -534,21 +537,7 @@ export default function JourneyComposer({
     onClose();
   };
 
-  const chooseLocalDestination = (place: JourneyPlace) => {
-    setDestination(place);
-    setQuery(place.name);
-    setSuggestions([]);
-    setSearching(false);
-    setPlanning(true);
-    setError(null);
-  };
-
-  const randomDestination = () => {
-    const candidates = JOURNEY_PLACES.filter((place) => place.code !== origin.code);
-    const place = candidates[(drafts.length + origin.code.length) % candidates.length];
-    if (place) chooseLocalDestination(place);
-  };
-
+  if (suspended) return null;
   if (variant === "mobile") {
     const fieldLabel = editingPlace === "origin" ? "起点" : "终点";
     const placeMode = (place: JourneyPlace): JourneyMode =>
@@ -567,11 +556,7 @@ export default function JourneyComposer({
     return (
       <section className={`journey-composer mobile composer-v2 ${composerSheet.dragging ? "is-dragging" : ""}`} {...composerSheet.sheetProps} style={{ "--composer-height": `${composerSheet.fraction * 100}%` } as CSSProperties} role="dialog" aria-label={editingPlace ? `选择${fieldLabel}` : "添加行程"}>
         <button type="button" className="composer-grabber" aria-label="展开或收起添加行程" onClick={composerSheet.toggleExpanded}><span /></button>
-        <header className="composer-header">
-          {editingPlace && <button className="composer-circle" aria-label="返回路线编辑" onClick={() => { searchEpochRef.current += 1; setEditingPlace(null); setError(null); }}><SFChevronLeft size="sm" /></button>}
-          <h2>{editingPlace ? `选择${fieldLabel}` : "添加行程"}</h2>
-          {!editingPlace && <button className="composer-circle" aria-label="关闭添加行程" onClick={requestClose}><SFXmark size="sm" /></button>}
-        </header>
+        <SheetHeader className="composer-header" title={editingPlace ? `选择${fieldLabel}` : "添加行程"} back={Boolean(editingPlace)} backLabel="返回路线编辑" onClose={editingPlace ? () => { searchEpochRef.current += 1; setEditingPlace(null); setError(null); } : requestClose} />
         {editingPlace ? (
           <>
             <label className="composer-search">
@@ -606,8 +591,8 @@ export default function JourneyComposer({
           <>
             <div className="composer-scroll">
               <div className="composer-plan-mode" role="group" aria-label="行程模式">
-                <button type="button" aria-pressed={travelMode === "simulation"} onClick={() => setTravelMode("simulation")}>模拟预览</button>
-                <button type="button" aria-pressed={travelMode === "real"} onClick={() => setTravelMode("real")}>真实行程</button>
+                <button type="button" aria-pressed={travelMode === "simulation"} onClick={() => { toggleFeedback(); setTravelMode("simulation"); }}>模拟预览</button>
+                <button type="button" aria-pressed={travelMode === "real"} onClick={() => { toggleFeedback(); setTravelMode("real"); }}>真实行程</button>
               </div>
               <p className="composer-hint">{travelMode === "real" ? "按你的真实时间规划，开启定位后可确认到达。" : "快速预览路线，不代表真实位置，也不会自动记为到达。"}</p>
               <section className="composer-section">
@@ -700,7 +685,7 @@ export default function JourneyComposer({
     >
       <header>
         <div>
-          <small>TRIP BUILDER</small>
+          <small>连续行程规划</small>
           <h2>安排连续行程</h2>
           <p>搜索风景地或交通节点，逐段选择飞机、火车、汽车和轮船。</p>
         </div>

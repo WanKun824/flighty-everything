@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { INITIAL_JOURNEY_SEGMENTS, createJourneySegmentBetween, type JourneySegment } from "./journeyData";
 import { appendUniqueSegments, nextPlaybackSelection } from "./journeyLifecycle";
 import type { WeatherMode } from "./flightyStorage";
+import { mergeRestoredSegments } from "./journeyUndo";
 
 export type JourneyMotif = "torii" | "mountain" | "skyline" | "pagoda";
 
@@ -425,13 +426,13 @@ export function useJourneyStore() {
   const restoreSegments = useCallback((segments: JourneySegment[], selectedSegmentId = "", tripId?: string) => {
     setState((current) => {
       const targetId = tripId ?? current.activeTripId;
-      if (!current.trips.some(trip => trip.id === targetId)) return current;
-      if (targetId !== current.activeTripId) return { ...current, trips: current.trips.map(trip => trip.id === targetId ? { ...trip, segments } : trip) };
+      const target = current.trips.find(trip => trip.id === targetId);
+      if (!target) return current;
+      const restored = mergeRestoredSegments(segments, targetId === current.activeTripId ? current.segments : target.segments);
+      if (targetId !== current.activeTripId) return { ...current, trips: current.trips.map(trip => trip.id === targetId ? { ...trip, segments: restored } : trip) };
       return activePatch(current, {
-      segments,
-      selectedSegmentId: segments.some((segment) => segment.id === selectedSegmentId)
-        ? selectedSegmentId
-        : (segments[0]?.id ?? ""),
+        segments: restored,
+        selectedSegmentId: restored.some(segment => segment.id === selectedSegmentId) ? selectedSegmentId : (restored[0]?.id ?? ""),
       });
     });
   }, []);
@@ -481,6 +482,18 @@ export function useJourneyStore() {
   }, []);
 
   const reset = useCallback(() => setState(INITIAL_JOURNEY_STATE), []);
+  const clear = useCallback(() => {
+    const empty = { ...primaryTrip, id: `trip-empty-${Date.now()}`, name: "我的行程", segments: [], savedToPassportAt: null };
+    setState({ ...INITIAL_JOURNEY_STATE, trips: [empty], activeTripId: empty.id, tripName: empty.name, segments: [], selectedSegmentId: "" });
+  }, []);
+  const restoreTrip = useCallback((trip: JourneyTrip, index: number, select = false) => {
+    setState(current => {
+      if (current.trips.some(item => item.id === trip.id)) return current;
+      const trips = [...current.trips];
+      trips.splice(Math.max(0, Math.min(index, trips.length)), 0, trip);
+      return { ...current, trips, ...(select ? { activeTripId: trip.id, tripName: trip.name, segments: trip.segments, selectedSegmentId: trip.segments[0]?.id ?? "" } : {}) };
+    });
+  }, []);
 
   return {
     state,
@@ -508,6 +521,8 @@ export function useJourneyStore() {
     toggleComplete,
     restartTrip,
     advanceSegment,
+    clear,
+    restoreTrip,
     reset,
   };
 }

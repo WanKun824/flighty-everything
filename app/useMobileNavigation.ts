@@ -5,12 +5,12 @@ import { finishBackGesture } from "./mobileGestures";
 
 export function useMobileNavigation(screen: string | null, onBack: () => void) {
   const callback = useRef(onBack);
-  callback.current = onBack;
+  useEffect(() => { callback.current = onBack; }, [onBack]);
   useEffect(() => {
     if (!screen) return;
     const device = document.querySelector<HTMLElement>(".flighty-device");
     if (!device) return;
-    const surfaces = [...device.querySelectorAll<HTMLElement>(":scope > .map-sheet, :scope > .full-sheet, :scope > .stats-sheet, :scope > .journey-composer, :scope > .passport-detail")];
+    const surfaces = [...device.querySelectorAll<HTMLElement>(":scope > .map-sheet, :scope > .full-sheet, :scope > .stats-sheet, :scope > .journey-composer, :scope > .passport-detail, .community-panel-scroll.community-push, .community-panel-scroll dialog[open]")].filter(element => element.getClientRects().length > 0);
     const surface = surfaces.at(-1);
     if (!surface) return;
     surface.classList.add("mobile-back-surface");

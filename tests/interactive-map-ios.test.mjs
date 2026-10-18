@@ -63,8 +63,10 @@ test("keeps mobile sheets draggable, keyboard accessible and haptic", async () =
     read("../package.json"),
   ]);
 
-  assert.match(page, /\[\.33, \.57, \.93\]/);
-  assert.match(mobile, /\[0\.32, 0\.58, 0\.84\]/);
+  assert.match(page, /detents: SHEET_DETENTS/);
+  assert.match(mobile, /detents: SHEET_DETENTS/);
+  const geometry = await read("../app/sheetLayout.ts");
+  assert.match(geometry, /SHEET_DETENTS = \[\.3, \.57, \.93\]/);
   assert.match(hook, /setPointerCapture/);
   assert.match(hook, /ArrowDown/);
   assert.match(hook, /prefers-reduced-motion|visualViewport/);
@@ -88,7 +90,7 @@ test("persists light, dark and system appearance across the map and native shell
   assert.match(appearance, /root\.dataset\.theme = resolved/);
   assert.match(page, /data-theme=\{appearance\.resolved\}/);
   assert.match(page, /theme=\{appearance\.resolved\}/);
-  assert.match(page, /onAppearanceChange=\{appearance\.setMode\}/);
+  assert.match(page, /onAppearanceChange=\{value => \{ toggleFeedback\(\); appearance\.setMode\(value\); \}\}/);
   assert.match(globe, /theme === "light" \? "day" : "night"/);
   assert.match(css, /\.flighty-page\[data-theme="light"\]/);
   assert.match(layout, /suppressHydrationWarning/);

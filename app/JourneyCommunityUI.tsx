@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import SheetHeader from "./SheetHeader";
 import SFCheckmarkCircleFill from "sf-symbols-lib/monochrome/SFCheckmarkCircleFill";
 import SFHeart from "sf-symbols-lib/monochrome/SFHeart";
 import SFHeartFill from "sf-symbols-lib/monochrome/SFHeartFill";
@@ -70,7 +71,7 @@ function JourneyCardTravelDetails({ segment, active, roadTraffic }: {
         : "船票信息";
   return (
     <div className="journey-ticket-strip" aria-label={`${segment.service} 票务与天气`}>
-      <span className="journey-ticket-code"><small>TICKET</small><strong>{segment.service}</strong></span>
+      <span className="journey-ticket-code"><small>票务</small><strong>{segment.service}</strong></span>
       <span className="journey-ticket-times"><b>{segment.departure}</b><i /><b>{segment.arrival}</b><small>{status}</small></span>
       <span className="journey-ticket-note" title={segment.note}>{segment.note}</span>
       {destinationWeather && <span className="journey-card-weather"><JourneyWeatherIcon observation={destinationWeather} /></span>}
@@ -107,8 +108,14 @@ export function PublishDialog({ segments, selectedId, onClose, onPublish }: {
   onClose: () => void;
   onPublish: (segment: JourneySegment, creatorName: string, caption: string) => Promise<void>;
 }) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    dialog?.showModal();
+    return () => dialog?.close();
+  }, []);
   const [segmentId, setSegmentId] = useState(selectedId ?? segments[0]?.id ?? "");
-  const [creatorName, setCreatorName] = useState("Vincent");
+  const [creatorName, setCreatorName] = useState("旅行者");
   const [caption, setCaption] = useState("把这段旅程分享给下一位出发的人。");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,14 +134,14 @@ export function PublishDialog({ segments, selectedId, onClose, onPublish }: {
   };
 
   return (
-    <section className="publish-journey-dialog" role="dialog" aria-modal="true" aria-label="发布行程">
-      <header><div><small>COMMUNITY</small><h2>发布你的行程</h2><p>社区会显示载具、班次和起终站，不发布座位号或证件信息。</p></div><button aria-label="关闭发布" onClick={onClose}><SFXmark size="sm" /></button></header>
+    <dialog ref={dialogRef} className="publish-journey-dialog" aria-label="发布行程" onCancel={event => { event.preventDefault(); onClose(); }}>
+      <SheetHeader title="发布行程" subtitle="只分享载具、班次和起终站，不发布座位号或证件信息。" onClose={onClose} />
       <label><span>选择行程</span><select value={segmentId} onChange={(event) => setSegmentId(event.target.value)}>{segments.map((segment) => <option key={segment.id} value={segment.id}>{MODE_META[segment.mode].label} · {segment.origin.code} → {segment.destination.code}</option>)}</select></label>
       <label><span>发布者名称</span><input value={creatorName} maxLength={40} onChange={(event) => setCreatorName(event.target.value)} /></label>
       <label><span>分享说明</span><textarea value={caption} maxLength={240} rows={3} onChange={(event) => setCaption(event.target.value)} /></label>
       <div className="publish-safety-note"><SFCheckmarkCircleFill size="sm" /><span><strong>只发布行程内容</strong><small>座位号、证件和精确住址不会进入社区。</small></span></div>
       {error && <p className="publish-error" role="alert">{error}</p>}
       <button className="publish-submit" disabled={!selected || !creatorName.trim() || submitting} onClick={() => void submit()}><SFSquareAndArrowUp size="sm" />{submitting ? "正在发布…" : "发布到社区"}</button>
-    </section>
+    </dialog>
   );
 }

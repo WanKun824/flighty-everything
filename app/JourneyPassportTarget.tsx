@@ -9,12 +9,12 @@ import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
 import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
 import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
 import SFSquareAndArrowUp from "sf-symbols-lib/monochrome/SFSquareAndArrowUp";
-import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import { JourneyModeIcon } from "./JourneyComposer";
 import { MODE_META, journeyStats, type JourneyMode } from "./journeyData";
 import type { JourneyTrip } from "./journeyStorage";
 import { passportTrips, passportYears, travelDate } from "./journeyLifecycle";
 import PassportWorldMap from "./PassportWorldMap";
+import SheetHeader from "./SheetHeader";
 
 const formatDuration = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
@@ -69,8 +69,8 @@ export default function JourneyPassportTarget({
 
       <section className="passport-summary-card">
         <button className="passport-card-share" aria-label="分享旅行护照" onClick={onShare}><SFSquareAndArrowUp size="sm" /></button>
-        <small>{compact || period === "all" ? "ALL-TIME" : period === "unknown" ? "UNDATED" : period} FLIGHTY PASSPORT</small>
-        <p>护照 · PASSPORT · 旅迹</p>
+        <small>{compact || period === "all" ? "全部时间" : period === "unknown" ? "日期待补充" : `${period}年`} · 我的旅迹</small>
+        <p>每一段路，都值得记录</p>
         <div className="passport-summary-grid">
           <span><small>行程段</small><strong>{stats.segments}</strong><em>{stats.modes} 种交通方式</em></span>
           <span><small>总里程</small><strong>{stats.distanceKm.toLocaleString("zh-CN")}<i> km</i></strong><em>{(stats.distanceKm / 40075).toFixed(2)}x 环绕地球</em></span>
@@ -182,11 +182,7 @@ export function JourneyPassportStatsTarget({
       <div className="passport-detail-scroll">
         <section className="passport-detail-hero">
           <div className="passport-detail-status" aria-hidden="true"><strong>{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}</strong><span><SFCellularbars size="xs" /><SFWifi size="xs" /><SFBattery100percent size="sm" /></span></div>
-          <header className="passport-detail-header">
-            <button aria-label="关闭旅迹统计" onClick={onClose}><SFXmark size="md" /></button>
-            <h1>fly everything</h1>
-            <button aria-label="分享旅迹统计" onClick={onShare}><SFSquareAndArrowUp size="md" /></button>
-          </header>
+          <SheetHeader className="passport-detail-header" title="旅迹统计" back backLabel="返回旅迹" onClose={onClose} onShare={onShare} />
           <div className="passport-detail-period" role="tablist" aria-label="统计时间范围">
             <button role="tab" aria-selected={period === "all"} className={period === "all" ? "active" : ""} onClick={() => setPeriod("all")}>全部</button>
             {years.map(year => <button key={year} role="tab" aria-selected={period === year} className={period === year ? "active" : ""} onClick={() => setPeriod(year)}>{year === "unknown" ? "日期待补充" : year}</button>)}
@@ -196,8 +192,8 @@ export function JourneyPassportStatsTarget({
           </div>
           <PassportWorldMap key={period} segments={segments} />
           <div className="passport-hero-summary">
-            <small>MY FLY EVERYTHING PASSPORT</small>
-            <p>多载具 · MULTI-MODAL · 旅迹</p>
+            <small>我的旅迹</small>
+            <p>飞机、火车、汽车与轮船</p>
             <div><span><small>行程段</small><strong>{stats.segments}</strong></span><span><small>总里程</small><strong>{stats.distanceKm.toLocaleString("zh-CN")}<i> km</i></strong></span><span><small>在途时间</small><strong>{formatDuration(stats.durationMinutes)}</strong></span><span><small>地点</small><strong>{stats.places}</strong></span><span><small>载具</small><strong>{stats.modes}</strong></span></div>
           </div>
         </section>

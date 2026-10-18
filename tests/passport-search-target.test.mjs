@@ -18,7 +18,7 @@ test("vehicle models stay on the live map while every showcase uses journey icon
   const [globe, ...showcases] = await Promise.all([
     readFile(new URL("../app/FlightGlobe.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MobileJourney.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/DesktopJourney.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/CommunityPanel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/JourneyPassportTarget.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/JourneyExperience27.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CommunityJourneyPage.tsx", import.meta.url), "utf8"),
