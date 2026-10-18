@@ -12,6 +12,10 @@ on:
         default: both
         type: choice
         options: [both, light, dark]
+      page_keys:
+        description: Optional comma-separated failed page keys to retry, empty captures all
+        required: false
+        type: string
 permissions:
   contents: read
 jobs:
@@ -45,7 +49,9 @@ jobs:
           npx cap sync ios
           xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS Simulator' -derivedDataPath build/simulator CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build > build/page-captures/xcode-build.log 2>&1
       - name: Run app and capture each current page
-        run: python3 ios/qa/capture-pages.py --theme "${{ matrix.appearance }}"
+        env:
+          CAPTURE_KEYS: ${{ inputs.page_keys }}
+        run: python3 ios/qa/capture-pages.py --theme "${{ matrix.appearance }}" --keys "$CAPTURE_KEYS"
       - name: Upload screenshots and provenance, including failures
         if: always()
         uses: actions/upload-artifact@v7

@@ -19,7 +19,7 @@ APP = Path('build/simulator/Build/Products/Release-iphonesimulator/App.app').res
 
 
 def run(*args, **kwargs):
-    return subprocess.check_output(list(args), text=True, **kwargs).strip()
+    return subprocess.check_output(list(args), text=True, timeout=kwargs.pop('timeout', 60), **kwargs).strip()
 
 
 def navigate(tab='flights', overlay=None, height=.93, mode=None):
@@ -160,11 +160,21 @@ def capture(device, directory, theme):
             if evidence.get('theme') != theme:
                 raise RuntimeError('Page theme mismatch: ' + str(evidence.get('theme')))
             image = OUT / (name + '.png')
-            run('xcrun', 'simctl', 'io', device, 'screenshot', str(image), timeout=25)
+            for attempt in range(2):
+                try:
+                    image.unlink(missing_ok=True)
+                    before = command(SNAPSHOT)
+                    evidence = json.loads(before['result'])
+                    run('xcrun', 'simctl', 'io', device, 'screenshot', str(image), timeout=45)
+                    break
+                except subprocess.TimeoutExpired:
+                    if attempt == 1:
+                        raise
+                    time.sleep(3)
             after = command(SNAPSHOT)
             if time.time() - after['time'] > 8:
                 raise RuntimeError('Stale app response')
-            record.update(status='captured', file=image.name, sha256=hashlib.sha256(image.read_bytes()).hexdigest(),
+            record.update(status='captured', screenshotAttempt=attempt + 1, file=image.name, sha256=hashlib.sha256(image.read_bytes()).hexdigest(),
                           before=evidence, after=json.loads(after['result']))
             consecutive_failures = 0
         except Exception as error:
@@ -204,8 +214,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--list', action='store_true')
     parser.add_argument('--theme', choices=['light', 'dark'], default='light')
+    parser.add_argument('--keys', default='', help='Optional comma-separated failed page keys to retry')
     args = parser.parse_args()
     if args.list:
         print(json.dumps(PAGES, ensure_ascii=True))
     else:
+        if args.keys:
+            keys = set(args.keys.split(','))
+            if not keys.issubset({page['key'] for page in PAGES}):
+                parser.error('Unknown capture key')
+            PAGES[:] = [page for page in PAGES if page['key'] in keys]
         main(args.theme)
