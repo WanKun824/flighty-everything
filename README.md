@@ -4,6 +4,24 @@
 
 <img src="public/brand/fly-icon.png" width="120" alt="FLY 品牌图标，不是运行截图" />
 
+<!-- browser-demos:start -->
+## 最新动态演示：飞行 · 全球机场 · 行程统计
+
+以下是**真实 Chrome 浏览器录制的 GIF，不是 iOS 录屏**。使用独立配置和明确标识的虚构演示数据；不访问或覆盖用户已有行程。
+
+| 飞机飞行与地图跟随 | 全球机场浏览与定位 |
+| --- | --- |
+| <img src="docs/demos/flight.gif" width="260" alt="飞机飞行与地图跟随：浏览器录制 GIF" /> | <img src="docs/demos/airports.gif" width="260" alt="全球机场搜索与定位：浏览器录制 GIF" /> |
+| 行程统计与年份筛选 | 飞机 / 火车 / 汽车 / 轮船行程切换 |
+| <img src="docs/demos/statistics.gif" width="260" alt="行程统计：浏览器录制 GIF" /> | <img src="docs/demos/journeys.gif" width="260" alt="四种交通行程切换：浏览器录制 GIF" /> |
+
+新增 **3 组、8 段**演示记录，覆盖 **4 种交通方式、10 个地点、7,160 km、25 小时**，可展示 2025 / 2026 年份筛选。**仅新存储首次启动显示，已有行程不会自动插入样例。**
+
+[逐段说明、演示路线与复现方法](docs/demos/README.md) · [录制来源与 SHA-256](docs/demos/manifest.json)
+
+最新演示代码位于 `build/ios-ui-20261018` 分支：[wkun475-star 仓库](https://github.com/wkun475-star/flighty-everything/tree/build/ios-ui-20261018) / [WanKun824 仓库](https://github.com/WanKun824/flighty-everything/tree/build/ios-ui-20261018)。默认分支只同步图册/Markdown，不覆盖其业务代码；此前发布的 IPA 不含这次新增样例。
+<!-- browser-demos:end -->
+
 **本轮预览交付：2026-10-18，版本 0.3.2。** 当前源码与文档位于 `build/ios-ui-20261018` 分支。保留私有仓库权限，不自动部署旧在线演示。历史版本的安装包、截图与当时问题单独归档，不混作当前结果。
 
 ## 下载与交付内容

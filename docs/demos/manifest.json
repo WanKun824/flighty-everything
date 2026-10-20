@@ -1,0 +1,135 @@
+{
+  "method": "Actual Chrome Web screenshots encoded as GIF, not iOS Simulator or physical-device video",
+  "capturedAt": "2026-10-20T16:57:11.668Z",
+  "sourceCommit": "cbef258459e5c5d5fc0f140573e1e039ed0bc1c4",
+  "applicationTree": "d7b8eab0c0bab7d98929ef5b923f88ce65ac1b56",
+  "worktreeHadChanges": false,
+  "viewport": {
+    "width": 402,
+    "height": 874
+  },
+  "fps": 7,
+  "data": "Fresh isolated profile; built-in fictional demo trips; live Mapbox basemap",
+  "clips": [
+    {
+      "id": "flight",
+      "title": "飞机飞行与跟随",
+      "file": "flight.gif",
+      "frames": 64,
+      "durationMs": 10114,
+      "bytes": 5540630,
+      "sha256": "7ef908231787d0b8f28f7ea673d8fcbafb0f9bd9190596b5572431c72b7cc7aa",
+      "before": {
+        "title": "行程",
+        "mapReady": "true",
+        "vehicle": "飞往东京 · 飞机正在出发",
+        "vehiclePosition": [
+          149,
+          399.5625
+        ],
+        "selected": "journey-hkg-hnd",
+        "tripCount": 5
+      },
+      "after": {
+        "title": "行程",
+        "mapReady": "true",
+        "vehicle": "飞往东京 · 飞机正在途中",
+        "vehiclePosition": [
+          149,
+          399.5625
+        ],
+        "selected": "journey-hkg-hnd",
+        "tripCount": 5
+      },
+      "pageErrors": []
+    },
+    {
+      "id": "airports",
+      "title": "全球机场浏览、搜索与定位",
+      "file": "airports.gif",
+      "frames": 69,
+      "durationMs": 11203,
+      "bytes": 1654395,
+      "sha256": "0cffbdf70177c02a65e1adda2c3c37e3da951fb3134a9bff7cc4fb53df5722f1",
+      "before": {
+        "title": "行程",
+        "mapReady": "true",
+        "vehiclePosition": null,
+        "selected": "journey-hkg-hnd",
+        "tripCount": 5
+      },
+      "after": {
+        "title": "行程",
+        "mapReady": "true",
+        "vehiclePosition": null,
+        "selected": "journey-hkg-hnd",
+        "tripCount": 5
+      },
+      "pageErrors": []
+    },
+    {
+      "id": "statistics",
+      "title": "三段演示旅行与统计筛选",
+      "file": "statistics.gif",
+      "frames": 75,
+      "durationMs": 11623,
+      "bytes": 252249,
+      "sha256": "9042308216876fc8806eec5bb38f537f61d4a5dfc118ff4ee7c398abf976cd64",
+      "before": {
+        "title": "旅迹",
+        "mapReady": "true",
+        "vehicle": "飞往东京 · 飞机正在出发",
+        "vehiclePosition": [
+          173.1551971435547,
+          381.86761474609375
+        ],
+        "selected": "journey-hkg-hnd",
+        "tripCount": 5
+      },
+      "after": {
+        "title": "旅迹",
+        "mapReady": "true",
+        "vehicle": "飞往东京 · 飞机正在途中",
+        "vehiclePosition": [
+          265.4246520996094,
+          314.2738952636719
+        ],
+        "selected": "journey-hkg-hnd",
+        "tripCount": 5
+      },
+      "pageErrors": []
+    },
+    {
+      "id": "journeys",
+      "title": "飞机、火车、汽车、轮船的行程切换",
+      "file": "journeys.gif",
+      "frames": 81,
+      "durationMs": 12654,
+      "bytes": 465328,
+      "sha256": "447d8f19d550b24b87ebc252fcebca9fb86a3de2a7e8554f4064d2441b6bd062",
+      "before": {
+        "title": "行程",
+        "mapReady": "true",
+        "vehicle": "飞往东京 · 飞机正在出发",
+        "vehiclePosition": [
+          161.09133911132812,
+          390.7050476074219
+        ],
+        "selected": "journey-hkg-hnd",
+        "tripCount": 5
+      },
+      "after": {
+        "title": "行程",
+        "mapReady": "true",
+        "vehicle": "香港到新加坡 · 演示 · 飞机正在出发",
+        "vehiclePosition": [
+          139.3338165283203,
+          419.2922058105469
+        ],
+        "selected": "demo-asia-1",
+        "tripCount": 5
+      },
+      "pageErrors": []
+    }
+  ]
+}
