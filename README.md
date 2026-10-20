@@ -1,5 +1,19 @@
 # flighty Everything
 
+## 最新动态演示（浏览器 GIF）
+
+**[四段 GIF、演示行程与录制说明](docs/demos/README.md)** · [录制来源与校验](docs/demos/manifest.json)
+
+| 飞机飞行 | 全球机场 |
+| --- | --- |
+| <img src="docs/demos/flight.gif" width="260" alt="飞机飞行：浏览器 GIF，非 iOS 录屏" /> | <img src="docs/demos/airports.gif" width="260" alt="全球机场搜索与定位：浏览器 GIF" /> |
+| 行程统计 | 四种交通方式切换 |
+| <img src="docs/demos/statistics.gif" width="260" alt="行程统计：浏览器 GIF" /> | <img src="docs/demos/journeys.gif" width="260" alt="飞机火车汽车轮船：浏览器 GIF" /> |
+
+新增 **3 组、8 段**虚构演示记录，覆盖 4 种交通、10 个地点、7,160 km、25 小时及 2025/2026 年份统计。只在新存储首次启动显示，不覆盖已有行程。
+
+本默认分支仅同步图册和 Markdown；体验最新界面/样例请使用 **[build/ios-ui-20261018 演示分支](https://github.com/WanKun824/flighty-everything/tree/build/ios-ui-20261018)**。录制为实际 Chrome 画面，不是 iOS 录屏；旧 IPA 不包含本次新样例。以下功能和安装包说明保留此默认分支的原版本含义。
+
 一套以 Flighty 视觉语言重新设计的多交通旅行产品：保留 iOS 移动端，同时提供完整的中文网页工作台，并把飞机、火车、汽车与轮船连接成同一条可操作旅程。
 
 ## Product features
