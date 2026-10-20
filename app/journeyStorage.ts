@@ -5,6 +5,7 @@ import { INITIAL_JOURNEY_SEGMENTS, createJourneySegmentBetween, type JourneySegm
 import { appendUniqueSegments, nextPlaybackSelection } from "./journeyLifecycle";
 import type { WeatherMode } from "./flightyStorage";
 import { mergeRestoredSegments } from "./journeyUndo";
+import { DEMO_JOURNEY_TRIPS } from "./demoJourneys";
 
 export type JourneyMotif = "torii" | "mountain" | "skyline" | "pagoda";
 
@@ -54,7 +55,7 @@ const weekendTrip: JourneyTrip = {
 };
 
 export const INITIAL_JOURNEY_STATE: JourneyState = {
-  trips: [primaryTrip, weekendTrip],
+  trips: [primaryTrip, weekendTrip, ...DEMO_JOURNEY_TRIPS],
   activeTripId: primaryTrip.id,
   collectionName: "我的行程",
   tripName: primaryTrip.name,
