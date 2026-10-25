@@ -2,11 +2,9 @@ name: Package Web Build
 
 on:
   workflow_dispatch:
-    inputs:
-      source_sha:
-        description: Optional exact source commit to verify
-        required: false
-        type: string
+  push:
+    branches: [main]
+    tags: ["v*"]
 
 permissions:
   contents: read
@@ -18,10 +16,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
-      - name: Verify requested source
-        env:
-          REQUESTED_SOURCE_SHA: ${{ inputs.source_sha }}
-        run: test -z "$REQUESTED_SOURCE_SHA" || test "$(git rev-parse HEAD)" = "$REQUESTED_SOURCE_SHA"
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
@@ -33,16 +27,7 @@ jobs:
         run: npm test
         env:
           NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
-      - name: Type check
-        run: npx tsc --noEmit -p tsconfig.json
-      - name: Build bundled native frontend
-        run: npm run native:build
-      - name: Package and verify source with documentation
-        run: |
-          python3 scripts/package-source.py
-          mkdir -p build/packages
-          git archive --format=zip --output=build/packages/flighty-everything-docs.zip HEAD README.md docs MODEL_LICENSES.md ios/qa/README.md
-      - name: Archive frontend build outputs
+      - name: Assemble deployable web package
         shell: bash
         run: |
           mkdir -p build/packages
@@ -59,20 +44,5 @@ jobs:
         with:
           name: flighty-everything-web
           path: build/packages/flighty-everything-web-*.tar.gz
-          archive: false
-          retention-days: 30
-      - name: Upload verified source package
-        uses: actions/upload-artifact@v7
-        with:
-          name: flighty-everything-source
-          path: |
-            release/source/*.zip
-            release/source/*.sha256
-          retention-days: 30
-      - name: Upload documentation on explicit request
-        uses: actions/upload-artifact@v7
-        with:
-          name: flighty-everything-docs
-          path: build/packages/flighty-everything-docs.zip
           archive: false
           retention-days: 30

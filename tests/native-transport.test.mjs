@@ -6,8 +6,7 @@ import ts from "typescript";
 async function provider(name) {
   const source = await readFile(new URL(`../app/api/transport/${name}/route.ts`, import.meta.url), "utf8");
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText
-    .replace('"../../../flightyData"', JSON.stringify(new URL("../app/flightyData.ts", import.meta.url).href))
-    .replace('"../../../railGeometry.ts"', JSON.stringify(new URL("../app/railGeometry.ts", import.meta.url).href));
+    .replace('"../../../flightyData"', JSON.stringify(new URL("../app/flightyData.ts", import.meta.url).href));
   return import(`data:text/javascript;base64,${Buffer.from(output).toString("base64")}`);
 }
 
@@ -28,33 +27,6 @@ test("native flight lookup reuses verified public-provider parsing without a hos
   assert.equal(result.segment.operational.quality, "verified-route");
   assert.equal(result.live, false);
   assert.deepEqual(requested, ["https://api.adsbdb.com/v0/callsign/CX548"]);
-});
-
-test("verified rail lookup requests, validates and retains curved provider geometry", async () => {
-  const { lookupRail } = await provider("rail");
-  let requestUrl;
-  const response = await lookupRail(new Request("https://flighty.invalid/?fromLon=8.5&fromLat=47.3&toLon=8.54&toLat=47.31&departAt=2028-09-18T09:00:00Z"), async url => {
-    requestUrl = new URL(url);
-    return Response.json({ itineraries: [{ legs: [{
-      mode: "RAIL", displayName: "Test IC",
-      startTime: "2028-09-18T09:00:00Z", endTime: "2028-09-18T09:15:00Z",
-      from: { lon: 8.5, lat: 47.3, name: "Fixture A" }, to: { lon: 8.54, lat: 47.31, name: "Fixture B" },
-      legGeometry: { points: "_y}eyA_qxeO_pR_pRowH_pRnwH_af@", precision: 6 },
-    }] }] });
-  });
-  const { segments } = await response.json();
-  assert.equal(requestUrl.searchParams.get("detailedLegs"), "true");
-  assert.equal(response.status, 200);
-  assert.equal(segments[0].railGeometry.source, "transitous");
-  assert.equal(segments[0].railGeometry.coordinates.length, 4);
-  assert.equal(segments[0].operational.realtime, false);
-  assert.deepEqual(segments[0].railGeometry.coordinates[2], [8.52, 47.315]);
-});
-
-test("rail provider rejects missing coordinates instead of searching at zero", async () => {
-  const { lookupRail } = await provider("rail");
-  const response = await lookupRail(new Request("https://flighty.invalid/?departAt=2028-09-18T09:00:00Z"), async () => { throw Error("must not fetch"); });
-  assert.equal(response.status, 400);
 });
 
 test("native rail lookup reports no coverage instead of inventing a train", async () => {

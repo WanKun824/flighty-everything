@@ -41,9 +41,8 @@ test("community publishing is durable and exposes vehicle, service and stations 
     read("../.openai/hosting.json"),
     read("../app/globals.css"),
   ]);
-  assert.match(home, /id: "community", label: "社区"/);
-  assert.match(home, /<CommunityPanel/);
-  assert.match(home, /aria-label=\{id === "community" \? "打开旅行社区" : label\}/);
+  assert.match(home, /href="\/community"/);
+  assert.match(home, /aria-label="打开旅行社区"/);
   assert.match(homeRoute, /lazy\(\(\) => import\("\.\/FlightyApp"\)\)/);
   assert.match(communityRoute, /CommunityClientShell/);
   assert.match(communityShell, /lazy\(\(\) => import\("\.\/JourneyExperience27"\)\)/);

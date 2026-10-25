@@ -5,7 +5,6 @@ import "../app/globals.css";
 import "../app/journey-theme.css";
 import "../app/journey-refinement.css";
 import "../app/native-layout.css";
-import "../app/ios-ui.css";
 import "./transportBridge";
 
 const FlightyApp = lazy(() => import("../app/FlightyApp"));
@@ -19,8 +18,8 @@ type NativeScreen =
 
 function NativeBootScreen() {
   return (
-    <main className="native-boot-screen" aria-label="fly everything 正在启动">
-      <span>fly <em>everything</em></span>
+    <main className="native-boot-screen" aria-label="flighty Everything 正在启动">
+      <span>flighty <em>Everything</em></span>
       <i />
     </main>
   );
@@ -46,7 +45,7 @@ function NativeApp() {
   return (
     <Suspense fallback={<NativeBootScreen />}>
       {screen.name === "home" && (
-        <FlightyApp />
+        <FlightyApp onOpenCommunity={() => setScreen({ name: "community" })} />
       )}
       {screen.name === "community" && (
         <JourneyExperience27

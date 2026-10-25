@@ -18,7 +18,7 @@ test("vehicle models stay on the live map while every showcase uses journey icon
   const [globe, ...showcases] = await Promise.all([
     readFile(new URL("../app/FlightGlobe.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/MobileJourney.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/CommunityPanel.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/DesktopJourney.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/JourneyPassportTarget.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/JourneyExperience27.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/CommunityJourneyPage.tsx", import.meta.url), "utf8"),
@@ -37,7 +37,6 @@ test("airports sheet and map use real airport identities, regions and status mar
     readFile(new URL("../app/FlightyApp.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
-  const airportSource = await readFile(new URL("../app/AirportPanels.tsx", import.meta.url), "utf8");
   for (const code of ["HKG", "NRT", "SIN", "ICN", "LHR", "CDG", "ORD", "JFK", "LAX"])
     assert.match(data, new RegExp(`code: "${code}"`));
   assert.ok((data.match(/timeZone:/g) ?? []).length >= 25);
@@ -46,19 +45,15 @@ test("airports sheet and map use real airport identities, regions and status mar
   assert.match(globe, /region === "All" \|\| airport\.region === region/);
   assert.match(globe, /flighty-airport-dots/);
   assert.doesNotMatch(globe, /airportMarkersRef/);
-  assert.match(airportSource, /<AirportRow/);
-  assert.match(airportSource, /onPlan\(airport, "origin"\)/);
-  assert.doesNotMatch(airportSource, /暂无实时运行数据/);
-  assert.doesNotMatch(page, /airportByCode\(selectedAirport\) \?\? AIRPORTS\[0\]/);
-  assert.doesNotMatch(airportSource, /departureOnTime|Operations Normal|View Full Operational Report/);
-  assert.match(airportSource, /catalog\.find\(entry => entry\.code === code\)/);
+  assert.match(page, /<AirportRow/);
+  assert.match(page, /真实机场资料/);
   assert.match(css, /\.airport-signal\.warning/);
   assert.match(css, /\.airport-signal\.severe/);
 });
 
 test("mobile search keeps place lookup and all four vehicle modes usable", async () => {
   const source = await readFile(new URL("../app/JourneyComposer.tsx", import.meta.url), "utf8");
-  assert.match(source, /placeholder="机场、车站、城市或景点"/);
+  assert.match(source, /搜索城市、景点、机场或车站/);
   assert.match(source, /searchJourneyPlaces\(query/);
   assert.match(source, /retrieveJourneyPlace\(suggestion/);
   assert.match(source, /Object\.keys\(MODE_META\)/);
@@ -94,7 +89,7 @@ test("passport keeps the shared draggable sheet while mobile search stays fixed 
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
   assert.match(page, /activeTab === "passport" \? "passport-panel"/);
-  assert.match(page, /\.\.\.mainSheet\.sheetProps/);
+  assert.match(page, /\.\.\.mainSheet\.handleProps/);
   assert.doesNotMatch(composer, /拖动调整搜索面板高度/);
   assert.match(css, /\.flight-panel\.passport-panel \{ top: auto; height: var\(--sheet-height,47%\)/);
   assert.match(css, /\.journey-composer\.mobile\.journey-search-target \{ height: 86%/);

@@ -12,11 +12,6 @@ on:
         required: true
         default: true
         type: boolean
-      skip_tests:
-        description: Export the device IPA only, without simulator or interaction tests
-        required: true
-        default: true
-        type: boolean
       export_method:
         description: Signed export method
         required: true
@@ -26,6 +21,8 @@ on:
           - release-testing
           - app-store-connect
           - debugging
+  push:
+    tags: ["v*"]
 
 permissions:
   contents: read
@@ -82,7 +79,6 @@ jobs:
         run: npx cap sync ios
 
       - name: Archive iOS Simulator app
-        if: inputs.skip_tests != true
         run: |
           xcodebuild \
             -project ios/App/App.xcodeproj \
@@ -99,7 +95,6 @@ jobs:
           mkdir -p build/packages
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" build/packages/flighty-everything-ios-simulator.app.zip
       - name: Upload iOS Simulator package
-        if: inputs.skip_tests != true
         uses: actions/upload-artifact@v7
         with:
           name: flighty-everything-ios-simulator
@@ -108,7 +103,6 @@ jobs:
           retention-days: 30
 
       - name: Verify Simulator full-screen layout in light and dark mode
-        if: inputs.skip_tests != true
         timeout-minutes: 22
         shell: bash
         run: |
@@ -167,7 +161,7 @@ jobs:
           # iPhone geometry, safe areas, real UIKit glass and both appearances.
           cp "$CONTAINER"/Documents/layout-*.json build/ui-qa/
       - name: Upload Simulator visual checks
-        if: always() && inputs.skip_tests != true
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: flighty-ios-ui-qa

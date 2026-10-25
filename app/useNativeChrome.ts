@@ -15,19 +15,16 @@ export function useNativeChrome(screenKey: string, backEnabled: boolean) {
       frame = 0;
       actions.clear();
       const keyboard = document.documentElement.dataset.keyboardOpen === "true";
-      const modal = Boolean(document.querySelector("dialog[open]"));
       const zoomed = Math.abs((window.visualViewport?.scale ?? 1) - 1) > .05;
       const definitions = [
-        { id: "tabs", selector: ".flight-tabbar nav", symbols: ["airplane.circle.fill", "person.2.fill", "book.closed.fill", "globe"], labels: true },
+        { id: "tabs", selector: ".flight-tabbar nav", symbols: ["airplane.circle.fill", "person.2.fill", "book.closed.fill"], labels: true },
         { id: "search", selector: ".search-orb", symbols: ["magnifyingglass"], labels: false },
         { id: "map", selector: ".map-tools", symbols: ["map.fill", "cloud.fill"], labels: false },
         { id: "follow", selector: ".map-follow-button", symbols: ["location.fill"], labels: false },
       ];
       const bars = definitions.flatMap(def => {
         const element = document.querySelector<HTMLElement>(def.selector);
-        if (!element || keyboard || modal || zoomed || !element.getClientRects().length) return [];
-        if ((def.id === "map" || def.id === "follow") && element.closest(".map-controls-hidden")) return [];
-        if ((def.id === "tabs" || def.id === "search") && element.closest(".sheet-expanded")) return [];
+        if (!element || keyboard || zoomed || !element.getClientRects().length) return [];
         const bounds = element.getBoundingClientRect();
         if (!bounds.width || !bounds.height) return [];
         const buttons = element instanceof HTMLButtonElement ? [element] : [...element.querySelectorAll<HTMLButtonElement>("button")];
@@ -72,9 +69,6 @@ export function useNativeChrome(screenKey: string, backEnabled: boolean) {
     for (const element of document.querySelectorAll(".flighty-device, .flight-tabbar, .map-tools, .map-follow-button, .primary-panel, .mobile-journey-detail-target")) observer.observe(element);
     const settings = new MutationObserver(schedule);
     settings.observe(document.documentElement, { attributes: true, attributeFilter: ["data-keyboard-open", "data-native-system-theme", "data-theme"] });
-    settings.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
-    const page = document.querySelector(".flighty-page");
-    if (page) settings.observe(page, { attributes: true, attributeFilter: ["class", "style"] });
     window.addEventListener("flighty-native-chrome-action", action);
     window.addEventListener("flighty-native-ready", schedule);
     window.addEventListener("resize", schedule);

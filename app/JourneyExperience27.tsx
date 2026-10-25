@@ -40,7 +40,7 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
   const { state } = store;
   const appearance = useAppearance();
   const { preferences, update: updatePreferences, reset: resetPreferences } = useJourneyPreferences();
-  const [surface, setSurface] = useState<Surface>("discover");
+  const [surface, setSurface] = useState<Surface>("mine");
   const [immersive, setImmersive] = useState(false);
   const [composerOpen, setComposerOpen] = useState(false);
   const [controlsOpen, setControlsOpen] = useState(false);
@@ -171,11 +171,11 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
       </section>
 
       <header className="journey-glass-bar liquid-glass-control">
-        <a className="journey-wordmark" href="#top" aria-label="fly everything 首页" onClick={(event) => {
+        <a className="journey-wordmark" href="#top" aria-label="flighty Everything 首页" onClick={(event) => {
+          if (!onHome) return;
           event.preventDefault();
-          if (onHome) onHome();
-          else window.location.assign("/");
-        }}><span><SFGlobeAsiaAustraliaFill size="sm" /></span><b>fly</b><em>everything</em></a>
+          onHome();
+        }}><span><SFGlobeAsiaAustraliaFill size="sm" /></span><b>flighty</b><em>Everything</em></a>
         <nav aria-label="行程视图">
           <button className={surface === "mine" ? "active" : ""} onClick={() => setSurface("mine")}>我的行程</button>
           <button className={surface === "discover" ? "active" : ""} onClick={() => setSurface("discover")}>社区</button>
@@ -216,13 +216,13 @@ export default function JourneyExperience27({ onHome, onOpenCommunity }: {
       {selected && !immersive && (
         <aside className={`journey-live-preview ${surface}`} style={{ "--journey-accent": MODE_META[selected.mode].color } as CSSProperties}>
           <div className="journey-live-model"><span><JourneyModeIcon mode={selected.mode} /></span></div>
-          <div><small>{surface === "mine" ? "旅程动画预览" : `${selectedCommunity?.creatorName ?? "旅行者"} 分享`}</small><strong>{selected.title}</strong><span>{selected.origin.code}<i />{selected.destination.code}</span></div>
+          <div><small>{surface === "mine" ? "LIVE 3D JOURNEY" : `${selectedCommunity?.creatorName ?? "旅行者"} 分享`}</small><strong>{selected.title}</strong><span>{selected.origin.code}<i />{selected.destination.code}</span></div>
         </aside>
       )}
 
       <section className={`journey-card-dock ${surface}`} aria-label={surface === "mine" ? "我的行程列表" : "社区行程列表"}>
         {surface === "mine" && <TripPassportStrip trips={state.trips} activeTripId={state.activeTripId} onSelect={store.selectTrip} onCreate={() => { store.createTrip(); setComposerOpen(true); }} onManage={() => setTripManagerOpen(true)} />}
-        <header><div><small>{surface === "mine" ? "我的旅程" : "旅行社区"}</small><strong>{surface === "mine" ? "我的行程" : "社区分享"}</strong></div><span>{mapSegments.length} 条路线</span></header>
+        <header><div><small>{surface === "mine" ? "YOUR JOURNEYS" : "COMMUNITY"}</small><strong>{surface === "mine" ? "我的行程" : "社区分享"}</strong></div><span>{mapSegments.length} 条路线</span></header>
         <div className="journey-card-rail">
           {surface === "mine" ? state.segments.map((segment) => (
             <JourneyCard key={segment.id} segment={segment} active={segment.id === selectedMine?.id} roadTraffic={roadTraffic[segment.id]} onClick={() => store.selectSegment(segment.id)} />

@@ -1,54 +1,96 @@
-# fly everything
+# flighty Everything
 
-飞机、火车、汽车与轮船的多交通旅行规划应用。React 19 / TypeScript / Vite（vinext）+ Capacitor 8，保留 iOS、Android 和 Web 的最新源码。
+## 最新动态演示（浏览器 GIF）
 
-## 仓库状态
+**[四段 GIF、演示行程与录制说明](docs/demos/README.md)** · [录制来源与校验](docs/demos/manifest.json)
 
-- 公开仓库：**[WanKun824/flighty-everything](https://github.com/WanKun824/flighty-everything)**。
-- 最新业务代码已统一到 **`main`**，不需要再切换旧演示/打包分支。
-- 仓库不保留旧发布、版本标签、截图、GIF、录屏或生成的安装包/压缩包。
-- 当前**没有可下载的 IPA、APK、AAB、Web 包或源码交付 ZIP**。iOS/Android 目录是工程源码，不是安装包。
-- 打包工作流仅允许手动触发，普通 push/tag 不再自动生成包。浏览器回归测试默认不保存截图或 trace。
-- 应用必需的品牌图标、3D 模型、纹理和 Gradle wrapper 属于源码依赖，继续保留。
-- 没有强制重写 Git 历史；旧提交不作为当前版本或下载资产维护。
+| 飞机飞行 | 全球机场 |
+| --- | --- |
+| <img src="docs/demos/flight.gif" width="260" alt="飞机飞行：浏览器 GIF，非 iOS 录屏" /> | <img src="docs/demos/airports.gif" width="260" alt="全球机场搜索与定位：浏览器 GIF" /> |
+| 行程统计 | 四种交通方式切换 |
+| <img src="docs/demos/statistics.gif" width="260" alt="行程统计：浏览器 GIF" /> | <img src="docs/demos/journeys.gif" width="260" alt="飞机火车汽车轮船：浏览器 GIF" /> |
 
-## 功能
+新增 **3 组、8 段**虚构演示记录，覆盖 4 种交通、10 个地点、7,160 km、25 小时及 2025/2026 年份统计。只在新存储首次启动显示，不覆盖已有行程。
 
-- 多交通方式旅程、地点/机场搜索、地图及 3D 载具模拟预览。
-- 四项主导航：行程、同行、旅迹、社区。
-- 行程添加、草稿保存、删除确认与撤销、本机持久化。
-- 旅迹年份筛选、里程、时长、频率和载具统计。
-- 新环境包含三组、八段明确标为虚构的演示记录，覆盖四种交通方式；已有用户数据不自动插入样例或被覆盖。
-- UIKit 控件、安全区、返回手势、触觉及前台定位桥接。不是全量 SwiftUI 应用。
+本默认分支仅同步图册和 Markdown；体验最新界面/样例请使用 **[build/ios-ui-20261018 演示分支](https://github.com/WanKun824/flighty-everything/tree/build/ios-ui-20261018)**。录制为实际 Chrome 画面，不是 iOS 录屏；旧 IPA 不包含本次新样例。以下功能和安装包说明保留此默认分支的原版本含义。
 
-## 本地运行
+一套以 Flighty 视觉语言重新设计的多交通旅行产品：保留 iOS 移动端，同时提供完整的中文网页工作台，并把飞机、火车、汽车与轮船连接成同一条可操作旅程。
 
-需要 Node.js **22.13+**、npm、Git。Windows 可使用 `npm.cmd`。
+## Product features
 
-```sh
-git clone https://github.com/WanKun824/flighty-everything.git
-cd flighty-everything
+- Three-column desktop journey workbench with live routes, date/mode filters, companions and travel statistics
+- Unified airplane, train, car and ferry data model with persistent add, complete and delete flows
+- iOS-style mobile journey timeline, multi-transport passport and interactive 3D vehicle details
+- Flight number/route search, calendar import, airports, favorites and Flighty-style friend invites
+- Interactive Mapbox globe with animated multi-transport vehicles, satellite/street/Mapbox Traffic layers, and RainViewer weather radar
+- Apple SF Symbols throughout the interface
+- Three-detent, haptic mobile sheets with iOS material effects and reduced-motion support
+- Responsive web UI plus Capacitor iOS and Android shells
+
+## Run locally
+
+Node.js 22.13 or newer is required.
+
+```bash
 npm ci
 npm run dev
 ```
 
-## 检查
+Open the local URL printed by the development server.
 
-```sh
+## Validate
+
+```bash
+npm run build
 npm test
-npx tsc --noEmit -p tsconfig.json
-npx playwright test
 npm run lint
+npx tsc --noEmit
 ```
 
-浏览器测试使用本机 Chrome、隔离存储及部分离线策略，不等于真机验收。Lint 尚有既有错误和警告；没有关闭规则或宣称全部 UI/质量门槛通过。
+## Native shells
 
-## 文档
+```bash
+npm run native:sync
+npm run android:debug
+npm run ios:sync
+```
 
-- [开发、配置与按需构建](docs/开发与打包说明.md)
-- [当前保留内容与已知限制](docs/交付清单与已知限制.md)
-- [代码与文档导航](docs/README.md)
-- [UI/UX 方案及未完成项](docs/UI-UX-改进计划.md)
-- [素材许可](MODEL_LICENSES.md)
+The Capacitor display name is `flighty Everything` on both platforms.
 
-本次清理仅针对本公开仓库及本地项目生成产物；私有镜像未修改。GitHub 自动提供的源码下载功能不等同于本项目发布了构建包。
+## GitHub packages
+
+The Actions page exposes two downloadable build pipelines:
+
+- **Package Web Build** validates the app and uploads a deployable `flighty-everything-web-*.tar.gz` artifact.
+- **Package iOS Client** always uploads an iOS Simulator `.app.zip`. When Apple signing secrets are configured, it additionally archives and exports an installable signed IPA with Xcode's current `release-testing`, `app-store-connect`, or `debugging` export method.
+
+To enable signed IPA export, add these repository Actions secrets:
+
+| Secret | Value |
+| --- | --- |
+| `IOS_CERTIFICATE_BASE64` | Base64-encoded Apple distribution or development `.p12` |
+| `IOS_CERTIFICATE_PASSWORD` | Password for the `.p12` |
+| `IOS_PROVISIONING_PROFILE_BASE64` | Base64-encoded provisioning profile for `com.wankun824.flightyeverything` |
+| `IOS_TEAM_ID` | Apple Developer Team ID |
+| `IOS_KEYCHAIN_PASSWORD` | Optional temporary CI keychain password |
+| `NEXT_PUBLIC_MAPBOX_TOKEN` | Optional restricted public Mapbox token |
+
+## Main files
+
+| File                      | Responsibility                                                  |
+| ------------------------- | --------------------------------------------------------------- |
+| `app/page.tsx`            | Responsive web/iOS routing and mobile interaction flows         |
+| `app/DesktopJourney.tsx`  | Desktop journey workbench, companions and statistics            |
+| `app/MobileJourney.tsx`   | iOS journey timeline, passport and detail screens               |
+| `app/JourneyComposer.tsx` | Shared four-mode journey creation flow                          |
+| `app/FlightGlobe.tsx`     | Mapbox globe, journey routes, airport markers, and radar layers |
+| `app/flightyData.ts`      | Airport, airline, flight, and statistics models                 |
+| `app/flightyStorage.ts`   | Versioned local persistence and mutations                       |
+| `app/journeyData.ts`      | Unified multi-transport journey model                           |
+| `app/journeyStorage.ts`   | Versioned journey persistence and mutations                     |
+| `app/globals.css`         | Calibrated desktop and iOS visual system                        |
+| `tests/`                  | Data, geometry, rendering, and behavior coverage                |
+
+## External data
+
+The project uses Mapbox for the globe and RainViewer for radar tiles. Configure `NEXT_PUBLIC_MAPBOX_TOKEN` in `.env.local` when replacing the bundled public demo token with your own restricted public token.

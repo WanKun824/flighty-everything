@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import SFCellularbars from "sf-symbols-lib/monochrome/SFCellularbars";
 import SFWifi from "sf-symbols-lib/monochrome/SFWifi";
 import SFBattery100percent from "sf-symbols-lib/monochrome/SFBattery100percent";
@@ -9,12 +9,11 @@ import SFLine3Horizontal from "sf-symbols-lib/monochrome/SFLine3Horizontal";
 import SFListBullet from "sf-symbols-lib/monochrome/SFListBullet";
 import SFPencil from "sf-symbols-lib/monochrome/SFPencil";
 import SFSquareAndArrowUp from "sf-symbols-lib/monochrome/SFSquareAndArrowUp";
+import SFXmark from "sf-symbols-lib/monochrome/SFXmark";
 import { JourneyModeIcon } from "./JourneyComposer";
 import { MODE_META, journeyStats, type JourneyMode } from "./journeyData";
 import type { JourneyTrip } from "./journeyStorage";
-import { passportTrips, passportYears, travelDate } from "./journeyLifecycle";
 import PassportWorldMap from "./PassportWorldMap";
-import SheetHeader from "./SheetHeader";
 
 const formatDuration = (minutes: number) => {
   const hours = Math.floor(minutes / 60);
@@ -23,8 +22,7 @@ const formatDuration = (minutes: number) => {
 };
 
 const tripDate = (trip: JourneyTrip) => {
-  const raw = trip.segments.map(travelDate).filter(Boolean).sort().at(-1);
-  if (!raw) return "日期待补充";
+  const raw = trip.savedToPassportAt ?? trip.createdAt;
   const date = new Date(raw);
   return Number.isNaN(date.valueOf())
     ? "已保存"
@@ -38,9 +36,7 @@ export default function JourneyPassportTarget({
   onEdit,
   onOpenStats,
   onShare,
-  compact = false,
 }: {
-  compact?: boolean;
   trips: JourneyTrip[];
   activeTripId: string;
   onSelect: (id: string) => void;
@@ -48,10 +44,12 @@ export default function JourneyPassportTarget({
   onOpenStats: () => void;
   onShare: () => void;
 }) {
-  const [period, setPeriod] = useState<string>("all");
+  const [period, setPeriod] = useState<"all" | "2026">("all");
   const [view, setView] = useState<"list" | "compact">("list");
-  const years = passportYears(trips);
-  const visibleTrips = passportTrips(trips, compact ? "all" : period);
+  const savedTrips = useMemo(() => trips.filter((trip) => Boolean(trip.savedToPassportAt)), [trips]);
+  const visibleTrips = period === "all"
+    ? savedTrips
+    : savedTrips.filter((trip) => (trip.savedToPassportAt ?? trip.createdAt).startsWith("2026"));
   const segments = visibleTrips.flatMap((trip) => trip.segments);
   const stats = journeyStats(segments);
   const modeCounts = (Object.keys(MODE_META) as JourneyMode[])
@@ -59,18 +57,19 @@ export default function JourneyPassportTarget({
     .sort((a, b) => b.count - a.count);
   const topMode = modeCounts[0]?.mode ?? "flight";
   const topModeCount = modeCounts[0]?.count ?? 0;
+  const completion = stats.segments ? Math.round((stats.completed / stats.segments) * 100) : 0;
 
   return (
     <div className="passport-target-scroll">
       <div className="passport-period-switch" role="tablist" aria-label="旅迹统计时间">
         <button role="tab" aria-selected={period === "all"} className={period === "all" ? "active" : ""} onClick={() => setPeriod("all")}>全部</button>
-        {years.map(year => <button key={year} role="tab" aria-selected={period === year} className={period === year ? "active" : ""} onClick={() => setPeriod(year)}>{year === "unknown" ? "日期待补充" : year}</button>)}
+        <button role="tab" aria-selected={period === "2026"} className={period === "2026" ? "active" : ""} onClick={() => setPeriod("2026")}>2026</button>
       </div>
 
       <section className="passport-summary-card">
         <button className="passport-card-share" aria-label="分享旅行护照" onClick={onShare}><SFSquareAndArrowUp size="sm" /></button>
-        <small>{compact || period === "all" ? "全部时间" : period === "unknown" ? "日期待补充" : `${period}年`} · 我的旅迹</small>
-        <p>每一段路，都值得记录</p>
+        <small>ALL-TIME FLIGHTY PASSPORT</small>
+        <p>护照 · PASSPORT · 旅迹</p>
         <div className="passport-summary-grid">
           <span><small>行程段</small><strong>{stats.segments}</strong><em>{stats.modes} 种交通方式</em></span>
           <span><small>总里程</small><strong>{stats.distanceKm.toLocaleString("zh-CN")}<i> km</i></strong><em>{(stats.distanceKm / 40075).toFixed(2)}x 环绕地球</em></span>
@@ -83,20 +82,25 @@ export default function JourneyPassportTarget({
 
       <section className="passport-progress-card">
         <button className="passport-card-share" aria-label="分享完成统计" onClick={onShare}><SFSquareAndArrowUp size="sm" /></button>
-        <strong>{visibleTrips.length}</strong>
-        <h2>留下足迹的旅程</h2>
-        <p>{stats.completed} 段已完成 · 计划和回放不计入统计</p>
-        <button className="passport-card-link" onClick={onOpenStats}><span>查看旅行记录</span><SFChevronRight size="sm" /></button>
+        <strong>{completion}<i>%</i></strong>
+        <h2>行程已完成</h2>
+        <p>{stats.completed} 段完成 · {Math.max(0, stats.segments - stats.completed)} 段待出发</p>
+        <button className="passport-card-link" onClick={onOpenStats}><span>查看行程进度</span><SFChevronRight size="sm" /></button>
       </section>
 
       <section className="passport-vehicle-card" style={{ "--vehicle-color": MODE_META[topMode].color } as CSSProperties}>
         <button className="passport-card-share" aria-label="分享载具统计" onClick={onShare}><SFSquareAndArrowUp size="sm" /></button>
         <h2>最常用载具</h2>
-        <strong>{topModeCount ? MODE_META[topMode].label : "暂无记录"}</strong>
+        <strong>{MODE_META[topMode].label}</strong>
         <p>{topModeCount} 段 · {MODE_META[topMode].shortLabel}</p>
         <div className="passport-vehicle-stage" aria-hidden="true"><span><JourneyModeIcon mode={topMode} /></span></div>
         <button className="passport-card-link" onClick={onOpenStats}><span>全部载具统计</span><SFChevronRight size="sm" /></button>
       </section>
+
+      <button className="passport-stats-cta" onClick={onOpenStats}>
+        <span><b>完整旅行地图与统计</b><small>查看路线、里程、时间与载具排行</small></span>
+        <SFChevronRight size="sm" />
+      </button>
 
       <section className="passport-past-trips">
         <header>
@@ -106,7 +110,7 @@ export default function JourneyPassportTarget({
             <button className={view === "compact" ? "active" : ""} aria-label="紧凑显示" onClick={() => setView("compact")}><SFLine3Horizontal size="sm" /></button>
           </div>
         </header>
-        <div className="passport-sort-row"><span>按旅行日期</span></div>
+        <div className="passport-sort-row"><button>日期 ↓</button><span>起点</span><span>终点</span><span>载具</span></div>
         <div className={`passport-trip-list ${view}`}>
           {visibleTrips.map((trip) => {
             const tripStats = journeyStats(trip.segments);
@@ -124,7 +128,7 @@ export default function JourneyPassportTarget({
               </article>
             );
           })}
-          {!visibleTrips.length && <p className="passport-empty-state">这个时间段还没有完成的路段。完成行程后会自动出现在这里。</p>}
+          {!visibleTrips.length && <p className="passport-empty-state">这个时间段还没有保存的旅迹。</p>}
         </div>
       </section>
     </div>
@@ -142,17 +146,19 @@ export function JourneyPassportStatsTarget({
   onClose: () => void;
   onShare: () => void;
 }) {
-  const [period, setPeriod] = useState<string>("all");
+  const [period, setPeriod] = useState<"all" | "2026">("all");
   const [frequency, setFrequency] = useState<"weekday" | "month">("weekday");
   const [clock, setClock] = useState(() => new Date());
   useEffect(() => { const timer = window.setInterval(() => setClock(new Date()), 30_000); return () => window.clearInterval(timer); }, []);
-  const years = passportYears(trips);
-  const visibleTrips = passportTrips(trips, period);
+  const savedTrips = trips.filter((trip) => Boolean(trip.savedToPassportAt));
+  const visibleTrips = period === "all"
+    ? savedTrips
+    : savedTrips.filter((trip) => (trip.savedToPassportAt ?? trip.createdAt).startsWith("2026"));
   const segments = visibleTrips.flatMap((trip) => trip.segments);
   const stats = journeyStats(segments);
-  const weekdayCounts = weekDays.map((_, index) => segments.filter(segment => { const date = travelDate(segment); return date ? new Date(`${date}T12:00:00Z`).getUTCDay() === index : false; }).length);
+  const weekdayCounts = weekDays.map((day) => segments.filter((segment) => segment.date.includes(`周${day}`)).length);
   const monthCounts = Array.from({ length: 12 }, (_, month) => segments.filter(segment => {
-    const value = travelDate(segment) ?? "";
+    const value = segment.operational?.scheduledDepartureAt ?? segment.date;
     const match = value.match(/^(?:\d{4}-)?(\d{1,2})(?:月|-)/);
     return Number(match?.[1]) === month + 1;
   }).length);
@@ -182,18 +188,22 @@ export function JourneyPassportStatsTarget({
       <div className="passport-detail-scroll">
         <section className="passport-detail-hero">
           <div className="passport-detail-status" aria-hidden="true"><strong>{clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })}</strong><span><SFCellularbars size="xs" /><SFWifi size="xs" /><SFBattery100percent size="sm" /></span></div>
-          <SheetHeader className="passport-detail-header" title="旅迹统计" back backLabel="返回旅迹" onClose={onClose} onShare={onShare} />
+          <header className="passport-detail-header">
+            <button aria-label="关闭旅迹统计" onClick={onClose}><SFXmark size="md" /></button>
+            <h1>flighty Everything</h1>
+            <button aria-label="分享旅迹统计" onClick={onShare}><SFSquareAndArrowUp size="md" /></button>
+          </header>
           <div className="passport-detail-period" role="tablist" aria-label="统计时间范围">
             <button role="tab" aria-selected={period === "all"} className={period === "all" ? "active" : ""} onClick={() => setPeriod("all")}>全部</button>
-            {years.map(year => <button key={year} role="tab" aria-selected={period === year} className={period === year ? "active" : ""} onClick={() => setPeriod(year)}>{year === "unknown" ? "日期待补充" : year}</button>)}
+            <button role="tab" aria-selected={period === "2026"} className={period === "2026" ? "active" : ""} onClick={() => setPeriod("2026")}>2026</button>
           </div>
           <div className="passport-mode-ribbon" aria-hidden="true">
             {segments.slice(0, 12).map((segment, index) => <span key={`${segment.id}-${index}`} style={{ color: MODE_META[segment.mode].color }}><JourneyModeIcon mode={segment.mode} /></span>)}
           </div>
           <PassportWorldMap key={period} segments={segments} />
           <div className="passport-hero-summary">
-            <small>我的旅迹</small>
-            <p>飞机、火车、汽车与轮船</p>
+            <small>MY FLIGHTY EVERYTHING PASSPORT</small>
+            <p>多载具 · MULTI-MODAL · 旅迹</p>
             <div><span><small>行程段</small><strong>{stats.segments}</strong></span><span><small>总里程</small><strong>{stats.distanceKm.toLocaleString("zh-CN")}<i> km</i></strong></span><span><small>在途时间</small><strong>{formatDuration(stats.durationMinutes)}</strong></span><span><small>地点</small><strong>{stats.places}</strong></span><span><small>载具</small><strong>{stats.modes}</strong></span></div>
           </div>
         </section>

@@ -10,20 +10,19 @@ test("playback completes once, advances in order and preserves completion throug
   assert.doesNotMatch(globe, /elapsed % duration/);
   assert.match(globe, /previousPlayback\?\.key === playbackKey \? previousPlayback\.progress/);
   assert.match(globe, /playback\.completed = true/);
-  assert.match(store, /nextPlaybackSelection\(current\.segments, id\)/);
-  assert.doesNotMatch(store.slice(store.indexOf("const restartTrip"), store.indexOf("const reset")), /status:|progress:/);
+  assert.match(store, /const next = current\.segments\[index \+ 1\]/);
+  assert.match(store, /selectedSegmentId: next\?\.id \?\? id/);
   assert.match(app, /journeyStore\.advanceSegment\(id\)/);
   assert.match(app, /journeyStore\.restartTrip\(\)/);
 });
 
 test("journey creation is explicit and map airplanes do not wobble", async () => {
   const [composer, vehicle, app] = await Promise.all([read("../app/JourneyComposer.tsx"), read("../app/Vehicle3D.tsx"), read("../app/FlightyApp.tsx")]);
-  assert.match(composer, /aria-label="行程所属旅程"/);
-  assert.match(composer, /recentJourneyPlaces\(trips\)/);
+  assert.match(composer, /role="radiogroup" aria-label="选择保存到哪个旅程"/);
+  assert.match(composer, /JOURNEY_PLACES\.slice\(4, 7\)/);
   assert.match(composer, /const validOrigin = originQuery\.trim\(\) === origin\.name/);
-  assert.match(composer, /openPlacePicker/);
-  assert.match(composer, /stagedCount === 0/);
-  assert.match(composer, /routeInputProblem/);
+  assert.match(composer, /if \(!drafts\.length\) setOriginQuery\(""\)/);
+  assert.match(composer, /disabled=\{stagedCount === 0 \|\| Boolean\(destination && !validOrigin\)\}/);
   assert.match(vehicle, /view === "map" && kind === "flight"/);
   assert.match(app, /createTripWithSegments\(tripName, segments\)/);
   assert.match(app, /title="天气图层"/);

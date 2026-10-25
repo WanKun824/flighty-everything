@@ -1,18 +1,14 @@
 "use client";
 
-import type { LocationFix } from "./realJourney";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { AIRPORTS, airportByCode, type Region } from "./flightyData";
+import { AIRPORTS, airportByCode, airportStatusLevel, type Region } from "./flightyData";
 import type { MapLayerMode, WeatherMode } from "./flightyStorage";
 import type { JourneyMode, JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
 import { fetchRoadTraffic, type RoadTrafficRoute } from "./roadTraffic";
-import { pointAt, type LegPath } from "./routeGeometry";
-import Vehicle3D, { preloadVehicle, type VehicleKind } from "./Vehicle3D";
-import { animationDuration, createPlaybackClock, nextVehicleKind } from "./vehiclePlayback";
-import { selectedSegmentCamera } from "./vehicleFollow";
-import { journeySegmentPath } from "./journeyPath";
+import { measure, pointAt, unwrap, type LegPath } from "./routeGeometry";
+import Vehicle3D from "./Vehicle3D";
 import { vehicleStageMotion } from "./vehicleMotion";
 import { createVehicleFollower } from "./vehicleFollow";
 import { loadAirportCatalog, type AirportCatalogEntry } from "./airportCatalog";
@@ -20,7 +16,6 @@ import { loadAirportCatalog, type AirportCatalogEntry } from "./airportCatalog";
 export type BasemapMode = MapLayerMode;
 
 type Props = {
-  userLocation?: LocationFix | null;
   airportsVisible: boolean;
   searchAirports?: boolean;
   airportRegion?: "All" | Region;
@@ -76,7 +71,6 @@ export const BASEMAP_OPTIONS: Array<{ id: BasemapMode; label: string }> = [
 
 export default function FlightGlobe({
   airportsVisible,
-  userLocation = null,
   searchAirports = false,
   airportRegion = "All",
   selectedAirport,
@@ -126,36 +120,10 @@ export default function FlightGlobe({
     onFollowInterrupted,
   });
   const [loaded, setLoaded] = useState(false);
-  const [mapError, setMapError] = useState(false);
-  const [mapRetry, setMapRetry] = useState(0);
   const [styleRevision, setStyleRevision] = useState(0);
   const [radarUpdated, setRadarUpdated] = useState<string | null>(null);
   const [roadTraffic, setRoadTraffic] = useState<Record<string, RoadTrafficRoute>>({});
   const [riderPortal, setRiderPortal] = useState<RiderPortal | null>(null);
-  const riderElementsRef = useRef<{ element: HTMLButtonElement; host: HTMLSpanElement } | null>(null);
-  const riderReadyKindRef = useRef<VehicleKind | null>(null);
-  const handleVehicleReady = useCallback((kind: VehicleKind) => { riderReadyKindRef.current = kind; }, []);
-
-  useEffect(() => {
-    const current = journeySegments.find(segment => segment.id === selectedJourneySegmentId);
-    const nextKind = nextVehicleKind(journeySegments, selectedJourneySegmentId);
-    if (!current || !nextKind) return;
-    let cancelled = false;
-    let idle: number | undefined;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    // Prioritize the visible model; reuse its preparation cache and warm the next one.
-    void preloadVehicle(current.mode).then(() => {
-      if (cancelled) return;
-      const warm = () => { if (!cancelled) void preloadVehicle(nextKind).catch(() => {}); };
-      if ("requestIdleCallback" in window) idle = window.requestIdleCallback(warm, { timeout: 1500 });
-      else timer = setTimeout(warm, 250);
-    }).catch(() => {});
-    return () => {
-      cancelled = true;
-      if (idle !== undefined) window.cancelIdleCallback(idle);
-      if (timer !== undefined) clearTimeout(timer);
-    };
-  }, [journeySegments, selectedJourneySegmentId]);
 
   useEffect(() => {
     if (!searchAirports) return;
@@ -219,9 +187,7 @@ export default function FlightGlobe({
         zoom: 2.05,
         pitch: 0,
         bearing: 0,
-        // The full-screen Retina map does not need an extra MSAA framebuffer.
-        // Keep model antialiasing separate; this reduces iOS follow GPU work.
-        antialias: !document.documentElement.hasAttribute("data-native-shell"),
+        antialias: true,
         attributionControl: false,
         fadeDuration: 0,
       });
@@ -240,12 +206,10 @@ export default function FlightGlobe({
         if (hostRef.current) hostRef.current.dataset.mapReady = "false";
         configureBasemap(map, basemapRef.current, basemapThemeRef.current);
         installProductLayers(map, liveDataRef.current, basemapRef.current);
-        setMapError(false);
         setLoaded(true);
         setStyleRevision((value) => value + 1);
       });
 
-      map.on("error", () => { if (!disposed && !map.isStyleLoaded()) setMapError(true); });
       map.on("idle", () => {
         if (!disposed && hostRef.current) hostRef.current.dataset.mapReady = "true";
       });
@@ -264,7 +228,7 @@ export default function FlightGlobe({
       map.on("mouseleave", "flighty-airport-dots", () => {
         map.getCanvas().style.cursor = "";
       });
-    }).catch(() => { if (!disposed) setMapError(true); });
+    });
 
     return () => {
       disposed = true;
@@ -272,7 +236,7 @@ export default function FlightGlobe({
       mapboxRef.current = null;
       instance?.remove();
     };
-  }, [mapRetry]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -353,33 +317,33 @@ export default function FlightGlobe({
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
-    if (!segment || segment.travelPlan?.mode === "real") {
-      setRiderPortal(null);
-      riderReadyKindRef.current = null;
-      return;
-    }
+    if (!segment) return;
     const road = roadTraffic[segment.id]?.coordinates;
-    const path: LegPath = journeySegmentPath(segment, road);
-    const duration = animationDuration(segment.mode, animationSpeed);
+    const coordinates = road ?? greatCircleCoordinates(
+      segment.origin.coordinate,
+      segment.destination.coordinate,
+      128,
+    );
+    const path: LegPath = measure(
+      segment.mode,
+      unwrap(coordinates),
+      road ? "road" : "geodesic",
+    );
+    const duration = animationDuration(segment.mode) / Math.max(0.25, animationSpeed);
 
-    // Keep the portal target stable: road-data updates must not rebuild WebGL.
-    if (!riderElementsRef.current) {
-      const element = document.createElement("button");
-      element.type = "button";
-      const host = document.createElement("span");
-      host.className = "journey-vehicle-3d-host";
-      element.appendChild(host);
-      element.addEventListener("click", () => {
-        const id = liveDataRef.current.selectedJourneySegmentId;
-        if (id) callbacksRef.current.onJourneySegmentSelect?.(id);
-      });
-      riderElementsRef.current = { element, host };
-    }
-    const { element, host: modelHost } = riderElementsRef.current;
+    const element = document.createElement("button");
+    element.type = "button";
     element.className = `journey-vehicle-3d-marker ${segment.mode}`;
     element.style.setProperty("--vehicle-3d-size", `${104 * vehicleScale}px`);
-    element.setAttribute("aria-label", `${segment.title} · ${transportLabel(segment.mode)}正在准备`);
-    if (riderReadyKindRef.current !== segment.mode) riderReadyKindRef.current = null;
+    element.setAttribute(
+      "aria-label",
+      `${segment.title} · ${transportLabel(segment.mode)}正在路线中移动`,
+    );
+    element.addEventListener("click", () => callbacksRef.current.onJourneySegmentSelect?.(segment.id));
+
+    const modelHost = document.createElement("span");
+    modelHost.className = "journey-vehicle-3d-host";
+    element.appendChild(modelHost);
     let publishedHeading = Number.NaN;
     setRiderPortal({ host: modelHost, segment, heading: 0, progress: segment.progress });
 
@@ -419,27 +383,19 @@ export default function FlightGlobe({
       : Math.max(0, Math.min(1, segment.progress));
     const playback = { key: playbackKey, progress: initialProgress, completed: previousPlayback?.key === playbackKey && previousPlayback.completed };
     playbackRef.current = playback;
-    const playbackClock = createPlaybackClock(initialProgress);
-    const pauseClock = () => { playbackClock(performance.now(), duration, false); };
-    document.addEventListener("visibilitychange", pauseClock);
+    const startedAt = performance.now() - duration * initialProgress;
     let frame = 0;
     let completed = playback.completed;
     let publishedProgressAt = 0;
     let publishedStatusAt = 0;
     let publishedStage = "";
     let publishedTrail = "";
-    const nativeFrameInterval = document.documentElement.hasAttribute("data-native-shell") ? 1000 / 60 : 0;
-    let lastAnimationAt = -Infinity;
     const animate = (now: number) => {
-      // ProMotion can call rAF at 120 Hz. Do not invalidate the entire globe
-      // twice per display budget. Playback still uses elapsed time, not frames.
-      if (document.hidden || now - lastAnimationAt < nativeFrameInterval - .5) {
-        frame = requestAnimationFrame(animate);
-        return;
+      let moving = initialProgress;
+      if (!reduceMotion.matches && motionEnabled) {
+        const elapsed = now - startedAt;
+        moving = Math.min(1, elapsed / duration);
       }
-      lastAnimationAt = now;
-      const ready = riderReadyKindRef.current === segment.mode;
-      const moving = playbackClock(now, duration, ready && !reduceMotion.matches && motionEnabled && !document.hidden);
       playback.progress = moving;
       if (now - publishedStatusAt >= 1000 || moving >= 1) {
         publishedStatusAt = now;
@@ -489,22 +445,10 @@ export default function FlightGlobe({
 
     return () => {
       cancelAnimationFrame(frame);
-      document.removeEventListener("visibilitychange", pauseClock);
       marker.remove();
-      element.remove();
+      setRiderPortal((current) => current?.host === modelHost ? null : current);
     };
   }, [journeySegments, selectedJourneySegmentId, journeySelectionToken, roadTraffic, loaded, vehicleScale, animationSpeed, motionEnabled]);
-
-  useEffect(() => {
-    const map = mapRef.current, mapboxgl = mapboxRef.current;
-    if (!map || !mapboxgl || !loaded || !userLocation) return;
-    const element = document.createElement("span");
-    element.className = "real-user-location"; element.setAttribute("role", "img"); element.setAttribute("aria-label", "我的实时位置");
-    const coordinate: [number, number] = [userLocation.longitude, userLocation.latitude];
-    const marker = new mapboxgl.Marker({ element, anchor: "center" }).setLngLat(coordinate).addTo(map);
-    if (followVehicleRef.current && !map.isZooming()) map.jumpTo({ center: coordinate });
-    return () => { marker.remove(); };
-  }, [userLocation, loaded, styleRevision, followVehicle]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -524,16 +468,29 @@ export default function FlightGlobe({
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !loaded || !selectedJourneySegmentId || followVehicleRef.current) return;
+    if (preserveCameraAfterStyleChangeRef.current) {
+      preserveCameraAfterStyleChangeRef.current = false;
+      return;
+    }
     const segment = journeySegments.find(
       (item) => item.id === selectedJourneySegmentId,
     );
     if (!segment) return;
-    // Selection pans only. Do not frame the whole route or overwrite zoom/pitch/bearing.
-    const progress = playbackRef.current?.progress ?? 0;
-    const path = journeySegmentPath(segment, roadTraffic[segment.id]?.coordinates);
-    map.jumpTo(selectedSegmentCamera(pointAt(path, progress).coordinate));
-    // Geometry/traffic/style updates must not recenter a user's manually moved map.
-  }, [selectedJourneySegmentId, journeySelectionToken, loaded]);
+    const route = unwrap(greatCircleCoordinates(
+      segment.origin.coordinate,
+      segment.destination.coordinate,
+      96,
+    ));
+    const longitudes = route.map(([longitude]) => longitude);
+    const latitudes = route.map(([, latitude]) => latitude);
+    map.fitBounds(
+      [
+        [Math.min(...longitudes), Math.min(...latitudes)],
+        [Math.max(...longitudes), Math.max(...latitudes)],
+      ],
+      { padding: 110, maxZoom: 7, duration: 850, essential: true },
+    );
+  }, [selectedJourneySegmentId, journeySelectionToken, journeySegments, loaded, styleRevision]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -661,8 +618,6 @@ export default function FlightGlobe({
       {riderPortal && createPortal(
         <Vehicle3D
           kind={riderPortal.segment.mode}
-          onReady={handleVehicleReady}
-          retryToken={journeySelectionToken}
           view="map"
           heading={riderPortal.heading}
           progress={riderPortal.progress}
@@ -671,7 +626,7 @@ export default function FlightGlobe({
         />,
         riderPortal.host,
       )}
-      {mapError ? <div className="globe-error" role="status"><span>地图暂不可用，已保存的行程仍可查看</span><button onClick={() => { setMapError(false); setLoaded(false); setMapRetry(value => value + 1); }}>重新加载地图</button></div> : <div className="globe-loading">正在载入实时地球…</div>}
+      <div className="globe-loading">正在载入实时地球…</div>
       {weatherMode !== "none" && (
         <div className="weather-legend">
           <span>雨</span><i className="green" /><i className="yellow" /><i className="orange" /><i className="red" /><i className="pink" />
@@ -879,12 +834,16 @@ function airportFeatures(selectedAirport: string | null, region: "All" | Region 
         selected: airport.code === selectedAirport,
         minZoom: 0,
         catalog: false,
-        color: airport.code === selectedAirport ? "#0a84ff" : "#8e8e93",
+        color: airportStatusLevel(airport) === "severe"
+          ? "#ff375f"
+          : airportStatusLevel(airport) === "warning"
+            ? "#ff9f0a"
+            : "#24c78a",
       },
       geometry: { type: "Point" as const, coordinates: airport.coordinate },
     })), ...catalog.filter(airport => !known.has(airport.code)).map(airport => ({
       type: "Feature" as const,
-      properties: { code: airport.code, selected: airport.code === selectedAirport, minZoom: airport.code === selectedAirport ? 0 : airport.minZoom, catalog: true, color: airport.code === selectedAirport ? "#0a84ff" : "#8e8e93" },
+      properties: { code: airport.code, selected: airport.code === selectedAirport, minZoom: airport.code === selectedAirport ? 0 : airport.minZoom, catalog: true, color: "#39a7ef" },
       geometry: { type: "Point" as const, coordinates: airport.coordinate },
     }))],
   };
@@ -916,7 +875,7 @@ function journeyLineFeatures(
         },
         geometry: {
           type: "LineString" as const,
-          coordinates: journeySegmentPath(segment, traffic?.coordinates).coordinates,
+          coordinates: unwrap(traffic?.coordinates ?? greatCircleCoordinates(segment.origin.coordinate, segment.destination.coordinate)),
         },
       };
     }),
@@ -929,6 +888,34 @@ function congestionColor(levels: RoadTrafficRoute["congestion"]) {
   if (levels.includes("moderate")) return "#ffd60a";
   if (levels.includes("low")) return "#30d158";
   return "#ff453a";
+}
+
+function greatCircleCoordinates(a: [number, number], b: [number, number], steps = 48) {
+  const points: [number, number][] = [];
+  const radians = (value: number) => (value * Math.PI) / 180;
+  const degrees = (value: number) => (value * 180) / Math.PI;
+  const aVector = vector(radians(a[0]), radians(a[1]));
+  const bVector = vector(radians(b[0]), radians(b[1]));
+  const angle = Math.acos(Math.min(1, Math.max(-1, aVector[0] * bVector[0] + aVector[1] * bVector[1] + aVector[2] * bVector[2])));
+  for (let index = 0; index <= steps; index += 1) {
+    const ratio = index / steps;
+    const sinAngle = Math.sin(angle);
+    const left = angle < 1e-6 ? 1 - ratio : Math.sin((1 - ratio) * angle) / sinAngle;
+    const right = angle < 1e-6 ? ratio : Math.sin(ratio * angle) / sinAngle;
+    const x = left * aVector[0] + right * bVector[0];
+    const y = left * aVector[1] + right * bVector[1];
+    const z = left * aVector[2] + right * bVector[2];
+    points.push([degrees(Math.atan2(y, x)), degrees(Math.atan2(z, Math.hypot(x, y)))]);
+  }
+  return points;
+}
+
+function vector(longitude: number, latitude: number): [number, number, number] {
+  return [Math.cos(latitude) * Math.cos(longitude), Math.cos(latitude) * Math.sin(longitude), Math.sin(latitude)];
+}
+
+function animationDuration(mode: JourneyMode) {
+  return { flight: 18_000, train: 25_000, car: 31_000, ferry: 36_000 }[mode];
 }
 
 function transportLabel(mode: JourneyMode) {

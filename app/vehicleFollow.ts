@@ -36,8 +36,3 @@ export function createVehicleFollower(camera: FollowCamera, anchor: VehicleAncho
     return false;
   };
 }
-
-/** Selecting a segment has exactly the same camera invariants as following it. */
-export function selectedSegmentCamera(center: Coordinate) {
-  return { center };
-}

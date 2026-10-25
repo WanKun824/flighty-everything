@@ -1,63 +1,6 @@
 import UIKit
 import Capacitor
 import WebKit
-import CoreLocation
-// Foreground-only, explicitly started by the bundled app after the user taps Locate.
-final class FlightyLocationHandler: NSObject, WKScriptMessageHandler, CLLocationManagerDelegate {
-    private weak var owner: FlightyBridgeViewController?
-    private let manager = CLLocationManager()
-    private var requestID: String?
-    init(owner: FlightyBridgeViewController) {
-        self.owner = owner
-        super.init()
-        manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.distanceFilter = kCLDistanceFilterNone
-        manager.allowsBackgroundLocationUpdates = false
-        NotificationCenter.default.addObserver(self, selector: #selector(pause), name: UIApplication.didEnterBackgroundNotification, object: nil)
-    }
-    deinit { NotificationCenter.default.removeObserver(self); manager.stopUpdatingLocation() }
-    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
-        guard message.frameInfo.isMainFrame, message.webView === owner?.webView,
-              message.webView?.url?.scheme == "capacitor", message.webView?.url?.host == "localhost",
-              let body = message.body as? [String: Any], let id = body["id"] as? String else { return }
-        if body["action"] as? String == "stop" {
-            if requestID == id { manager.stopUpdatingLocation(); requestID = nil }
-            return
-        }
-        guard body["action"] as? String == "start", UIApplication.shared.applicationState == .active else { return }
-        requestID = id
-        switch manager.authorizationStatus {
-        case .notDetermined: manager.requestWhenInUseAuthorization()
-        case .authorizedWhenInUse, .authorizedAlways: manager.startUpdatingLocation()
-        default: emit(["error": 1])
-        }
-    }
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        guard requestID != nil, UIApplication.shared.applicationState == .active else { return }
-        switch manager.authorizationStatus {
-        case .authorizedWhenInUse, .authorizedAlways: manager.startUpdatingLocation()
-        case .denied, .restricted: manager.stopUpdatingLocation(); emit(["error": 1])
-        default: break
-        }
-    }
-    @objc private func pause() { manager.stopUpdatingLocation() }
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard UIApplication.shared.applicationState == .active, let location = locations.last, location.horizontalAccuracy >= 0 else { return }
-        emit(["fix": ["longitude": location.coordinate.longitude, "latitude": location.coordinate.latitude,
-                       "accuracy": location.horizontalAccuracy, "timestamp": location.timestamp.timeIntervalSince1970 * 1000,
-                       "speed": location.speed >= 0 ? location.speed as Any : NSNull()]])
-    }
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        emit(["error": (error as? CLError)?.code == .denied ? 1 : 2])
-    }
-    private func emit(_ payload: [String: Any]) {
-        guard let id = requestID else { return }
-        var event = payload; event["id"] = id
-        guard let data = try? JSONSerialization.data(withJSONObject: event), let json = String(data: data, encoding: .utf8) else { return }
-        owner?.webView?.evaluateJavaScript("window.dispatchEvent(new CustomEvent('flighty-location',{detail: \(json)}))", completionHandler: nil)
-    }
-}
 
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     var window: UIWindow?
@@ -90,33 +33,9 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
     private var lastQAFingerprint = ""
     private var chromeBars: [String: FlightyGlassBar] = [:]
     private lazy var chromeHandler = FlightyChromeHandler(owner: self)
-    private lazy var locationHandler = FlightyLocationHandler(owner: self)
     private lazy var backGesture = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleBackGesture(_:)))
     private var canNavigateBack = false
     private var isUIQA: Bool { ProcessInfo.processInfo.environment["FLIGHTY_UI_QA"] == "1" }
-    #if targetEnvironment(simulator)
-    private var screenshotTimer: Timer?
-    private var screenshotCommandID = ""
-    private func startScreenshotSession() {
-        guard ProcessInfo.processInfo.environment["FLY_SCREENSHOT_SESSION"] == "1", screenshotTimer == nil else { return }
-        screenshotTimer = Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
-            guard let self, UIApplication.shared.applicationState == .active else { return }
-            let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            guard let data = try? Data(contentsOf: directory.appendingPathComponent("screenshot-command.json")),
-                  let command = try? JSONSerialization.jsonObject(with: data) as? [String: String],
-                  let id = command["id"], id != self.screenshotCommandID, let script = command["script"] else { return }
-            self.screenshotCommandID = id
-            self.webView?.evaluateJavaScript("document.documentElement.dataset.screenshotSession = 'true';\n" + script) { result, error in
-                let payload: [String: Any] = ["id": id, "active": UIApplication.shared.applicationState == .active,
-                    "time": Date().timeIntervalSince1970, "result": result as? String ?? "",
-                    "error": error?.localizedDescription ?? ""]
-                if let output = try? JSONSerialization.data(withJSONObject: payload) {
-                    try? output.write(to: directory.appendingPathComponent("screenshot-response.json"), options: .atomic)
-                }
-            }
-        }
-    }
-    #endif
     override func capacitorDidLoad() {
         super.capacitorDidLoad()
         // The WKWebView is the root view. Do not add glass strips to its safe areas:
@@ -157,7 +76,6 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
         view.addSubview(chromeHost)
         if isUIQA { view.addSubview(qaMarker) }
         webView?.configuration.userContentController.add(chromeHandler, name: "flightyChrome")
-        webView?.configuration.userContentController.add(locationHandler, name: "flightyLocation")
         notifyWebChromeReady()
         backGesture.edges = .left
         backGesture.delegate = self
@@ -197,9 +115,6 @@ final class FlightyBridgeViewController: CAPBridgeViewController {
         if isUIQA {
             captureLayoutAudit(attempt: 0)
         }
-        #if targetEnvironment(simulator)
-        startScreenshotSession()
-        #endif
     }
 
     @objc private func publishPresentation() {

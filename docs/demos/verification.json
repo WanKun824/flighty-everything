@@ -1,0 +1,70 @@
+{
+  "applicationSourceCommit": "cbef258459e5c5d5fc0f140573e1e039ed0bc1c4",
+  "unitTests": {
+    "passed": 162,
+    "failed": 0
+  },
+  "browserTests": {
+    "passed": 42,
+    "failed": 0,
+    "projects": [
+      "light",
+      "dark",
+      "small-phone"
+    ]
+  },
+  "typecheck": "passed",
+  "nativeWebBuild": "passed; not IPA",
+  "lint": {
+    "status": "failed",
+    "errors": 9,
+    "warnings": 9
+  },
+  "gifChecks": [
+    {
+      "file": "flight.gif",
+      "encodedFrames": 72,
+      "dimensions": [
+        402,
+        874
+      ],
+      "loop": 0,
+      "sha256": "7ef908231787d0b8f28f7ea673d8fcbafb0f9bd9190596b5572431c72b7cc7aa"
+    },
+    {
+      "file": "airports.gif",
+      "encodedFrames": 79,
+      "dimensions": [
+        402,
+        874
+      ],
+      "loop": 0,
+      "sha256": "0cffbdf70177c02a65e1adda2c3c37e3da951fb3134a9bff7cc4fb53df5722f1"
+    },
+    {
+      "file": "statistics.gif",
+      "encodedFrames": 82,
+      "dimensions": [
+        402,
+        874
+      ],
+      "loop": 0,
+      "sha256": "9042308216876fc8806eec5bb38f537f61d4a5dfc118ff4ee7c398abf976cd64"
+    },
+    {
+      "file": "journeys.gif",
+      "encodedFrames": 89,
+      "dimensions": [
+        402,
+        874
+      ],
+      "loop": 0,
+      "sha256": "447d8f19d550b24b87ebc252fcebca9fb86a3de2a7e8554f4064d2441b6bd062"
+    }
+  ],
+  "realIOSRecording": false,
+  "sampleTrips": 3,
+  "sampleSegments": 8,
+  "existingStorageProtection": "passed in all 3 browser projects",
+  "notes": "No new IPA or simulator workflow; first-run sample data only."
+}

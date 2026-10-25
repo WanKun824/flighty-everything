@@ -28,13 +28,13 @@ test("sheet flicks have momentum without crossing the minimum or maximum", () =>
 test("all primary tabs share typography, glass and geometry; readable input sizes preserve zoom", async () => {
   const [css, app, base, html] = await Promise.all([read("../app/native-layout.css"),read("../app/FlightyApp.tsx"),read("../app/globals.css"),read("../native/index.html")]);
   assert.match(app, /flight-panel primary-panel/);
-  assert.match(app, /minimumHeight: 256/);
+  assert.match(app, /minimumHeight: 304/);
   assert.match(css, /primary-panel \.panel-titlebar h1/);
   assert.match(css, /primary-panel \.passport-target-scroll/);
   assert.match(css, /primary-panel \.friends-body/);
-  assert.match(css, /--sheet-material: rgba\(252,252,254,\.94\)/);
+  assert.match(css, /--sheet-material: rgba\(246,249,253,\.56\)/);
   assert.match(css, /blur\(34px\) saturate\(1\.55\)/);
-  assert.match(css, /map-sheet\.mobile-journey-detail-target[\s\S]*border-radius: 34px/);
+  assert.match(css, /map-sheet\.mobile-journey-detail-target[\s\S]*border-radius: 34px 34px 0 0/);
   assert.match(css, /font-size: 16px !important/);
   assert.match(base, /-webkit-text-size-adjust: 100%/);
   assert.doesNotMatch(html, /user-scalable=no|maximum-scale=1/);

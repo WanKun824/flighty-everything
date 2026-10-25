@@ -88,7 +88,7 @@ export function useAppearance() {
 }
 
 export const appearanceLabel: Record<AppearanceMode, string> = {
-  system: "跟随系统",
-  light: "浅色",
-  dark: "深色",
+  system: "System",
+  light: "Light",
+  dark: "Dark",
 };

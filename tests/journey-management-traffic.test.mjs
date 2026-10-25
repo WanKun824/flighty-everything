@@ -64,8 +64,7 @@ test("car routes use live traffic while train status remains explicitly provider
   assert.doesNotMatch(globe, /bearing: followCamera/);
   assert.match(globe, /bearing: 0/);
   assert.match(mobileApp, /const \[followVehicle, setFollowVehicle\] = useState\(false\)/);
-  assert.equal((mobileApp.match(/"跟随当前选中路段"/g) ?? []).length, 1);
-  assert.match(mobileApp, /"跟随我的位置"/);
+  assert.equal((mobileApp.match(/aria-label="跟随当前选中路段"/g) ?? []).length, 1);
   assert.match(mobileApp, /aria-pressed=\{followVehicle\}/);
   assert.match(mobileApp, /onClick=\{\(\) => setFollowVehicle\(\(value\) => !value\)\}/);
   assert.match(mobileApp, /<SFMapFill size="md"\s*\/>[\s\S]*?<SFLocationFill size="md"\s*\/>/);

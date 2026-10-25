@@ -19,14 +19,10 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "@capacitor/action-sheet": "^8.1.1",
     "@capacitor/android": "^8.5.0",
     "@capacitor/core": "^8.5.0",
-    "@capacitor/dialog": "^8.0.1",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/ios": "^8.5.0",
-    "@capacitor/keyboard": "^8.0.6",
-    "@capacitor/share": "^8.0.3",
     "drizzle-orm": "0.45.2",
     "lucide-react": "^0.468.0",
     "mapbox-gl": "^3.28.1",
@@ -42,7 +38,6 @@
     "@eslint/js": "9.39.4",
     "@material-design-icons/svg": "^0.14.15",
     "@next/eslint-plugin-next": "16.2.6",
-    "@playwright/test": "^1.64.1",
     "@tailwindcss/postcss": "4.2.1",
     "@types/node": "22.19.19",
     "@types/react": "19.2.14",

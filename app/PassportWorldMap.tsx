@@ -1,84 +1,108 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { JourneySegment } from "./journeyData";
 import { MAPBOX_ACCESS_TOKEN } from "./mapboxConfig";
 import { geodesic, unwrap } from "./routeGeometry";
-import { useAppearance } from "./appearance";
 
 export default function PassportWorldMap({ segments }: { segments: JourneySegment[] }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<import("mapbox-gl").Map | null>(null);
   const segmentsRef = useRef(segments);
-  useEffect(() => { segmentsRef.current = segments; }, [segments]);
-  const [status, setStatus] = useState("正在载入足迹地图…");
-  const { resolved } = useAppearance();
-  const hasSegments = segments.length > 0;
+  segmentsRef.current = segments;
 
   useEffect(() => {
-    if (!hasSegments) return;
     let disposed = false;
     let map: import("mapbox-gl").Map | null = null;
-    const host = hostRef.current;
-    if (!host) return;
-    const observer = new ResizeObserver(() => map?.resize());
-    observer.observe(host);
     void import("mapbox-gl").then(({ default: mapboxgl }) => {
-      if (disposed) return;
+      if (disposed || !hostRef.current) return;
       mapboxgl.accessToken = MAPBOX_ACCESS_TOKEN;
       map = new mapboxgl.Map({
-        container: host, style: resolved === "light" ? "mapbox://styles/mapbox/light-v11" : "mapbox://styles/mapbox/dark-v11",
-        projection: "equalEarth", center: [0, 12], minZoom: -2, zoom: 0, pitch: 0, bearing: 0,
-        interactive: false, attributionControl: false, antialias: true, fadeDuration: 0,
+        container: hostRef.current,
+        style: "mapbox://styles/mapbox/dark-v11",
+        projection: "equalEarth",
+        center: [0, 12],
+        minZoom: -2,
+        zoom: 0,
+        pitch: 0,
+        bearing: 0,
+        interactive: false,
+        attributionControl: false,
+        antialias: true,
+        fadeDuration: 0,
       });
-      mapRef.current = map;
-      map.on("error", () => { if (!disposed) setStatus("足迹地图暂不可用，统计数据仍保留"); });
       map.on("load", () => {
         if (!map || disposed) return;
-        const styles = getComputedStyle(document.documentElement);
-        map.addSource("passport-routes", { type: "geojson", data: routeCollection(segmentsRef.current, styles) });
-        map.addSource("passport-stops", { type: "geojson", data: stopCollection(segmentsRef.current) });
-        map.addLayer({ id: "passport-route-lines", type: "line", source: "passport-routes", paint: {
-          "line-color": ["get", "color"], "line-width": 2.2, "line-opacity": .95,
-        } });
+        for (const layer of map.getStyle().layers ?? []) {
+          if (layer.type === "symbol" || layer.type === "line") map.setLayoutProperty(layer.id, "visibility", "none");
+          if (layer.type === "background") map.setPaintProperty(layer.id, "background-color", "#6500ee");
+          if (layer.type === "fill") map.setPaintProperty(layer.id, "fill-color", layer.id.includes("water") ? "#210063" : "#6500ee");
+        }
+        map.addSource("passport-routes", {
+          type: "geojson",
+          data: routeCollection(segmentsRef.current),
+        });
+        map.addLayer({
+          id: "passport-route-glow",
+          type: "line",
+          source: "passport-routes",
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": 7,
+            "line-opacity": 0.22,
+            "line-blur": 4,
+          },
+        });
+        map.addSource("passport-stops", {
+          type: "geojson", data: {
+            type: "FeatureCollection",
+            features: segmentsRef.current.flatMap(segment => [segment.origin, segment.destination]).map(place => ({
+              type: "Feature", properties: {}, geometry: { type: "Point", coordinates: place.coordinate },
+            })),
+          },
+        });
         map.addLayer({ id: "passport-stop-dots", type: "circle", source: "passport-stops", paint: {
-          "circle-radius": 3, "circle-color": styles.getPropertyValue("--ios-blue").trim(),
-          "circle-stroke-color": styles.getPropertyValue("--ios-on-accent").trim(), "circle-stroke-width": 1,
+          "circle-radius": 3, "circle-color": "#f4ed79", "circle-stroke-color": "#fff", "circle-stroke-width": 1,
         } });
-        setStatus("");
+        map.addLayer({
+          id: "passport-route-lines",
+          type: "line",
+          source: "passport-routes",
+          paint: {
+            "line-color": ["get", "color"],
+            "line-width": 2.2,
+            "line-opacity": 0.95,
+          },
+        });
       });
-    }).catch(() => { if (!disposed) setStatus("足迹地图暂不可用，统计数据仍保留"); });
-    return () => { disposed = true; observer.disconnect(); map?.remove(); mapRef.current = null; };
-  }, [resolved, hasSegments]);
-
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    const update = () => {
-      const styles = getComputedStyle(document.documentElement);
-      (map.getSource("passport-routes") as import("mapbox-gl").GeoJSONSource | undefined)?.setData(routeCollection(segments, styles));
-      (map.getSource("passport-stops") as import("mapbox-gl").GeoJSONSource | undefined)?.setData(stopCollection(segments));
+    });
+    return () => {
+      disposed = true;
+      map?.remove();
     };
-    if (map.isStyleLoaded()) update(); else map.on("load", update);
-    return () => { map.off("load", update); };
-  }, [segments, resolved, status]);
+  }, []);
 
-  return <div className="passport-world-map" aria-label={`世界地图，共显示 ${segments.length} 段旅程`}>
-    <div ref={hostRef} className="passport-map-host" />
-    {(!hasSegments || status) && <span className="passport-map-state" role="status">{hasSegments ? status : "完成行程后，在这里查看世界足迹"}</span>}
-  </div>;
+  return <div ref={hostRef} className="passport-world-map" aria-label={`世界地图，共显示 ${segments.length} 段旅程`} />;
 }
 
-function routeCollection(segments: JourneySegment[], styles: CSSStyleDeclaration) {
-  const tokens = { flight: "--ios-blue", train: "--ios-purple", car: "--ios-red", ferry: "--ios-teal" };
-  return { type: "FeatureCollection" as const, features: segments.map(segment => ({
-    type: "Feature" as const,
-    properties: { color: styles.getPropertyValue(tokens[segment.mode]).trim() },
-    geometry: { type: "LineString" as const, coordinates: unwrap(geodesic(segment.origin.coordinate, segment.destination.coordinate, 64)) },
-  })) };
+function routeCollection(segments: JourneySegment[]) {
+  return {
+    type: "FeatureCollection" as const,
+    features: segments.map((segment) => ({
+      type: "Feature" as const,
+      properties: { color: routeColor(segment.mode) },
+      geometry: {
+        type: "LineString" as const,
+        coordinates: unwrap(geodesic(segment.origin.coordinate, segment.destination.coordinate, 64)),
+      },
+    })),
+  };
 }
-function stopCollection(segments: JourneySegment[]) {
-  return { type: "FeatureCollection" as const, features: segments.flatMap(segment => [segment.origin, segment.destination]).map(place => ({
-    type: "Feature" as const, properties: {}, geometry: { type: "Point" as const, coordinates: place.coordinate },
-  })) };
+
+function routeColor(mode: JourneySegment["mode"]) {
+  return {
+    flight: "#42a5ff",
+    train: "#c35cff",
+    car: "#ff5570",
+    ferry: "#4ccff2",
+  }[mode];
 }
