@@ -15,7 +15,7 @@ on:
       skip_tests:
         description: Export the device IPA only, without simulator or interaction tests
         required: true
-        default: false
+        default: true
         type: boolean
       export_method:
         description: Signed export method
@@ -26,8 +26,6 @@ on:
           - release-testing
           - app-store-connect
           - debugging
-  push:
-    tags: ["v*"]
 
 permissions:
   contents: read

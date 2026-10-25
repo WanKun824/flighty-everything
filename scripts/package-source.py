@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parents[1]
 EXTRAS = {
     "README.md", ".env.example", "scripts/package-source.py",
     "docs/开发与打包说明.md", "docs/交付清单与已知限制.md",
-    "PACKAGE-VERIFICATION.json",
 }
 REQUIRED = {
     "package.json", "package-lock.json", "vite.config.ts",
@@ -59,7 +58,8 @@ def permitted(name):
     if p.name in {"local.properties", ".DS_Store", ".npmrc", ".netrc", ".dev.vars"}:
         return False
     return p.suffix.lower() not in {
-        ".ipa", ".apk", ".aab", ".p12", ".pfx", ".pem", ".key",
+        ".ipa", ".apk", ".aab", ".zip", ".gz", ".tgz", ".tar", ".7z",
+        ".p12", ".pfx", ".pem", ".key",
         ".mobileprovision", ".keystore", ".jks", ".log", ".tsbuildinfo",
     }
 

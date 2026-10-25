@@ -7,9 +7,6 @@ on:
         description: Optional exact source commit to verify
         required: false
         type: string
-  push:
-    branches: [main]
-    tags: ["v*"]
 
 permissions:
   contents: read
@@ -44,7 +41,7 @@ jobs:
         run: |
           python3 scripts/package-source.py
           mkdir -p build/packages
-          git archive --format=zip --output=build/packages/flighty-everything-docs-screenshots.zip HEAD README.md docs MODEL_LICENSES.md ios/qa/README.md
+          git archive --format=zip --output=build/packages/flighty-everything-docs.zip HEAD README.md docs MODEL_LICENSES.md ios/qa/README.md
       - name: Archive frontend build outputs
         shell: bash
         run: |
@@ -72,10 +69,10 @@ jobs:
             release/source/*.zip
             release/source/*.sha256
           retention-days: 30
-      - name: Upload documentation and screenshots
+      - name: Upload documentation on explicit request
         uses: actions/upload-artifact@v7
         with:
-          name: flighty-everything-docs-screenshots
-          path: build/packages/flighty-everything-docs-screenshots.zip
+          name: flighty-everything-docs
+          path: build/packages/flighty-everything-docs.zip
           archive: false
           retention-days: 30

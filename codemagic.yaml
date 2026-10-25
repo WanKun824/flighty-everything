@@ -12,6 +12,7 @@ workflows:
       - name: 安装与同步
         script: |
           npm ci
+          npm run native:build
           npx cap sync ios
       - name: 构建未签名 IPA
         script: |

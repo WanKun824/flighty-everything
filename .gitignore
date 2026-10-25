@@ -45,3 +45,19 @@ yarn-error.log*
 *.tsbuildinfo
 __pycache__/
 *.pyc
+
+# Generated application packages and removed visual archives
+*.ipa
+*.apk
+*.aab
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.xcarchive/
+/docs/runtime-*/
+/docs/screenshots/
+/docs/demos/
+/android/app/src/main/assets/public/
+/ios/App/App/public/

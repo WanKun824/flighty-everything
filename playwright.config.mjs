@@ -6,14 +6,14 @@ export default defineConfig({
   workers: 1,
   timeout: 45_000,
   expect: { timeout: 12_000 },
-  reporter: [["list"], ["html", { outputFolder: "build/ui-acceptance-report", open: "never" }]],
+  reporter: [["list"]],
   outputDir: "build/ui-acceptance-results",
   use: {
     baseURL: "http://127.0.0.1:3007",
     channel: "chrome",
     viewport: { width: 402, height: 874 },
-    trace: "retain-on-failure",
-    screenshot: "only-on-failure",
+    trace: "off",
+    screenshot: "off",
     launchOptions: process.env.PLAYWRIGHT_CHROME_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROME_PATH } : {},
   },
   projects: [
